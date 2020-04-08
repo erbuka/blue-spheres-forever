@@ -1,0 +1,136 @@
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	GameData::Initialize(): Loaded 128 stage sections
+Info ->	AudioEngine::AudioEngine(): Sound initialized!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/curveWorld_Shadow.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/curveWorld_Shadow.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/sonic_Shadow.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/sonic_Shadow.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/curveWorld_deferred.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders//curveWorld_deferred.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/sonic_deferred.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/sonic_deferred.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderAlbedoShadows_deferred.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderAlbedoShadows_deferred.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/render.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/render.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/bloom.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/bloom.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderSky.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderSky.geom loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderSky.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderBg.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/renderBg.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/render_test.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/render_test.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/basic2D.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/basic2D.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/font.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/font.geom loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/font.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/stars.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/stars.geom loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/stars.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/intro.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/intro.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/convolve.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/convolveHigh.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	Sonic::Sonic(): Loading animation key-frame: 0
+Info ->	Sonic::Sonic(): Loading animation key-frame: 1
+Info ->	Sonic::Sonic(): Loading animation key-frame: 2
+Info ->	Sonic::Sonic(): Loading animation key-frame: 3
+Info ->	Sonic::Sonic(): Loading animation key-frame: 4
+Info ->	Sonic::Sonic(): Loading animation key-frame: 5
+Info ->	Sonic::Sonic(): Loading animation key-frame: 6
+Info ->	Sonic::Sonic(): Loading animation key-frame: 7
+Info ->	Sonic::Sonic(): Loading animation key-frame: 8
+Info ->	Sonic::Sonic(): Loading animation key-frame: 9
+Info ->	Sonic::Sonic(): Loading animation key-frame: 10
+Info ->	Sonic::Sonic(): Loading animation key-frame: 11
+Info ->	Sonic::Sonic(): Loading animation key-frame: 0
+Info ->	Sonic::Sonic(): Loading animation key-frame: 0
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/blur.vert loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	ShaderManager::loadShaderFromFile(): res/shaders/blurHigh.frag loaded. Compiling...
+Info ->	ShaderManager::loadShader(): Compiled!
+Info ->	Shader::init(): Program created and linked!
+Info ->	Shader::init(): Program validated!
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
+Info ->	Global::LoadGameConfig(): Configuration file loaded.
