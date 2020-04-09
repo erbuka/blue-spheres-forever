@@ -4,9 +4,13 @@
 
 #include <string>
 #include <unordered_map>
-
+#include <array>
 
 #define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(const std::string& name, uint32_t count, varType * ptr)
+#define UNIFORM1_INL(type, varType, size) \
+	inline void Uniform ## size ## type(const std::string& name, std::array<varType,size> v) { \
+		Uniform ## size ## type ## v(name, 1, v.data()); \
+	}
 
 namespace bsf
 {
@@ -25,7 +29,13 @@ namespace bsf
 
 		void Use();
 		
+		UNIFORM1_INL(i, int32_t, 1);
 		UNIFORM_DECL(i, int32_t, 1);
+
+		UNIFORM1_INL(f, float, 1);
+		UNIFORM1_INL(f, float, 2);
+		UNIFORM1_INL(f, float, 3);
+		UNIFORM1_INL(f, float, 4);
 
 		UNIFORM_DECL(f, float, 1);
 		UNIFORM_DECL(f, float, 2);
@@ -41,4 +51,4 @@ namespace bsf
 }
 
 #undef UNIFORM_DECL
-#undef UNIFORM1_DECL
+#undef UNIFORM1_INL

@@ -1,8 +1,16 @@
 workspace "BlueSpheresForever"
     architecture "x86_64"
-    configurations { "Debug", "Relase" }
+    configurations { "Debug", "Release" }
     startproject "Main"
 
+    filter "configurations:Debug"
+        symbols "On"
+        optimize "Off"
+
+    filter "configurations:Release"
+        symbols "Off"
+        optimize "On"
+        
     filter "system:windows"
         systemversion "latest"
 

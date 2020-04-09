@@ -355,9 +355,14 @@ namespace bsf
 
 
 	GameLogic::GameLogic(Stage& stage) :
-		m_Stage(stage),
-		m_State(EState::Starting)
+		m_Stage(stage)
 	{
+		m_State = EState::Starting;
+		
+		m_RotateCommand = ERotate::None;
+		m_JumpCommand = false;
+		m_RunForwardCommand = false;
+
 		m_State = EState::Starting;
 		m_Position = stage.StartPoint;
 		m_Direction = stage.StartDirection;
@@ -366,7 +371,7 @@ namespace bsf
 		m_IsRotating = false;
 		m_IsJumping = false;
 		m_IsGoingBackward = false;
-		m_RotationAngle = std::atan2f(m_Direction.x, m_Direction.y);
+		m_RotationAngle = m_TargetRotationAngle = std::atan2f(m_Direction.x, m_Direction.y);
 		m_Height = 0.0f;
 		m_LastBounceDistance = 1.0f;
 	}

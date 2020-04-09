@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Log.h"
+#include "Texture.h";
 
 #include <glad/glad.h>
 
@@ -91,6 +92,16 @@ namespace bsf
 		glDetachShader(program, fragmentShader);
 
 		return program;
+	}
+
+	Ref<Texture2D> CreateCheckerBoard(std::array<uint32_t, 2> colors)
+	{
+		std::array<uint32_t, 4> data = {
+			colors[0], colors[1],
+			colors[1], colors[0]
+		};
+
+		return MakeRef<Texture2D>(2, 2, data.data());
 	}
 
 }

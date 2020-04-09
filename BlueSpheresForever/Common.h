@@ -7,10 +7,10 @@
 
 namespace bsf
 {
+	class Texture2D;
+
 
 	#pragma region Events
-
-
 
 	enum class MouseButton : int
 	{
@@ -107,6 +107,8 @@ namespace bsf
 	}
 
 	uint32_t LoadProgram(const std::string& vertexSource, const std::string& fragmentSource);
+
+	Ref<Texture2D> CreateCheckerBoard(std::array<uint32_t, 2> colors);
 
 	#pragma endregion
 

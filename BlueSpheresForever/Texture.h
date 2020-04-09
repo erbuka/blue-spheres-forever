@@ -9,31 +9,76 @@
 namespace bsf
 {
 
+	enum class TextureFilter
+	{
+		MinFilter,
+		MagFilter
+	};
+
+	enum class TextureFilterMode
+	{
+		Nearest,
+		Linear,
+		LinearMipmapLinear
+	};
+
+	enum class TextureCubeFace
+	{
+		Front, Back, Left, Right, Bottom, Top
+	};
+
 	class Texture
 	{
 	public:
+		Texture();
+		virtual ~Texture();
 
-		Texture(uint32_t width, uint32_t height, uint32_t pixelsPerUnit, void* pixels);
-		Texture(const std::string& fileName, uint32_t pixelsPerUnit);
-		Texture(Texture&) = delete;
-		Texture(Texture&&) noexcept;
+		virtual void Bind(uint32_t textureUnit) = 0;
 
-		~Texture();
-
-		uint32_t GetID() const { return m_ID; }
+		uint32_t GetId() const { return m_Id; }
 
 		uint32_t GetWidth() const { return m_Width; }
 		uint32_t GetHeight() const { return m_Height; }
 
-		uint32_t GetPixelsPerUnit() const { return m_PixelsPerUnit; }
+	protected:
+		uint32_t m_Id;
+		uint32_t m_Width, m_Height;
+	};
+
+	
+	class TextureCube : public Texture
+	{
+	public:
+		TextureCube(uint32_t width, uint32_t height);
+		TextureCube(TextureCube&) = delete;
+		TextureCube(TextureCube&&) = delete;
+
+		void SetPixels(TextureCubeFace face, const void* pixels);
+
+		void Bind(uint32_t textureUnit) override;
+
+		void Filter(TextureFilter filter, TextureFilterMode mode);
+
+
+	};
+
+	class Texture2D : public Texture
+	{
+	public:
+
+		Texture2D(uint32_t width, uint32_t height, const void* pixels);
+		Texture2D(const std::string& fileName);
+		Texture2D(Texture2D&) = delete;
+		Texture2D(Texture2D&&) noexcept;
+
+		void Filter(TextureFilter filter, TextureFilterMode mode);
+
+		void Bind(uint32_t textureUnit) override;
 
 	private:
 
 		bool Load(const std::string& fileName);
 
-		uint32_t m_PixelsPerUnit;
-		uint32_t m_Width = 0, m_Height = 0;
-		uint32_t m_ID = 0;
 	};
 
 }
