@@ -106,6 +106,7 @@ namespace bsf
 		return R(0);
 	}
 
+
 	uint32_t LoadProgram(const std::string& vertexSource, const std::string& fragmentSource);
 
 	Ref<Texture2D> CreateCheckerBoard(std::array<uint32_t, 2> colors);

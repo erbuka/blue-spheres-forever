@@ -18,6 +18,7 @@ namespace bsf
 		void Translate(const glm::vec3& translate);
 		void Rotate(const glm::vec3& axis, float angle);
 		void Scale(const glm::vec3& scale);
+		void Multiply(const glm::mat4& mat);
 
 		void Perspective(float fovY, float aspect, float zNear, float zFar);
 		void Orthographic(float left, float right, float bottom, float top, float zNear, float zFar);

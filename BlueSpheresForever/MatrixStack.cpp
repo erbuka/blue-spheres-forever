@@ -37,6 +37,11 @@ namespace bsf
 		m_Stack.top() *= glm::scale(scale);
 	}
 
+	void MatrixStack::Multiply(const glm::mat4& mat)
+	{
+		m_Stack.top() *= mat;
+	}
+
 	void MatrixStack::Perspective(float fovY, float aspect, float zNear, float zFar)
 	{
 		m_Projection = glm::perspective(fovY, aspect, zNear, zFar);

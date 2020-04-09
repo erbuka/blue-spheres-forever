@@ -377,6 +377,11 @@ namespace bsf
 	}
 
 
+	glm::vec2 GameLogic::GetPosition() const
+	{
+		return WrapPosition(m_Position);
+	}
+
 	void GameLogic::Advance(const Time& time)
 	{
 
@@ -500,6 +505,9 @@ namespace bsf
 
 			}
 		}
+
+		// Wrap position inside boundary
+		m_Position = WrapPosition(m_Position);
 	}
 
 	void GameLogic::Rotate(ERotate r)
@@ -521,6 +529,26 @@ namespace bsf
 		{
 			m_RunForwardCommand = true;
 		}
+	}
+
+	glm::vec2 GameLogic::WrapPosition(const glm::vec2& p) const
+	{
+		glm::vec2 pos = p;
+
+		while (pos.x < 0.0f)
+			pos.x += m_Stage.GetWidth();
+
+		while (pos.y <= 0.0f)
+			pos.y += m_Stage.GetHeight();
+
+		if (pos.x > m_Stage.GetWidth())
+			pos.x = std::fmodf(pos.x, m_Stage.GetWidth());
+
+		if (pos.y > m_Stage.GetHeight())
+			pos.y = std::fmodf(pos.y, m_Stage.GetHeight());
+
+		return pos;
+
 	}
 
 	bool GameLogic::PullRotateCommand()

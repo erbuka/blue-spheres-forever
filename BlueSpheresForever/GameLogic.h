@@ -32,18 +32,21 @@ namespace bsf
 
 		GameLogic(Stage& stage);
 
-		inline float GetHeight() const { return m_Height; }
-		inline glm::ivec2 GetDirection() const { return m_Direction; }
-		inline glm::vec2 GetPosition() const { return m_Position; }
-		inline float GetRotationAngle() const { return m_RotationAngle; }
-		inline float GetVelocity() const { return m_Velocity; }
+		float GetHeight() const { return m_Height; }
+		glm::ivec2 GetDirection() const { return m_Direction; }
+		glm::vec2 GetPosition() const;
+		float GetRotationAngle() const { return m_RotationAngle; }
+		float GetVelocity() const { return m_Velocity; }
 		void Advance(const Time& time);
+
+		glm::vec2 WrapPosition(const glm::vec2& pos) const;
 
 		void Rotate(ERotate r);
 		void Jump();
 		void RunForward();
 
 	private:
+
 
 		float m_Velocity, m_VelocityScale;
 
