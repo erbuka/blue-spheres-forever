@@ -10,6 +10,41 @@
 namespace bsf
 {
 
+	static std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(const std::string& fileName, bool flipY)
+	{
+		uint32_t width, height;
+
+		std::vector<unsigned char> data, flippedData;
+		unsigned error = lodepng::decode(data, width, height, fileName);
+
+		// If there's an error, display it.
+		if (error != 0) {
+			BSF_ERROR("There was en error while loading file '{0}': {1}", fileName, lodepng_error_text(error));
+			return { };
+		}
+
+		// Flip y pixels
+		if (flipY)
+		{
+			flippedData.resize(data.size());
+
+			for (uint32_t y = 0; y < height; y++)
+			{
+				std::memcpy(
+					flippedData.data() + y * width * sizeof(uint32_t),
+					data.data() + (height - y - 1) * width * sizeof(uint32_t),
+					width * sizeof(uint32_t));
+			}
+
+			return { flippedData, width, height };
+		}
+		else
+		{
+			return { data, width, height };
+
+		}
+	}
+
 	static std::unordered_map<TextureFilter, GLenum> s_glFilter = {
 		{ TextureFilter::MinFilter, GL_TEXTURE_MIN_FILTER },
 		{ TextureFilter::MagFilter, GL_TEXTURE_MAG_FILTER }
@@ -22,8 +57,8 @@ namespace bsf
 	};
 
 	static std::unordered_map<TextureCubeFace, GLenum> s_glTexCubeFace = {
-		{ TextureCubeFace::Front, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z  },
-		{ TextureCubeFace::Back, GL_TEXTURE_CUBE_MAP_POSITIVE_Z  },
+		{ TextureCubeFace::Front, GL_TEXTURE_CUBE_MAP_POSITIVE_Z  },
+		{ TextureCubeFace::Back, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,  },
 		{ TextureCubeFace::Left, GL_TEXTURE_CUBE_MAP_NEGATIVE_X  },
 		{ TextureCubeFace::Right, GL_TEXTURE_CUBE_MAP_POSITIVE_X  },
 		{ TextureCubeFace::Top, GL_TEXTURE_CUBE_MAP_POSITIVE_Y  },
@@ -125,6 +160,33 @@ namespace bsf
 	}
 
 
+	TextureCube::TextureCube(const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top)
+	{
+		static std::array<TextureCubeFace, 6> faces = {
+			TextureCubeFace::Front,
+			TextureCubeFace::Back,
+			TextureCubeFace::Left,
+			TextureCubeFace::Right,
+			TextureCubeFace::Bottom,
+			TextureCubeFace::Top
+		};
+
+		std::array<std::string, 6> files = { front, back, left, right, bottom, top };
+
+		BSF_GLCALL(glGenTextures(1, &m_Id));
+		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
+		
+		for (uint32_t i = 0; i < files.size(); i++)
+		{
+			auto [pixels, width, height] = LoadPng(files[i], false);
+			m_Width = width;
+			m_Height = height;
+			SetPixels(faces[i], pixels.data());
+		}
+		
+
+	}
+
 	TextureCube::TextureCube(uint32_t width, uint32_t height)
 	{
 		m_Width = width;
@@ -166,7 +228,7 @@ namespace bsf
 
 		if (filter == TextureFilter::MinFilter && mode == TextureFilterMode::LinearMipmapLinear)
 		{
-			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+			BSF_GLCALL(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 		}
 	}
 }

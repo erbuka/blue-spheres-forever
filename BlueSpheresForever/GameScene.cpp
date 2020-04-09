@@ -42,7 +42,7 @@ static const std::string s_SkyBoxFragment = R"Fragment(
 	out vec4 oColor;	
 
 	void main() {	
-		oColor = texture(uMap,  (uRotate * vec4(normalize(fUv), 0.0)).xyz);
+		oColor = texture(uMap,  fUv);
 	}
 )Fragment";
 
@@ -72,6 +72,7 @@ static const std::string s_Vertex = R"Vertex(
 static const std::string s_Fragment = R"Fragment(
 	#version 330
 	
+	uniform samplerCube uEnv;
 	uniform sampler2D uMap;
 	uniform vec4 uColor;
 	
@@ -83,9 +84,7 @@ static const std::string s_Fragment = R"Fragment(
 	void main() {
 	
 		vec3 normal = normalize(fNormal);
-
-		//oColor = uColor * texture(uMap, fUv) ;
-		oColor = uColor * texture(uMap, fUv) * dot(normal, vec3(0.0, 0.0, 1.0));
+		oColor = uColor * texture(uMap, fUv) * 0.5 + texture(uEnv, fNormal) * 0.5;
 	}
 	
 )Fragment";
@@ -362,23 +361,16 @@ namespace bsf
 		m_SkyBox = CreateSkyBox();
 
 		{
-			std::array<uint32_t, 6> colors = {
-				0xff88ff00, 0xff00ff88,
-				0xff8800ff, 0xff0088ff,
-				0xffff8888, 0xffff8888,
-			};
-
-			m_CubeMap = MakeRef<TextureCube>(1, 1);
-
-			m_CubeMap->SetPixels(TextureCubeFace::Front, &colors[0]);
-			m_CubeMap->SetPixels(TextureCubeFace::Back, &colors[1]);
-			m_CubeMap->SetPixels(TextureCubeFace::Left, &colors[2]);
-			m_CubeMap->SetPixels(TextureCubeFace::Right, &colors[3]);
-			m_CubeMap->SetPixels(TextureCubeFace::Bottom, &colors[4]);
-			m_CubeMap->SetPixels(TextureCubeFace::Top, &colors[5]);
-
-			m_CubeMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
-			m_CubeMap->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
+			
+			m_CubeMap = MakeRef<TextureCube>(
+				"assets/textures/front.png",
+				"assets/textures/back.png",
+				"assets/textures/left.png",
+				"assets/textures/right.png",
+				"assets/textures/bottom.png",
+				"assets/textures/top.png");
+			m_CubeMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_CubeMap->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
 
 		}
 
@@ -421,22 +413,13 @@ namespace bsf
 		
 		// Draw Skybox
 		{
-			float v = pos.y / m_Stage.GetHeight() * glm::pi<float>() * 2.0f;
-			float u = pos.x / m_Stage.GetWidth() * glm::pi<float>() * 2.0f;
-
-			glm::vec3 forward = 
-				glm::rotate(glm::identity<glm::mat4>(), m_GameLogic->GetRotationAngle(), { 0.0f, 1.0f, 0.0f }) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-
-			auto rot = glm::eulerAngleZ(-u);
-
 
 			m_CubeMap->Bind(0);
 			glDepthMask(GL_FALSE);
 			m_ModelViewMatrix.Push();
-			m_ModelViewMatrix.LookAt({ 0.0f, 0.0f, 0.0f }, forward, { 0.0f, 1.0f, 0.0f });
+			m_ModelViewMatrix.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
 			m_SkyBoxProgram->Use();
 			m_SkyBoxProgram->Uniform1i("uMap", { 0 });
-			m_SkyBoxProgram->UniformMatrix4f("uRotate", glm::transpose(rot));
 			m_SkyBoxProgram->UniformMatrix4f("uProjection", m_ModelViewMatrix.GetProjection());
 			m_SkyBoxProgram->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 			m_SkyBox->Draw(GL_TRIANGLES);
@@ -458,10 +441,11 @@ namespace bsf
 		m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 
 		m_Program->Uniform1i("uMap", { 0 });
+		m_Program->Uniform1i("uEnv", { 1 });
 
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Program->Uniform2f("uUvOffset", { (ix % 2) * 0.5f +  fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
-		m_World->Draw(GL_TRIANGLES);
+		//m_World->Draw(GL_TRIANGLES);
 
 		m_Program->Uniform2f("uUvOffset", { 0, 0 });
 
