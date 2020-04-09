@@ -29,7 +29,7 @@ namespace bsf
 	private:
 		
 		std::vector<Unsubscribe> m_Subscriptions;
-		MatrixStack m_Matrix;
+		MatrixStack m_ModelViewMatrix;
 
 		Ref<VertexArray> m_World, m_Sphere, m_SkyBox;
 		Ref<ShaderProgram> m_Program, m_SkyBoxProgram;

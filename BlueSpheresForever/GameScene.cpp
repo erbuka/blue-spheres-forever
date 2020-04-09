@@ -4,12 +4,14 @@
 #include "ShaderProgram.h"
 #include "Texture.h"
 #include "GameLogic.h"
+#include "Log.h"
 
 #include <array>
 #include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <glm/gtx/matrix_transform_2d.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -410,28 +412,39 @@ namespace bsf
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
 		glm::vec3 normal;
+
+		// Madmath
+		{
+			auto rot = glm::rotate(glm::identity<glm::mat3>(), m_GameLogic->GetRotationAngle());
+
+			auto dir = rot * glm::vec3(1.0f, 0.0f, 0.0f);
+			auto dir2 = m_GameLogic->GetDirection();
+
+			BSF_INFO("{0:.2f} {1:.2f}, {2} {3}", dir.x, dir.y, dir2.x, dir2.y);
+
+		}
 		
-		m_Matrix.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
-		m_Matrix.LoadIdentity();
+		m_ModelViewMatrix.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
+		m_ModelViewMatrix.LoadIdentity();
 		
 		// Draw Skybox
 
 		m_CubeMap->Bind(0);
 
 		glDepthMask(GL_FALSE);
-		m_Matrix.Push();
-		m_Matrix.Rotate({ 0.0f, 1.0f, 0.0f }, m_GameLogic->GetRotationAngle());
+		m_ModelViewMatrix.Push();
+		m_ModelViewMatrix.Rotate({ 0.0f, 1.0f, 0.0f }, m_GameLogic->GetRotationAngle());
 		m_SkyBoxProgram->Use();
 		m_SkyBoxProgram->Uniform1i("uMap", { 0 });
-		m_SkyBoxProgram->UniformMatrix4f("uProjection", m_Matrix.GetProjection());
-		m_SkyBoxProgram->UniformMatrix4f("uModelView", m_Matrix.GetModelView());
+		m_SkyBoxProgram->UniformMatrix4f("uProjection", m_ModelViewMatrix.GetProjection());
+		m_SkyBoxProgram->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 		m_SkyBox->Draw(GL_TRIANGLES);
-		m_Matrix.Pop();
+		m_ModelViewMatrix.Pop();
 		glDepthMask(GL_TRUE);
 
 		// Setup the player view
-		m_Matrix.LookAt({ 0.0f, -3.0f, 2.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 0.0f, 1.0f });
-		m_Matrix.Rotate({ 0.0f, 0.0f, 1.0f }, m_GameLogic->GetRotationAngle());
+		m_ModelViewMatrix.LookAt({ -3.0f, 0.0f, 2.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 0.0f, 1.0f });
+		m_ModelViewMatrix.Rotate({ 0.0f, 0.0f, 1.0f }, -m_GameLogic->GetRotationAngle());
 
 		// Draw ground
 		m_Map->Bind(0);
@@ -439,8 +452,8 @@ namespace bsf
 
 		m_Program->Use();
 
-		m_Program->UniformMatrix4f("uProjection", m_Matrix.GetProjection());
-		m_Program->UniformMatrix4f("uModelView", m_Matrix.GetModelView());
+		m_Program->UniformMatrix4f("uProjection", m_ModelViewMatrix.GetProjection());
+		m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 
 		m_Program->Uniform1i("uMap", { 0 });
 
@@ -451,13 +464,13 @@ namespace bsf
 		m_Program->Uniform2f("uUvOffset", { 0, 0 });
 
 		// Draw player
-		m_Matrix.Push();
-		m_Matrix.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
-		m_Program->UniformMatrix4f("uModelView", m_Matrix.GetModelView());
+		m_ModelViewMatrix.Push();
+		m_ModelViewMatrix.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
+		m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 		m_White->Bind(0);
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Sphere->Draw(GL_TRIANGLES);
-		m_Matrix.Pop();
+		m_ModelViewMatrix.Pop();
 
 
 		// Draw spheres and rings
@@ -469,9 +482,9 @@ namespace bsf
 
 				if (val != EStageObject::None)
 				{
-					m_Matrix.Push();
-					m_Matrix.Translate(Project({ x - fx, y - fy, 0.15f }, normal));
-					m_Program->UniformMatrix4f("uModelView", m_Matrix.GetModelView());
+					m_ModelViewMatrix.Push();
+					m_ModelViewMatrix.Translate(Project({ x - fx, y - fy, 0.15f }, normal));
+					m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 					
 					switch (val)
 					{
@@ -493,7 +506,7 @@ namespace bsf
 						break;
 					}
 
-					m_Matrix.Pop();
+					m_ModelViewMatrix.Pop();
 				}
 
 			}

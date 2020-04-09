@@ -25,8 +25,8 @@ namespace bsf
 		enum class ERotate : int8_t 
 		{
 			None = 0,
-			Left = -1,
-			Right = 1
+			Left = 1,
+			Right = -1
 		};
 
 

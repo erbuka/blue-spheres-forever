@@ -371,7 +371,7 @@ namespace bsf
 		m_IsRotating = false;
 		m_IsJumping = false;
 		m_IsGoingBackward = false;
-		m_RotationAngle = m_TargetRotationAngle = std::atan2f(m_Direction.x, m_Direction.y);
+		m_RotationAngle = m_TargetRotationAngle = std::atan2f(m_Direction.y, m_Direction.x);
 		m_Height = 0.0f;
 		m_LastBounceDistance = 1.0f;
 	}
