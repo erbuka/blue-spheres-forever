@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <glm/gtx/matrix_transform_2d.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -34,13 +35,14 @@ static const std::string s_SkyBoxVertex = R"Vertex(
 static const std::string s_SkyBoxFragment = R"Fragment(
 	#version 330
 	
+	uniform mat4 uRotate;
 	uniform samplerCube uMap;
 	
 	in vec3 fUv;
 	out vec4 oColor;	
 
 	void main() {	
-		oColor = texture(uMap, fUv);
+		oColor = texture(uMap,  (uRotate * vec4(normalize(fUv), 0.0)).xyz);
 	}
 )Fragment";
 
@@ -412,67 +414,36 @@ namespace bsf
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
 		glm::vec3 normal;
-
-		// Madmath
-		/*
-		glm::mat4 madRotation;
-		{
-
-			auto getSphricalCoord = [&](const glm::vec2& position) {
-				float u = position.x / m_Stage.GetWidth() * glm::pi<float>() * 2.0f;
-				float v = position.y / m_Stage.GetHeight() * glm::pi<float>() * 2.0f -
-					std::max(0.0f, position.y / m_Stage.GetHeight() - 0.5f) * 4.0f * glm::pi<float>();
-
-				return glm::vec3(std::sin(v) * std::cos(u), std::sin(v) * std::sin(u), std::cos(v));
-			};
-
-			glm::vec2 dir = glm::rotate(glm::identity<glm::mat3>(), m_GameLogic->GetRotationAngle()) * glm::vec3(1.0f, 0.0f, 0.0f);
-			glm::vec3 p0 = getSphricalCoord(m_GameLogic->GetPosition());
-			glm::vec3 p1 = getSphricalCoord(m_GameLogic->WrapPosition(m_GameLogic->GetPosition() + dir));
-
-			glm::vec3 back = glm::normalize(p0 - p1);
-			glm::vec3 up = p0;
-			glm::vec3 right = glm::cross(up, back);
-
-
-			//BSF_INFO("{0:.2f} {1:.2f}", u, v);
-			//BSF_INFO("up: {0:.2f} {1:.2f} {2:.2f}", up.x, up.y, up.z);
-			//BSF_INFO("right: {0:.2f} {1:.2f} {2:.2f}", right.x, right.y, right.z);
-			BSF_INFO("back: {0:.2f} {1:.2f} {2:.2f}", back.x, back.y, back.z);
-
-			madRotation = {
-				right.x, right.y, right.z, 0.0f,
-				up.x, up.y, up.z, 0.0f,
-				back.x, back.y, back.z, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f
-			};
-
-			madRotation = glm::transpose(madRotation);
-
-
-			//BSF_INFO("{0:.2f} {1:.2f}", dir.x, dir.y);
-			//BSF_INFO("{0:.2f} {1:.2f}", pos.x, pos.y);
-
-		}
-		*/
+		
 		
 		m_ModelViewMatrix.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
 		m_ModelViewMatrix.LoadIdentity();
 		
 		// Draw Skybox
 		{
+			float v = pos.y / m_Stage.GetHeight() * glm::pi<float>() * 2.0f;
+			float u = pos.x / m_Stage.GetWidth() * glm::pi<float>() * 2.0f;
+
+			glm::vec3 forward = 
+				glm::rotate(glm::identity<glm::mat4>(), m_GameLogic->GetRotationAngle(), { 0.0f, 1.0f, 0.0f }) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+
+			auto rot = glm::eulerAngleZ(-u);
+
+
 			m_CubeMap->Bind(0);
 			glDepthMask(GL_FALSE);
 			m_ModelViewMatrix.Push();
-			m_ModelViewMatrix.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
+			m_ModelViewMatrix.LookAt({ 0.0f, 0.0f, 0.0f }, forward, { 0.0f, 1.0f, 0.0f });
 			m_SkyBoxProgram->Use();
 			m_SkyBoxProgram->Uniform1i("uMap", { 0 });
+			m_SkyBoxProgram->UniformMatrix4f("uRotate", glm::transpose(rot));
 			m_SkyBoxProgram->UniformMatrix4f("uProjection", m_ModelViewMatrix.GetProjection());
 			m_SkyBoxProgram->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
 			m_SkyBox->Draw(GL_TRIANGLES);
 			m_ModelViewMatrix.Pop();
 			glDepthMask(GL_TRUE);
 		}
+
 		// Setup the player view
 		m_ModelViewMatrix.LookAt({ -3.0f, 0.0f, 2.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 0.0f, 1.0f });
 		m_ModelViewMatrix.Rotate({ 0.0f, 0.0f, 1.0f }, -m_GameLogic->GetRotationAngle());
