@@ -24,11 +24,9 @@ namespace bsf
 		void Orthographic(float left, float right, float bottom, float top, float zNear, float zFar);
 		void LookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up = { 0.0f, 1.0f, 0.0f });
 
-		const glm::mat4& GetModelView() const { return m_Stack.top(); }
-		const glm::mat4& GetProjection() const { return m_Projection; }
+		const glm::mat4& GetMatrix() const { return m_Stack.top(); }
 
 	private:
-		glm::mat4 m_Projection;
 		std::stack<glm::mat4> m_Stack;
 	};
 }

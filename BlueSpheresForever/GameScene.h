@@ -29,13 +29,13 @@ namespace bsf
 	private:
 		
 		std::vector<Unsubscribe> m_Subscriptions;
-		MatrixStack m_ModelViewMatrix;
+		MatrixStack m_Model, m_View, m_Projection;
 
 		Ref<VertexArray> m_World, m_Sphere, m_SkyBox;
 		Ref<ShaderProgram> m_Program, m_SkyBoxProgram;
 		
 		Ref<TextureCube> m_CubeMap;
-		Ref<Texture2D> m_Map, m_White;
+		Ref<Texture2D> m_Map, m_White, m_Bumper;
 		Ref<GameLogic> m_GameLogic;
 		
 		Stage m_Stage;

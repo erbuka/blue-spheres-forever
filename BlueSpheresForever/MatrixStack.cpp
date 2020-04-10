@@ -5,8 +5,7 @@
 
 namespace bsf
 {
-	MatrixStack::MatrixStack() :
-		m_Projection(glm::identity<glm::mat4>())
+	MatrixStack::MatrixStack() 
 	{
 		m_Stack.push(glm::identity<glm::mat4>());
 	}
@@ -44,12 +43,12 @@ namespace bsf
 
 	void MatrixStack::Perspective(float fovY, float aspect, float zNear, float zFar)
 	{
-		m_Projection = glm::perspective(fovY, aspect, zNear, zFar);
+		m_Stack.top() *= glm::perspective(fovY, aspect, zNear, zFar);
 	}
 
 	void MatrixStack::Orthographic(float left, float right, float bottom, float top, float zNear, float zFar)
 	{
-		m_Projection = glm::ortho(left, right, bottom, top, zNear, zFar);
+		m_Stack.top() *= glm::ortho(left, right, bottom, top, zNear, zFar);
 	}
 	void MatrixStack::LookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up)
 	{

@@ -20,14 +20,15 @@ static const std::string s_SkyBoxVertex = R"Vertex(
 	#version 330
 	
 	uniform mat4 uProjection;
-	uniform mat4 uModelView;
+	uniform mat4 uModel;
+	uniform mat4 uView;
 
 	layout(location = 0) in vec3 aPosition;
 
 	out vec3 fUv;
 	
 	void main() {
-		gl_Position = uProjection * uModelView * vec4(aPosition, 1.0);
+		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
 		fUv = aPosition;
 	}	
 )Vertex";
@@ -50,7 +51,8 @@ static const std::string s_Vertex = R"Vertex(
 	#version 330
 	
 	uniform mat4 uProjection;
-	uniform mat4 uModelView;
+	uniform mat4 uView;
+	uniform mat4 uModel;
 	
 	uniform vec2 uUvOffset;
 
@@ -58,13 +60,20 @@ static const std::string s_Vertex = R"Vertex(
 	layout(location = 1) in vec3 aNormal;
 	layout(location = 2) in vec2 aUv;
 
+	
+	out vec3 fPosition;
 	out vec3 fNormal;
-	smooth out vec2 fUv;
+	out vec2 fUv;
 	
 	void main() {
-		gl_Position = uProjection * uModelView * vec4(aPosition, 1.0);
+		
+		vec3 position = (uView * uModel * vec4(aPosition, 1.0)).xyz;
+
+		gl_Position = uProjection * vec4(position, 1.0);
+
+		fNormal = aNormal;
+		fPosition = aPosition;
 		fUv = aUv + uUvOffset;
-		fNormal = (uModelView * vec4(aNormal, 0.0)).xyz;
 	}	
 )Vertex";
 
@@ -72,22 +81,57 @@ static const std::string s_Vertex = R"Vertex(
 static const std::string s_Fragment = R"Fragment(
 	#version 330
 	
+	uniform mat4 uProjection;
+	uniform mat4 uView;
+	uniform mat4 uModel;
+	
+	uniform vec3 uCameraPos;
+	uniform vec3 uLightDir;
+
 	uniform samplerCube uEnv;
 	uniform sampler2D uMap;
 	uniform vec4 uColor;
 	
+	in vec3 fPosition;
 	in vec3 fNormal;
 	in vec2 fUv;
 
-	out vec4 oColor;	
+	out vec4 oColor;
+
+	vec3 fresnelSchlick(float cosTheta, vec3 F0);
 
 	void main() {
-	
-		vec3 normal = normalize(fNormal);
-		oColor = uColor * texture(uMap, fUv) * 0.5 + texture(uEnv, fNormal) * 0.5;
+
+		vec3 N = normalize((uModel * vec4(fNormal, 0.0)).xyz);
+		vec3 V = normalize(uCameraPos - (uModel * vec4(fPosition, 1.0)).xyz);
+		vec3 L = normalize(uLightDir);
+		vec3 H = normalize(V + L);
+		vec3 R = reflect(-V, N);
+
+		float NdL = max(0.0, dot(N, L));
+
+		float NdH = max(0.0, dot(N, H));
+		
+		vec3 env = texture(uEnv, R).rgb;
+		vec3 albedo = (texture(uMap, fUv) * uColor).xyz;
+
+		vec3 ambient = albedo * 0.1;
+		vec3 diffuse = albedo * NdL;
+
+		vec3 color = albedo + env * 0.2;
+
+		oColor = vec4(ambient + color * NdL, 1.0);
 	}
+
+
+	vec3 fresnelSchlick(float cosTheta, vec3 F0)
+	{
+		return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+	}  
+
 	
 )Fragment";
+
 
 namespace bsf
 {
@@ -179,7 +223,9 @@ namespace bsf
 
 		for (const auto& t : triangles)
 		{
-			vertices.push_back({ t * radius, glm::normalize(t), glm::vec2(0.0f, 0.0f) });
+			float u = (std::atan2f(t.z, t.x) / (2.0f * glm::pi<float>()));
+			float v = (std::asinf(t.y) / glm::pi<float>()) + 0.5f;
+			vertices.push_back({ t * radius, glm::normalize(t), glm::vec2(u, v) });
 		}
 
 		Ref<VertexArray> result = Ref<VertexArray>(new VertexArray({
@@ -202,6 +248,8 @@ namespace bsf
 		glm::vec3 ground = { position.x, position.y, 0.0f };
 
 		normal = glm::normalize(ground - center);
+
+
 
 		return center + normal * (radius + offset);
 
@@ -356,6 +404,12 @@ namespace bsf
 			m_White->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
 		}
 
+		{
+			m_Bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
+			m_Bumper->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			m_Bumper->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+		}
+
 		// SkyBox
 
 		m_SkyBox = CreateSkyBox();
@@ -396,6 +450,7 @@ namespace bsf
 		for (int i = 0; i < steps; i++)
 			m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
 
+		glEnable(GL_FRAMEBUFFER_SRGB);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		//glCullFace(GL_BACK);
@@ -407,29 +462,37 @@ namespace bsf
 		float fx = pos.x - ix, fy = pos.y - iy;
 		glm::vec3 normal;
 		
-		
-		m_ModelViewMatrix.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
-		m_ModelViewMatrix.LoadIdentity();
+		m_Projection.LoadIdentity();
+		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
+
+		m_Model.LoadIdentity();
+		m_View.LoadIdentity();
 		
 		// Draw Skybox
 		{
 
 			m_CubeMap->Bind(0);
 			glDepthMask(GL_FALSE);
-			m_ModelViewMatrix.Push();
-			m_ModelViewMatrix.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
+			m_View.Push();
+			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
 			m_SkyBoxProgram->Use();
 			m_SkyBoxProgram->Uniform1i("uMap", { 0 });
-			m_SkyBoxProgram->UniformMatrix4f("uProjection", m_ModelViewMatrix.GetProjection());
-			m_SkyBoxProgram->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
+			m_SkyBoxProgram->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+			m_SkyBoxProgram->UniformMatrix4f("uView", m_View.GetMatrix());
+			m_SkyBoxProgram->UniformMatrix4f("uModel", m_Model.GetMatrix());
 			m_SkyBox->Draw(GL_TRIANGLES);
-			m_ModelViewMatrix.Pop();
+			m_View.Pop();
 			glDepthMask(GL_TRUE);
 		}
 
 		// Setup the player view
-		m_ModelViewMatrix.LookAt({ -3.0f, 0.0f, 2.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 0.0f, 1.0f });
-		m_ModelViewMatrix.Rotate({ 0.0f, 0.0f, 1.0f }, -m_GameLogic->GetRotationAngle());
+		m_View.LookAt({ -3.0f, 2.0f, 0.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
+		m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
+
+		m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
+
+		glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		glm::vec3 lightVector = { 0.0f, 1.0f, 0.0f };
 
 		// Draw ground
 		m_Map->Bind(0);
@@ -437,26 +500,31 @@ namespace bsf
 
 		m_Program->Use();
 
-		m_Program->UniformMatrix4f("uProjection", m_ModelViewMatrix.GetProjection());
-		m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
+		m_Program->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+		m_Program->UniformMatrix4f("uView", m_View.GetMatrix());
+		m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
+
+		m_Program->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
+		m_Program->Uniform3fv("uLightDir", 1, glm::value_ptr(lightVector));
 
 		m_Program->Uniform1i("uMap", { 0 });
 		m_Program->Uniform1i("uEnv", { 1 });
 
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Program->Uniform2f("uUvOffset", { (ix % 2) * 0.5f +  fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
-		//m_World->Draw(GL_TRIANGLES);
+		
+		m_World->Draw(GL_TRIANGLES);
 
 		m_Program->Uniform2f("uUvOffset", { 0, 0 });
 
 		// Draw player
-		m_ModelViewMatrix.Push();
-		m_ModelViewMatrix.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
-		m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
+		m_Model.Push();
+		m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
+		m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
 		m_White->Bind(0);
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Sphere->Draw(GL_TRIANGLES);
-		m_ModelViewMatrix.Pop();
+		m_Model.Pop();
 
 
 		// Draw spheres and rings
@@ -468,31 +536,37 @@ namespace bsf
 
 				if (val != EStageObject::None)
 				{
-					m_ModelViewMatrix.Push();
-					m_ModelViewMatrix.Translate(Project({ x - fx, y - fy, 0.15f }, normal));
-					m_Program->UniformMatrix4f("uModelView", m_ModelViewMatrix.GetModelView());
+					m_Model.Push();
+					m_Model.Translate(Project({ x - fx, y - fy, 0.15f }, normal));
+					m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
+					m_Program->Uniform1i("uMap", { 0 });
+
 					
 					switch (val)
 					{
 					case EStageObject::RedSphere: 
+						m_White->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(red));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::BlueSphere:
+						m_White->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(blue));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::YellowSphere:
+						m_White->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::StarSphere:
+						m_Bumper->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					}
 
-					m_ModelViewMatrix.Pop();
+					m_Model.Pop();
 				}
 
 			}
