@@ -66,7 +66,7 @@ namespace bsf
 	class Texture2D : public Texture
 	{
 	public:
-
+		Texture2D(uint32_t color);
 		Texture2D(uint32_t width, uint32_t height, const void* pixels);
 		Texture2D(const std::string& fileName);
 		Texture2D(Texture2D&) = delete;

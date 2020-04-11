@@ -17,7 +17,7 @@
 #include <GLFW/glfw3.h>
 
 static const std::string s_SkyBoxVertex = R"Vertex(
-	#version 330
+	#version 330 core
 	
 	uniform mat4 uProjection;
 	uniform mat4 uModel;
@@ -34,7 +34,7 @@ static const std::string s_SkyBoxVertex = R"Vertex(
 )Vertex";
 
 static const std::string s_SkyBoxFragment = R"Fragment(
-	#version 330
+	#version 330 core
 	
 	uniform mat4 uRotate;
 	uniform samplerCube uMap;
@@ -48,7 +48,7 @@ static const std::string s_SkyBoxFragment = R"Fragment(
 )Fragment";
 
 static const std::string s_Vertex = R"Vertex(
-	#version 330
+	#version 330 core
 	
 	uniform mat4 uProjection;
 	uniform mat4 uView;
@@ -79,7 +79,7 @@ static const std::string s_Vertex = R"Vertex(
 
 
 static const std::string s_Fragment = R"Fragment(
-	#version 330
+	#version 330 core
 	
 	uniform mat4 uProjection;
 	uniform mat4 uView;
@@ -90,6 +90,8 @@ static const std::string s_Fragment = R"Fragment(
 
 	uniform samplerCube uEnv;
 	uniform sampler2D uMap;
+	uniform sampler2D uMetallic;
+	uniform sampler2D uRoughness;
 	uniform vec4 uColor;
 	
 	in vec3 fPosition;
@@ -98,35 +100,98 @@ static const std::string s_Fragment = R"Fragment(
 
 	out vec4 oColor;
 
+	const float PI = 3.14159265359;
+
+	float DistributionGGX(vec3 N, vec3 H, float roughness);
+	float GeometrySchlickGGX(float NdotV, float roughness);
+	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 	vec3 fresnelSchlick(float cosTheta, vec3 F0);
 
 	void main() {
 
+		float metallic = texture(uMetallic, fUv).r;
+		float roughness = texture(uRoughness, fUv).r;
+
 		vec3 N = normalize((uModel * vec4(fNormal, 0.0)).xyz);
 		vec3 V = normalize(uCameraPos - (uModel * vec4(fPosition, 1.0)).xyz);
-		vec3 L = normalize(uLightDir);
+		vec3 L = normalize(uLightDir - (uModel * vec4(fPosition, 1.0)).xyz);
 		vec3 H = normalize(V + L);
 		vec3 R = reflect(-V, N);
 
-		float NdL = max(0.0, dot(N, L));
-
-		float NdH = max(0.0, dot(N, H));
-		
 		vec3 env = texture(uEnv, R).rgb;
-		vec3 albedo = (texture(uMap, fUv) * uColor).xyz;
+		vec3 albedo = (texture(uMap, fUv) * uColor).rgb;
+			
+		albedo.r = pow(albedo.r, 2.2);
+		albedo.g = pow(albedo.g, 2.2);
+		albedo.b = pow(albedo.b, 2.2);
 
-		vec3 ambient = albedo * 0.1;
-		vec3 diffuse = albedo * NdL;
+		vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
-		vec3 color = albedo + env * 0.2;
+        float NDF = DistributionGGX(N, H, roughness);        
+        float G   = GeometrySmith(N, V, L, roughness);      
+        vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0);       
+        
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;	  
+        
+        vec3 numerator    = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        vec3 specular     = numerator / max(denominator, 0.001);  
+            
+        // add to outgoing radiance Lo
+		vec3 radiance = vec3(23.0, 21.0, 20.0);
+        float NdotL = max(dot(N, L), 0.0);                
+        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
+	
+		vec3 ambient = vec3(0.03) * albedo;
 
-		oColor = vec4(ambient + color * NdL, 1.0);
+		vec3 fragment = color + ambient;		
+
+		fragment = fragment / (fragment + vec3(1.0));
+
+		oColor = vec4(fragment, 1.0);
+		//oColor = vec4(F, 1.0);
+	}
+
+	float DistributionGGX(vec3 N, vec3 H, float roughness)
+	{
+		float a      = roughness*roughness;
+		float a2     = a*a;
+		float NdotH  = max(dot(N, H), 0.0);
+		float NdotH2 = NdotH*NdotH;
+	
+		float num   = a2;
+		float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+		denom = PI * denom * denom;
+	
+		return num / denom;
+	}
+
+	float GeometrySchlickGGX(float NdotV, float roughness)
+	{
+		float r = (roughness + 1.0);
+		float k = (r*r) / 8.0;
+
+		float num   = NdotV;
+		float denom = NdotV * (1.0 - k) + k;
+	
+		return num / denom;
+	}
+	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+	{
+		float NdotV = max(dot(N, V), 0.0);
+		float NdotL = max(dot(N, L), 0.0);
+		float ggx2  = GeometrySchlickGGX(NdotV, roughness);
+		float ggx1  = GeometrySchlickGGX(NdotL, roughness);
+	
+		return ggx1 * ggx2;
 	}
 
 
 	vec3 fresnelSchlick(float cosTheta, vec3 F0)
 	{
-		return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+		return F0 + (1.0 - F0) * pow(1.0 - clamp(cosTheta, 0.0, 1.0), 5.0);
 	}  
 
 	
@@ -248,8 +313,6 @@ namespace bsf
 		glm::vec3 ground = { position.x, position.y, 0.0f };
 
 		normal = glm::normalize(ground - center);
-
-
 
 		return center + normal * (radius + offset);
 
@@ -410,6 +473,21 @@ namespace bsf
 			m_Bumper->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 		}
 
+		{
+			m_SphereMetallic = MakeRef<Texture2D>("assets/textures/sphere-metallic.png");
+			m_SphereMetallic->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			m_SphereMetallic->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+		}
+
+		{
+			m_SphereRoughness = MakeRef<Texture2D>("assets/textures/sphere-roughness.png");
+			m_SphereRoughness->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			m_SphereRoughness->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+		}
+
+		m_GroundMetallic = MakeRef<Texture2D>(0x11111111);
+		m_GroundRoughness = MakeRef<Texture2D>(0xeeeeeeee);
+
 		// SkyBox
 
 		m_SkyBox = CreateSkyBox();
@@ -492,11 +570,13 @@ namespace bsf
 		m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 
 		glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		glm::vec3 lightVector = { 0.0f, 1.0f, 0.0f };
+		glm::vec3 lightVector = { 0.0f, 10.0f, 0.0f };
 
 		// Draw ground
 		m_Map->Bind(0);
 		m_CubeMap->Bind(1);
+		m_GroundMetallic->Bind(2);
+		m_GroundRoughness->Bind(3);
 
 		m_Program->Use();
 
@@ -509,6 +589,8 @@ namespace bsf
 
 		m_Program->Uniform1i("uMap", { 0 });
 		m_Program->Uniform1i("uEnv", { 1 });
+		m_Program->Uniform1i("uMetallic", { 2 });
+		m_Program->Uniform1i("uRoughness", { 3 });
 
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Program->Uniform2f("uUvOffset", { (ix % 2) * 0.5f +  fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
@@ -526,6 +608,9 @@ namespace bsf
 		m_Sphere->Draw(GL_TRIANGLES);
 		m_Model.Pop();
 
+
+		m_SphereMetallic->Bind(2);
+		m_SphereRoughness->Bind(3);
 
 		// Draw spheres and rings
 		for (int32_t x = -10; x < 10; x++)

@@ -65,6 +65,12 @@ namespace bsf
 		{ TextureCubeFace::Bottom, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y  },
 	};
 
+	Texture2D::Texture2D(uint32_t color) : Texture2D(1, 1, &color)
+	{
+		Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
+		Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
+	}
+
 	Texture2D::Texture2D(uint32_t width, uint32_t height, const void* pixels)
 	{
 		uint32_t size = width * height;
