@@ -9,6 +9,12 @@ namespace bsf
 	{
 		m_Stack.push(glm::identity<glm::mat4>());
 	}
+	
+	MatrixStack::operator glm::mat4()
+	{
+		return m_Stack.top();
+	}
+
 	void MatrixStack::Push()
 	{
 		m_Stack.push(m_Stack.top());

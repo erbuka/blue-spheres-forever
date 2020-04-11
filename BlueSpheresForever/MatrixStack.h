@@ -11,6 +11,8 @@ namespace bsf
 
 		MatrixStack();
 
+		operator glm::mat4();
+
 		void Push();
 		void Pop();
 

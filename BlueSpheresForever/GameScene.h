@@ -35,8 +35,7 @@ namespace bsf
 		Ref<ShaderProgram> m_Program, m_SkyBoxProgram;
 		
 		Ref<TextureCube> m_CubeMap;
-		Ref<Texture2D> m_Map, m_White, m_Bumper, m_SphereMetallic, m_SphereRoughness,
-			m_GroundMetallic, m_GroundRoughness;
+		Ref<Texture2D> m_Map, m_GroundMetallic, m_GroundRoughness;
 		Ref<GameLogic> m_GameLogic;
 		
 		Stage m_Stage;

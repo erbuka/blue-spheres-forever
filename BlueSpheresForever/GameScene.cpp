@@ -5,6 +5,7 @@
 #include "Texture.h"
 #include "GameLogic.h"
 #include "Log.h"
+#include "Assets.h"
 
 #include <array>
 #include <vector>
@@ -422,9 +423,9 @@ namespace bsf
  
 	}
 
-
 	void GameScene::OnAttach(Application& app)
 	{
+
 		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
 
 		app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
@@ -460,31 +461,6 @@ namespace bsf
 			m_Map->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
 		}
 
-		{
-			int32_t white = 0xffffffff;
-			m_White = MakeRef<Texture2D>(1, 1, &white);
-			m_White->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
-			m_White->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
-		}
-
-		{
-			m_Bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
-			m_Bumper->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			m_Bumper->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-		}
-
-		{
-			m_SphereMetallic = MakeRef<Texture2D>("assets/textures/sphere-metallic.png");
-			m_SphereMetallic->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			m_SphereMetallic->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-		}
-
-		{
-			m_SphereRoughness = MakeRef<Texture2D>("assets/textures/sphere-roughness.png");
-			m_SphereRoughness->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			m_SphereRoughness->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-		}
-
 		m_GroundMetallic = MakeRef<Texture2D>(0x11111111);
 		m_GroundRoughness = MakeRef<Texture2D>(0xeeeeeeee);
 
@@ -515,6 +491,7 @@ namespace bsf
 	{
 		auto windowSize = app.GetWindowSize();
 		float aspect = windowSize.x / windowSize.y;
+		auto& assets = Assets::Get();
 
 
 		//glPolygonMode(GL_FRONT, GL_LINE);
@@ -603,14 +580,14 @@ namespace bsf
 		m_Model.Push();
 		m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
 		m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
-		m_White->Bind(0);
+		assets.GetTexture(AssetName::TexWhite)->Bind(0);
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Sphere->Draw(GL_TRIANGLES);
 		m_Model.Pop();
 
 
-		m_SphereMetallic->Bind(2);
-		m_SphereRoughness->Bind(3);
+		assets.GetTexture(AssetName::TexSphereMetallic)->Bind(2);
+		assets.GetTexture(AssetName::TexSphereRoughness)->Bind(3);
 
 		// Draw spheres and rings
 		for (int32_t x = -10; x < 10; x++)
@@ -630,22 +607,22 @@ namespace bsf
 					switch (val)
 					{
 					case EStageObject::RedSphere: 
-						m_White->Bind(0);
+						assets.GetTexture(AssetName::TexWhite)->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(red));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::BlueSphere:
-						m_White->Bind(0);
+						assets.GetTexture(AssetName::TexWhite)->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(blue));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::YellowSphere:
-						m_White->Bind(0);
+						assets.GetTexture(AssetName::TexWhite)->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::StarSphere:
-						m_Bumper->Bind(0);
+						assets.GetTexture(AssetName::TexBumper)->Bind(0);
 						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 						m_Sphere->Draw(GL_TRIANGLES);
 						break;

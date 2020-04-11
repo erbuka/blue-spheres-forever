@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Log.h"
 #include "Scene.h"
+#include "Assets.h"
 
 #include <chrono>
 
@@ -79,6 +80,7 @@ namespace bsf
     {
         m_CurrentScene = nullptr;
         m_NextScene = nullptr;
+        Assets::Get().Dispose();
         glfwTerminate();
     }
 
@@ -122,6 +124,9 @@ namespace bsf
         auto currTime = std::chrono::high_resolution_clock::now();
 
         m_CurrentScene = std::make_shared<Scene>();
+
+        // Load Assets 
+        Assets::Get().Load();
 
         while (!glfwWindowShouldClose(m_Window))
         {
