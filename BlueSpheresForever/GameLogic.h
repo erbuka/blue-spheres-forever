@@ -38,6 +38,7 @@ namespace bsf
 		float GetRotationAngle() const { return m_RotationAngle; }
 		float GetVelocity() const { return m_Velocity; }
 		void Advance(const Time& time);
+		bool IsRotating() const { return m_IsRotating; }
 
 		glm::vec2 WrapPosition(const glm::vec2& pos) const;
 

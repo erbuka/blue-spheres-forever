@@ -37,6 +37,7 @@ static const std::string s_SkyBoxVertex = R"Vertex(
 static const std::string s_SkyBoxFragment = R"Fragment(
 	#version 330 core
 	
+	uniform vec3 uOffset;
 	uniform mat4 uRotate;
 	uniform samplerCube uMap;
 	
@@ -44,7 +45,7 @@ static const std::string s_SkyBoxFragment = R"Fragment(
 	out vec4 oColor;	
 
 	void main() {	
-		oColor = texture(uMap,  fUv);
+		oColor = texture(uMap,  normalize(fUv) + normalize(uOffset));
 	}
 )Fragment";
 
@@ -525,13 +526,24 @@ namespace bsf
 		
 		// Draw Skybox
 		{
+			float u = pos.x / m_Stage.GetWidth() * 2.0f * glm::pi<float>();
+			float v = pos.y / m_Stage.GetHeight() * 2.0f * glm::pi<float>();
+
+			glm::vec3 ou = { std::cos(u), std::sin(u), 0.0f };
+			//glm::vec3 ou = { 0.0f, 0.0f, 0.0 };
+			glm::vec3 ov = { 0.0f, std::sin(-v), std::cos(-v) };
+			glm::vec3 offset = glm::normalize(ou + ov);
+
+			glm::mat4 rotY = glm::rotate(glm::identity<glm::mat4>(), -m_GameLogic->GetRotationAngle() - glm::pi<float>() / 2.0f, { 0.0f, 1.0f, 0.0f });
 
 			m_CubeMap->Bind(0);
 			glDepthMask(GL_FALSE);
 			m_View.Push();
-			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
+			m_View.Translate({ 0.0f, 0.0f, -5.0f });
+			m_View.Multiply(rotY);
 			m_SkyBoxProgram->Use();
 			m_SkyBoxProgram->Uniform1i("uMap", { 0 });
+			m_SkyBoxProgram->Uniform3fv("uOffset", 1, glm::value_ptr(offset));
 			m_SkyBoxProgram->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
 			m_SkyBoxProgram->UniformMatrix4f("uView", m_View.GetMatrix());
 			m_SkyBoxProgram->UniformMatrix4f("uModel", m_Model.GetMatrix());
@@ -572,7 +584,7 @@ namespace bsf
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Program->Uniform2f("uUvOffset", { (ix % 2) * 0.5f +  fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
 		
-		m_World->Draw(GL_TRIANGLES);
+		//m_World->Draw(GL_TRIANGLES);
 
 		m_Program->Uniform2f("uUvOffset", { 0, 0 });
 
