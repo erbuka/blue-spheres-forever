@@ -9,6 +9,19 @@ namespace bsf
 {
 	class Texture2D;
 
+	enum class ShaderType
+	{
+		Vertex,
+		Geometry,
+		Fragment
+	};
+
+	struct ShaderSource
+	{
+		ShaderType Type;
+		std::string Source;
+	};
+
 
 	#pragma region Events
 
@@ -107,7 +120,7 @@ namespace bsf
 	}
 
 
-	uint32_t LoadProgram(const std::string& vertexSource, const std::string& fragmentSource);
+	uint32_t LoadProgram(const std::initializer_list<ShaderSource>& shaderSources);
 
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
 

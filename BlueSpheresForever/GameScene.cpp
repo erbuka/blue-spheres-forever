@@ -29,15 +29,19 @@ static const std::string s_SkyVertex = R"Vertex(
 
 	const float PI = 3.141592;
 
-	in vec2 aUv;
-
+	layout(location = 0) in vec2 aUv;
+	layout(location = 1) in float aSize;
+	
+	flat out vec4 gPosition;
+	flat out float gSize;
+	
 	vec3 dome(in vec2 uv) {
 		uv = uv * 2.0 - 1.0;
 
 		float x = uv.x;
 		float y = uv.y;		
-		//float z = -(x*x + y*y) + 1.0;			
-		float z = sqrt(1.0 - x*x - y*y);
+		float z = -(x*x + y*y) + 1.0;			
+		//float z = sqrt(1.0 - x*x - y*y);
 		return vec3(x, y, z);
 			
 	}	
@@ -45,21 +49,58 @@ static const std::string s_SkyVertex = R"Vertex(
 	void main() {
 	
 		vec2 coords = fract(aUv + uOffset);
+		vec4 position = uProjection * uView * uModel * vec4(dome(coords), 1.0);
 		
-		vec3 position = dome(coords);
+		gPosition = position;
+		gSize = aSize;
 
-		gl_Position = uProjection * uView * uModel * vec4(position, 1.0);
+		gl_Position =  position;
 	}	
 
 )Vertex";
 
+static const std::string s_SkyGeometry = R"Geometry(
+	#version 330
+	
+	uniform vec2 uUnitSize;
+
+	layout(points) in;
+	layout(triangle_strip, max_vertices = 4) out;	
+
+	flat in vec4 gPosition[1];
+	flat in float gSize[1];		
+	
+	out vec2 fUv;
+
+	void main() {
+		vec4 position = gPosition[0] / gPosition[0].w;
+		float sx = uUnitSize.x * gSize[0] * 2.0f;
+		float sy = uUnitSize.y * gSize[0] * 2.0f;
+			
+
+		gl_Position = position + vec4(+sx, -sy, position.z, position.w); fUv = vec2(1.0f, 0.0f); EmitVertex();
+		gl_Position = position + vec4(+sx, +sy, position.z, position.w); fUv = vec2(1.0f, 1.0f); EmitVertex();
+		gl_Position = position + vec4(-sx, -sy, position.z, position.w); fUv = vec2(0.0f, 0.0f); EmitVertex();
+		gl_Position = position + vec4(-sx, +sy, position.z, position.w); fUv = vec2(0.0f, 1.0f); EmitVertex();
+		
+		
+		EndPrimitive();
+		
+	}
+
+)Geometry";
+
 static const std::string s_SkyFragment = R"Fragment(
 	#version 330 core
+	
+	uniform sampler2D uMap;
+
+	in vec2 fUv;
 
 	out vec4 oColor;
 
 	void main() {
-		oColor = vec4(1.0);
+		oColor = texture(uMap, fUv);
 	}
 
 
@@ -227,6 +268,7 @@ namespace bsf
 	struct StarVertex
 	{
 		glm::vec2 UV;
+		float Size;
 	};
 
 	static Ref<VertexArray> CreateSkyDome()
@@ -238,10 +280,12 @@ namespace bsf
 		for (uint32_t i = 0; i < starCount; i++)
 		{
 			stars[i].UV = { float(rand()) / RAND_MAX, float(rand()) / RAND_MAX };
+			stars[i].Size = (float(rand()) / RAND_MAX) < 0.1f ? 5.0f : 1.0f;
 		}
 
 		auto result = Ref<VertexArray>(new VertexArray({
-			{ "aUV", AttributeType::Float2 }	
+			{ "aUV", AttributeType::Float2 },
+			{ "aSize", AttributeType::Float }
 		}));
 
 		result->SetData(stars.data(), stars.size(), GL_STATIC_DRAW);
@@ -498,7 +542,7 @@ namespace bsf
 
 		m_Program = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
 
-		m_SkyProgram = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyFragment);
+		m_SkyProgram = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyGeometry, s_SkyFragment);
 
 		{
 			m_Map = CreateCheckerBoard({ 0xff0088ff, 0xff88ff00 });
@@ -557,6 +601,12 @@ namespace bsf
 		{
 			// It's going to be centered at the camera and drawn like a cubemap
 			// so we just disable depth write
+				
+			float unit = 1.0f / 200.0f;
+			float ratio = windowSize.x / windowSize.y;
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glDepthMask(GL_FALSE);
 
 			m_View.LoadIdentity();
@@ -567,14 +617,20 @@ namespace bsf
 			float u = 1.0f - pos.x / m_Stage.GetWidth();
 			float v = 1.0f - pos.y / m_Stage.GetHeight();
 
+			assets.GetTexture(AssetName::TexStar)->Bind(0);
+
 			m_SkyProgram->Use();
 			m_SkyProgram->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
 			m_SkyProgram->UniformMatrix4f("uView", m_View.GetMatrix());
 			m_SkyProgram->UniformMatrix4f("uModel", m_Model.GetMatrix());
+			m_SkyProgram->Uniform1i("uMap", { 0 });
 			m_SkyProgram->Uniform2f("uOffset", { u, v });
+			m_SkyProgram->Uniform2f("uUnitSize", { unit, ratio * unit });
 			m_Sky->Draw(GL_POINTS);
 
 			glDepthMask(GL_TRUE);
+			glDisable(GL_BLEND);
+
 		}
 
 

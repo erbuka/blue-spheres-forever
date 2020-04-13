@@ -19,8 +19,21 @@ namespace bsf
 
 	ShaderProgram::ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource)
 	{
-		m_Id = LoadProgram(vertexSource, fragmentSource);
+		m_Id = LoadProgram({
+			{ ShaderType::Vertex, vertexSource },
+			{ ShaderType::Fragment, fragmentSource }
+		});
 	}
+
+	ShaderProgram::ShaderProgram(const std::string& vertexSource, const std::string& geometrySource, const std::string& fragmentSource)
+	{
+		m_Id = LoadProgram({
+			{ ShaderType::Vertex, vertexSource },
+			{ ShaderType::Geometry, geometrySource },
+			{ ShaderType::Fragment, fragmentSource }
+		});
+	}
+
 	ShaderProgram::~ShaderProgram()
 	{
 		BSF_GLCALL(glDeleteProgram(m_Id));

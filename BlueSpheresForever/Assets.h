@@ -16,7 +16,8 @@ namespace bsf
 		TexNormalPosZ,
 		TexBumper,
 		TexSphereMetallic,
-		TexSphereRoughness
+		TexSphereRoughness,
+		TexStar
 	};
 
 

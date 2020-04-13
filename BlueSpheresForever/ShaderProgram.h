@@ -21,6 +21,7 @@ namespace bsf
 	public:
 
 		ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource);
+		ShaderProgram(const std::string& vertexSource, const std::string& geometrySource, const std::string& fragmentSource);
 		~ShaderProgram();
 
 		int32_t GetUniformLocation(const std::string& name);

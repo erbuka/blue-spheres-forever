@@ -2,19 +2,29 @@
 #include "Log.h"
 #include "Texture.h";
 
+#include <unordered_map>
+#include <initializer_list>
+
 #include <glad/glad.h>
 
 namespace bsf
 {
 
-	uint32_t LoadShader(const std::string& shaderSource, GLenum type)
+	static std::unordered_map<ShaderType, GLenum> s_glShaderType = {
+		{ ShaderType::Vertex, GL_VERTEX_SHADER },
+		{ ShaderType::Geometry, GL_GEOMETRY_SHADER },
+		{ ShaderType::Fragment, GL_FRAGMENT_SHADER }
+	};
+
+
+	uint32_t LoadShader(const ShaderSource& shaderSource)
 	{
 		// Create an empty vertex shader handle
-		GLuint shader = glCreateShader(type);
+		GLuint shader = glCreateShader(s_glShaderType[shaderSource.Type]);
 
 		// Send the vertex shader source code to GL
 		// Note that std::string's .c_str is NULL character terminated.
-		const GLchar* source = (const GLchar*)shaderSource.c_str();
+		const GLchar* source = (const GLchar*)shaderSource.Source.c_str();
 		glShaderSource(shader, 1, &source, 0);
 
 		// Compile the vertex shader
@@ -44,7 +54,7 @@ namespace bsf
 		return shader;
 	}
 
-	uint32_t LoadProgram(const std::string& vertexSource, const std::string& fragmentSource)
+	uint32_t LoadProgram(const std::initializer_list<ShaderSource>& shaderSources)
 	{
 
 
@@ -52,13 +62,15 @@ namespace bsf
 		// Now time to link them together into a program.
 		// Get a program object.
 		GLuint program = glCreateProgram();
-
-		GLuint vertexShader = LoadShader(vertexSource, GL_VERTEX_SHADER);
-		GLuint fragmentShader = LoadShader(fragmentSource, GL_FRAGMENT_SHADER);
-
-		// Attach our shaders to our program
-		glAttachShader(program, vertexShader);
-		glAttachShader(program, fragmentShader);
+		
+		std::vector<uint32_t> shaders(shaderSources.size());
+		
+		uint32_t i = 0;
+		for (auto src = shaderSources.begin(); src != shaderSources.end(); ++src, ++i)
+			shaders[i] = LoadShader(*src);
+		
+		for(uint32_t s: shaders)
+			glAttachShader(program, s);
 
 		// Link our program
 		glLinkProgram(program);
@@ -75,10 +87,9 @@ namespace bsf
 			std::vector<GLchar> infoLog(maxLength);
 			glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
 
-			// We don't need the shader anymore.
-			glDeleteShader(fragmentShader);
-			// Either of them. Don't leak shaders.
-			glDeleteShader(vertexShader);
+
+			for (uint32_t s : shaders)
+				glDetachShader(program, s);
 
 			// Use the infoLog as you see fit.
 			BSF_ERROR("There were some errors while linking the program: {0}", infoLog.data());
@@ -88,8 +99,8 @@ namespace bsf
 		}
 
 		// Always detach shaders after a successful link.
-		glDetachShader(program, vertexShader);
-		glDetachShader(program, fragmentShader);
+		for (uint32_t s : shaders)
+			glDetachShader(program, s);
 
 		return program;
 	}

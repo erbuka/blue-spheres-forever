@@ -51,6 +51,15 @@ namespace bsf
 			m_Textures[AssetName::TexSphereRoughness] = sphereRoughness;
 		}
 
+		{
+			auto star = MakeRef<Texture2D>("assets/textures/star.png");
+			star->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			star->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_Textures[AssetName::TexStar] = star;
+		}
+
+
+
 	}
 
 	void Assets::Dispose()
