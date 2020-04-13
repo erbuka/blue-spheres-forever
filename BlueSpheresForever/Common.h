@@ -109,7 +109,7 @@ namespace bsf
 
 	uint32_t LoadProgram(const std::string& vertexSource, const std::string& fragmentSource);
 
-	Ref<Texture2D> CreateCheckerBoard(std::array<uint32_t, 2> colors);
+	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
 
 	#pragma endregion
 

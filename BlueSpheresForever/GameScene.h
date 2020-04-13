@@ -31,10 +31,9 @@ namespace bsf
 		std::vector<Unsubscribe> m_Subscriptions;
 		MatrixStack m_Model, m_View, m_Projection;
 
-		Ref<VertexArray> m_World, m_Sphere, m_SkyBox;
-		Ref<ShaderProgram> m_Program, m_SkyBoxProgram;
+		Ref<VertexArray> m_World, m_Sphere, m_Sky;
+		Ref<ShaderProgram> m_Program, m_SkyProgram;
 		
-		Ref<TextureCube> m_CubeMap;
 		Ref<Texture2D> m_Map, m_GroundMetallic, m_GroundRoughness;
 		Ref<GameLogic> m_GameLogic;
 		

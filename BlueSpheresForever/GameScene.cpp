@@ -17,36 +17,52 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-static const std::string s_SkyBoxVertex = R"Vertex(
+
+static const std::string s_SkyVertex = R"Vertex(
 	#version 330 core
-	
+
 	uniform mat4 uProjection;
-	uniform mat4 uModel;
 	uniform mat4 uView;
+	uniform mat4 uModel;
 
-	layout(location = 0) in vec3 aPosition;
+	uniform vec2 uOffset;
 
-	out vec3 fUv;
-	
-	void main() {
-		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-		fUv = aPosition;
+	const float PI = 3.141592;
+
+	in vec2 aUv;
+
+	vec3 dome(in vec2 uv) {
+		uv = uv * 2.0 - 1.0;
+
+		float x = uv.x;
+		float y = uv.y;		
+		//float z = -(x*x + y*y) + 1.0;			
+		float z = sqrt(1.0 - x*x - y*y);
+		return vec3(x, y, z);
+			
 	}	
+
+	void main() {
+	
+		vec2 coords = fract(aUv + uOffset);
+		
+		vec3 position = dome(coords);
+
+		gl_Position = uProjection * uView * uModel * vec4(position, 1.0);
+	}	
+
 )Vertex";
 
-static const std::string s_SkyBoxFragment = R"Fragment(
+static const std::string s_SkyFragment = R"Fragment(
 	#version 330 core
-	
-	uniform vec3 uOffset;
-	uniform mat4 uRotate;
-	uniform samplerCube uMap;
-	
-	in vec3 fUv;
-	out vec4 oColor;	
 
-	void main() {	
-		oColor = texture(uMap,  normalize(fUv) + normalize(uOffset));
+	out vec4 oColor;
+
+	void main() {
+		oColor = vec4(1.0);
 	}
+
+
 )Fragment";
 
 static const std::string s_Vertex = R"Vertex(
@@ -90,7 +106,6 @@ static const std::string s_Fragment = R"Fragment(
 	uniform vec3 uCameraPos;
 	uniform vec3 uLightDir;
 
-	uniform samplerCube uEnv;
 	uniform sampler2D uMap;
 	uniform sampler2D uMetallic;
 	uniform sampler2D uRoughness;
@@ -120,7 +135,6 @@ static const std::string s_Fragment = R"Fragment(
 		vec3 H = normalize(V + L);
 		vec3 R = reflect(-V, N);
 
-		vec3 env = texture(uEnv, R).rgb;
 		vec3 albedo = (texture(uMap, fUv) * uColor).rgb;
 			
 		albedo.r = pow(albedo.r, 2.2);
@@ -180,6 +194,7 @@ static const std::string s_Fragment = R"Fragment(
 	
 		return num / denom;
 	}
+
 	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	{
 		float NdotV = max(dot(N, V), 0.0);
@@ -209,6 +224,32 @@ namespace bsf
 		glm::vec2 UV;
 	};
 
+	struct StarVertex
+	{
+		glm::vec2 UV;
+	};
+
+	static Ref<VertexArray> CreateSkyDome()
+	{
+		uint32_t starCount = 1000;
+		
+		std::vector<StarVertex> stars(1000);
+
+		for (uint32_t i = 0; i < starCount; i++)
+		{
+			stars[i].UV = { float(rand()) / RAND_MAX, float(rand()) / RAND_MAX };
+		}
+
+		auto result = Ref<VertexArray>(new VertexArray({
+			{ "aUV", AttributeType::Float2 }	
+		}));
+
+		result->SetData(stars.data(), stars.size(), GL_STATIC_DRAW);
+
+		return result;
+
+		
+	}
 
 	static Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion)
 	{
@@ -453,8 +494,11 @@ namespace bsf
 
 		m_World = CreateWorld(-5, 5, -5, 5, 10);
 		m_Sphere = CreateIcosphere(0.15, 3);
+		m_Sky = CreateSkyDome();
 
 		m_Program = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
+
+		m_SkyProgram = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyFragment);
 
 		{
 			m_Map = CreateCheckerBoard({ 0xff0088ff, 0xff88ff00 });
@@ -464,26 +508,6 @@ namespace bsf
 
 		m_GroundMetallic = MakeRef<Texture2D>(0x11111111);
 		m_GroundRoughness = MakeRef<Texture2D>(0xeeeeeeee);
-
-		// SkyBox
-
-		m_SkyBox = CreateSkyBox();
-
-		{
-			
-			m_CubeMap = MakeRef<TextureCube>(
-				"assets/textures/front.png",
-				"assets/textures/back.png",
-				"assets/textures/left.png",
-				"assets/textures/right.png",
-				"assets/textures/bottom.png",
-				"assets/textures/top.png");
-			m_CubeMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-			m_CubeMap->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
-
-		}
-
-		m_SkyBoxProgram = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
 
 
 	}
@@ -506,10 +530,11 @@ namespace bsf
 		for (int i = 0; i < steps; i++)
 			m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
 
+		glPointSize(4);
 		glEnable(GL_FRAMEBUFFER_SRGB);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
-		//glCullFace(GL_BACK);
+		glCullFace(GL_BACK);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -517,45 +542,48 @@ namespace bsf
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
 		glm::vec3 normal;
-		
+
 		m_Projection.LoadIdentity();
 		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
 
 		m_Model.LoadIdentity();
 		m_View.LoadIdentity();
-		
-		// Draw Skybox
+
+
+
+
+		// Draw sky
+
 		{
-			float u = pos.x / m_Stage.GetWidth() * 2.0f * glm::pi<float>();
-			float v = pos.y / m_Stage.GetHeight() * 2.0f * glm::pi<float>();
-
-			glm::vec3 ou = { std::cos(u), std::sin(u), 0.0f };
-			//glm::vec3 ou = { 0.0f, 0.0f, 0.0 };
-			glm::vec3 ov = { 0.0f, std::sin(-v), std::cos(-v) };
-			glm::vec3 offset = glm::normalize(ou + ov);
-
-			glm::mat4 rotY = glm::rotate(glm::identity<glm::mat4>(), -m_GameLogic->GetRotationAngle() - glm::pi<float>() / 2.0f, { 0.0f, 1.0f, 0.0f });
-
-			m_CubeMap->Bind(0);
+			// It's going to be centered at the camera and drawn like a cubemap
+			// so we just disable depth write
 			glDepthMask(GL_FALSE);
-			m_View.Push();
-			m_View.Translate({ 0.0f, 0.0f, -5.0f });
-			m_View.Multiply(rotY);
-			m_SkyBoxProgram->Use();
-			m_SkyBoxProgram->Uniform1i("uMap", { 0 });
-			m_SkyBoxProgram->Uniform3fv("uOffset", 1, glm::value_ptr(offset));
-			m_SkyBoxProgram->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-			m_SkyBoxProgram->UniformMatrix4f("uView", m_View.GetMatrix());
-			m_SkyBoxProgram->UniformMatrix4f("uModel", m_Model.GetMatrix());
-			m_SkyBox->Draw(GL_TRIANGLES);
-			m_View.Pop();
+
+			m_View.LoadIdentity();
+			m_Model.LoadIdentity();
+			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
+			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
+
+			float u = 1.0f - pos.x / m_Stage.GetWidth();
+			float v = 1.0f - pos.y / m_Stage.GetHeight();
+
+			m_SkyProgram->Use();
+			m_SkyProgram->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+			m_SkyProgram->UniformMatrix4f("uView", m_View.GetMatrix());
+			m_SkyProgram->UniformMatrix4f("uModel", m_Model.GetMatrix());
+			m_SkyProgram->Uniform2f("uOffset", { u, v });
+			m_Sky->Draw(GL_POINTS);
+
 			glDepthMask(GL_TRUE);
 		}
 
+
 		// Setup the player view
+
+		m_View.LoadIdentity();
+		m_Model.LoadIdentity();
 		m_View.LookAt({ -3.0f, 2.0f, 0.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
 		m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
-
 		m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 
 		glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -563,9 +591,8 @@ namespace bsf
 
 		// Draw ground
 		m_Map->Bind(0);
-		m_CubeMap->Bind(1);
-		m_GroundMetallic->Bind(2);
-		m_GroundRoughness->Bind(3);
+		m_GroundMetallic->Bind(1);
+		m_GroundRoughness->Bind(2);
 
 		m_Program->Use();
 
@@ -577,14 +604,13 @@ namespace bsf
 		m_Program->Uniform3fv("uLightDir", 1, glm::value_ptr(lightVector));
 
 		m_Program->Uniform1i("uMap", { 0 });
-		m_Program->Uniform1i("uEnv", { 1 });
-		m_Program->Uniform1i("uMetallic", { 2 });
-		m_Program->Uniform1i("uRoughness", { 3 });
+		m_Program->Uniform1i("uMetallic", { 1 });
+		m_Program->Uniform1i("uRoughness", { 2 });
 
 		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
 		m_Program->Uniform2f("uUvOffset", { (ix % 2) * 0.5f +  fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
 		
-		//m_World->Draw(GL_TRIANGLES);
+		m_World->Draw(GL_TRIANGLES);
 
 		m_Program->Uniform2f("uUvOffset", { 0, 0 });
 
@@ -598,8 +624,8 @@ namespace bsf
 		m_Model.Pop();
 
 
-		assets.GetTexture(AssetName::TexSphereMetallic)->Bind(2);
-		assets.GetTexture(AssetName::TexSphereRoughness)->Bind(3);
+		assets.GetTexture(AssetName::TexSphereMetallic)->Bind(1);
+		assets.GetTexture(AssetName::TexSphereRoughness)->Bind(2);
 
 		// Draw spheres and rings
 		for (int32_t x = -10; x < 10; x++)

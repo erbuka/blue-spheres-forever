@@ -10,14 +10,13 @@
 #include <numeric>
 #include <iostream>
 
-
 namespace bsf
 {
 
 	// Game velocity defaults
 	static constexpr float s_BaseVelocity = 3.5f;
 	static constexpr float s_MaxVelocoty = 5.5f;
-	static constexpr float s_AngularVelocity = glm::pi<float>() * 2.0f;
+	static constexpr float s_AngularVelocity = glm::pi<float>();
 
 	// Jump
 	static constexpr float s_JumpDistance = 2.0f;
@@ -53,10 +52,7 @@ namespace bsf
 	};
 
 
-#pragma region Transform Rings Algorithm
-
-
-
+	#pragma region Transform Rings Algorithm
 
 
 
@@ -349,7 +345,7 @@ namespace bsf
 	};
 
 
-#pragma endregion
+	#pragma endregion
 
 
 
@@ -497,7 +493,7 @@ namespace bsf
 				// If we crossed and edge and there's a rotation request,
 				// we want snap to the edge and rotate in place.
 				// Must be on the ground to rotate, and can't rotate in the
-				// same spot more than one
+				// same spot more than once
 				if (crossed && m_LastBounceDistance == 1.0f && !m_IsJumping && PullRotateCommand())
 				{
 					m_Position = glm::round(m_Position);
