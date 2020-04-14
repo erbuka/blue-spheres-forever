@@ -31,7 +31,7 @@ namespace bsf
 		m_Textures[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(0xffff0000));
 
 		{
-			auto bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
+			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
 			bumper->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
 			bumper->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 			m_Textures[AssetName::TexBumper] = bumper;

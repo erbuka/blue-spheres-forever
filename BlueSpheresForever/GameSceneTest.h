@@ -17,7 +17,7 @@ namespace bsf
 		void OnRender(Application& app, const Time& time) override;
 		void OnDetach(Application& app) override;
 	private:
-		Stage m_Stage;
+		Ref<Stage> m_Stage;
 		Ref<GameLogic> m_GameLogic;
 		Ref<Renderer2D> m_Renderer2D;
 	};

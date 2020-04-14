@@ -9,6 +9,7 @@
 
 #include <array>
 #include <vector>
+#include <filesystem>
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -299,10 +300,6 @@ namespace bsf
 	{
 		const float t = (1.0f + glm::sqrt(5.0f)) / 2.0f;
 
-		auto mid = [](const glm::vec3& a, const glm::vec3& b)
-		{	
-			return ;
-		};
 
 		auto subdivide = [](const std::vector<glm::vec3>& v)
 		{
@@ -509,6 +506,11 @@ namespace bsf
  
 	}
 
+	GameScene::GameScene(const Ref<Stage>& stage) :
+		m_Stage(stage)
+	{
+	}
+
 	void GameScene::OnAttach(Application& app)
 	{
 
@@ -533,8 +535,7 @@ namespace bsf
 			}
 		});
 
-		m_Stage = Stage::FromFile("assets/data/playground.bss");
-		m_GameLogic = MakeRef<GameLogic>(m_Stage);
+		m_GameLogic = MakeRef<GameLogic>(*m_Stage);
 
 		m_World = CreateWorld(-5, 5, -5, 5, 10);
 		m_Sphere = CreateIcosphere(0.15, 3);
@@ -545,13 +546,21 @@ namespace bsf
 		m_SkyProgram = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyGeometry, s_SkyFragment);
 
 		{
-			m_Map = CreateCheckerBoard({ 0xff0088ff, 0xff88ff00 });
+			if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
+			{
+				m_Map = CreateCheckerBoard({ ToHexColor(m_Stage->CheckerColors[0]), ToHexColor(m_Stage->CheckerColors[1]) });
+			}
+			else
+			{
+				m_Map = Ref<Texture2D>(new Texture2D((std::filesystem::path("assets/textures") / m_Stage->Texture).string()));
+			} 
+
 			m_Map->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
 			m_Map->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
 		}
 
 		m_GroundMetallic = MakeRef<Texture2D>(0x11111111);
-		m_GroundRoughness = MakeRef<Texture2D>(0xeeeeeeee);
+		m_GroundRoughness = MakeRef<Texture2D>(0xaaaaaaaa);
 
 
 	}
@@ -614,8 +623,8 @@ namespace bsf
 			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 
-			float u = 1.0f - pos.x / m_Stage.GetWidth();
-			float v = 1.0f - pos.y / m_Stage.GetHeight();
+			float u = 1.0f - pos.x / m_Stage->GetWidth();
+			float v = 1.0f - pos.y / m_Stage->GetHeight();
 
 			assets.GetTexture(AssetName::TexStar)->Bind(0);
 
@@ -688,7 +697,7 @@ namespace bsf
 		{
 			for (int32_t y = -10; y < 10; y++)
 			{
-				auto val = m_Stage.GetValueAt(x + ix, y + iy);
+				auto val = m_Stage->GetValueAt(x + ix, y + iy);
 
 				if (val != EStageObject::None)
 				{

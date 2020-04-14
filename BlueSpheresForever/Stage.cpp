@@ -6,10 +6,8 @@
 
 namespace bsf
 {
-	Stage Stage::FromFile(const std::string& filename)
+	bool Stage::FromFile(const std::string& filename)
 	{
-		Stage result;
-
 		std::ifstream is;
 
 		is.open(filename, std::ios_base::binary);
@@ -17,44 +15,42 @@ namespace bsf
 		if (!is.good())
 		{
 			BSF_ERROR("Bad file: {0}", filename);
-			return std::move(result);
+			return false;
 		}
 
-		Read(is, result.Version); // uint32
+		Read(is, Version); // uint32
 
 		Read<uint32_t>(is); // Width
 		Read<uint32_t>(is); // Height
 
-		Read(is, result.FloorRenderingMode); // uint8;
-		Read(is, result.BumpMappingEnabled); // uint8;
+		Read(is, FloorRenderingMode); // uint8;
+		Read(is, BumpMappingEnabled); // uint8;
 
 		uint32_t texStrSize = Read<uint32_t>(is);
 		uint32_t bumpStrSize = Read<uint32_t>(is);
 	
 		if (texStrSize > 0)
-			result.Texture = std::string(Read<char>(is, texStrSize).data(), texStrSize);
+			Texture = std::string(Read<char>(is, texStrSize).data(), texStrSize);
 
 		if (bumpStrSize > 0)
-			result.NormalMap = std::string(Read<char>(is, bumpStrSize).data(), bumpStrSize);
+			NormalMap = std::string(Read<char>(is, bumpStrSize).data(), bumpStrSize);
 
 
-		Read(is, result.StartPoint); // ivec2
-		Read(is, result.StartDirection); // ivec2
-		Read(is, result.EmeraldColor); // vec3
+		Read(is, StartPoint); // ivec2
+		Read(is, StartDirection); // ivec2
+		Read(is, EmeraldColor); // vec3
 
-		Read(is, result.CheckerColors); // 2 * vec3
-		Read(is, result.SkyColors); // 2 * vec3
-		Read(is, result.StarColors); // 2 * vec3
+		Read(is, CheckerColors); // 2 * vec3
+		Read(is, SkyColors); // 2 * vec3
+		Read(is, StarColors); // 2 * vec3
 
-		Read(is, result.MaxRings); // uint32
+		Read(is, MaxRings); // uint32
 
-		Read(is, result.m_Data); // 1024 bytes
-		Read(is, result.m_AvoidSearch); // 1024 bytes;
+		Read(is, m_Data); // 1024 bytes
+		Read(is, m_AvoidSearch); // 1024 bytes;
 
 		is.close();
 
-
-		return result;
 	}
 
 	Stage::Stage()

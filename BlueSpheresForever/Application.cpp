@@ -44,7 +44,7 @@ namespace bsf
         switch (button)
         {
         case GLFW_MOUSE_BUTTON_1: appButton = MouseButton::Left; break;
-        case GLFW_MOUSE_BUTTON_2: appButton = MouseButton::Left; break;
+        case GLFW_MOUSE_BUTTON_2: appButton = MouseButton::Right; break;
         }
 
         if (action == GLFW_PRESS)

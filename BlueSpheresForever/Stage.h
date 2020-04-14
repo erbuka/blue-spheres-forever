@@ -49,7 +49,7 @@ namespace bsf
 		glm::vec3 EmeraldColor;
 		std::array<glm::vec3, 2> CheckerColors, SkyColors, StarColors;
 
-		static Stage FromFile(const std::string& filename);
+		bool FromFile(const std::string& filename);
 
 		Stage();
 		

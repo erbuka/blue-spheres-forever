@@ -105,6 +105,21 @@ namespace bsf
 		return program;
 	}
 
+	uint32_t ToHexColor(const glm::vec3& rgb)
+	{
+		return ToHexColor({ rgb, 1.0f });
+	}
+
+	uint32_t ToHexColor(const glm::vec4& rgba)
+	{
+		uint8_t r = uint8_t(rgba.r * 255.0f);
+		uint8_t g = uint8_t(rgba.g * 255.0f);
+		uint8_t b = uint8_t(rgba.b * 255.0f);
+		uint8_t a = uint8_t(rgba.a * 255.0f);
+
+		return  (a << 24) | (b << 16) | (g << 8) | (r << 0);
+	}
+
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors)
 	{
 		std::array<uint32_t, 4> data = {

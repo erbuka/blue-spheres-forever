@@ -17,8 +17,9 @@ namespace bsf
 
 		m_Renderer2D = MakeRef<Renderer2D>();
 
-		m_Stage = Stage::FromFile("assets/data/playground.bss");
-		m_GameLogic = MakeRef<GameLogic>(m_Stage);
+		m_Stage = MakeRef<Stage>();
+		m_Stage->FromFile("assets/data/playground.bss");
+		m_GameLogic = MakeRef<GameLogic>(*m_Stage);
 
 		app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
 			if (evt.KeyCode == GLFW_KEY_LEFT) 
@@ -72,7 +73,7 @@ namespace bsf
 		{
 			for (int32_t y = -10; y < 10; y++)
 			{
-				auto val = m_Stage.GetValueAt(x + ix, y + iy);
+				auto val = m_Stage->GetValueAt(x + ix, y + iy);
 
 				if (val != EStageObject::None)
 				{

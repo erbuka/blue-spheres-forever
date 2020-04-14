@@ -122,6 +122,9 @@ namespace bsf
 
 	uint32_t LoadProgram(const std::initializer_list<ShaderSource>& shaderSources);
 
+	uint32_t ToHexColor(const glm::vec3& rgb);
+	uint32_t ToHexColor(const glm::vec4& rgb);
+
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
 
 	#pragma endregion

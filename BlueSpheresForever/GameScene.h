@@ -20,6 +20,9 @@ namespace bsf
 	class GameScene : public Scene
 	{
 	public:
+			
+		GameScene(const Ref<Stage>& stage);
+
 		void OnAttach(Application& app) override;
 		void OnRender(Application& app, const Time& time) override;
 		void OnDetach(Application& app) override;
@@ -37,7 +40,7 @@ namespace bsf
 		Ref<Texture2D> m_Map, m_GroundMetallic, m_GroundRoughness;
 		Ref<GameLogic> m_GameLogic;
 		
-		Stage m_Stage;
+		Ref<Stage> m_Stage;
 
 	};
 }
