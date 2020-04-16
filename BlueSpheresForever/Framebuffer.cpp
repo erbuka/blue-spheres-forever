@@ -89,7 +89,27 @@ namespace bsf
 
 	void Framebuffer::Bind()
 	{
+		static std::array<uint32_t, 16>  s_ColorAttachments = {
+			GL_COLOR_ATTACHMENT0,
+			GL_COLOR_ATTACHMENT1,
+			GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3,
+			GL_COLOR_ATTACHMENT4,
+			GL_COLOR_ATTACHMENT5,
+			GL_COLOR_ATTACHMENT6,
+			GL_COLOR_ATTACHMENT7,
+			GL_COLOR_ATTACHMENT8,
+			GL_COLOR_ATTACHMENT9,
+			GL_COLOR_ATTACHMENT10,
+			GL_COLOR_ATTACHMENT11,
+			GL_COLOR_ATTACHMENT12,
+			GL_COLOR_ATTACHMENT13,
+			GL_COLOR_ATTACHMENT14,
+			GL_COLOR_ATTACHMENT15
+		};
+
 		BSF_GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, m_Id));
+		BSF_GLCALL(glDrawBuffers(m_ColorAttachments.size(), s_ColorAttachments.data()));
 	}
 
 	void Framebuffer::Unbind()
