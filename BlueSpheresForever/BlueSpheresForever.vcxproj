@@ -101,6 +101,7 @@
     <ClInclude Include="Assets.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="EventEmitter.h" />
+    <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="GameLogic.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="GameSceneTest.h" />
@@ -119,6 +120,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Assets.cpp" />
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GameSceneTest.cpp" />

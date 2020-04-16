@@ -111,6 +111,7 @@ namespace bsf
 
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+
         // Setup GLFW callbacks
         glfwSetWindowUserPointer(m_Window, this);
 

@@ -3,6 +3,8 @@
 #include "Renderer2D.h"
 #include "Log.h"
 #include "GameLogic.h"
+#include "Assets.h"
+#include "Texture.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -44,7 +46,7 @@ namespace bsf
 
 	void GameSceneTest::OnRender(Application& app, const Time& time)
 	{
-		
+		auto& assets = Assets::Get();
 		auto size = app.GetWindowSize();
 		
 		float height = 32.0f;
@@ -53,7 +55,7 @@ namespace bsf
 		glViewport(0, 0, size.x, size.y);
 
 		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		auto pos = m_GameLogic->GetPosition();
 
@@ -64,6 +66,7 @@ namespace bsf
 
 		m_Renderer2D->Begin(glm::ortho(-width / 2.0f, width / 2.0f, -height / 2.0f, height / 2.0f, -1.0f, 1.0f));
 		m_Renderer2D->Rotate(m_GameLogic->GetRotationAngle());
+
 
 
 		int32_t ix = pos.x, iy = pos.y;
@@ -88,7 +91,6 @@ namespace bsf
 
 					m_Renderer2D->Push();
 					m_Renderer2D->Translate({ x - fx, y - fy });
-					//s_Renderer2D.Scale({ 0.5f, 0.5f });
 					m_Renderer2D->DrawQuad({ 0, 0 });
 					m_Renderer2D->Pop();
 				}
@@ -98,6 +100,7 @@ namespace bsf
 
 
 		m_Renderer2D->Push();
+		m_Renderer2D->Texture(std::dynamic_pointer_cast<Texture2D>(assets.GetTexture(AssetName::TexBumper)));
 		m_Renderer2D->Color({ 1.0f, 0.0f, 1.0f, 1.0f });
 		m_Renderer2D->Translate({ 0, 0 });
 		m_Renderer2D->Scale({ 1.0f + m_GameLogic->GetHeight(),  1.0f + m_GameLogic->GetHeight() });

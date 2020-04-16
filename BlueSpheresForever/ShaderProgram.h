@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Common.h"
+
 #include <glm/glm.hpp>
 
 #include <string>
@@ -14,7 +16,7 @@
 
 namespace bsf
 {
-
+	class Texture;
 
 	class ShaderProgram
 	{
@@ -29,9 +31,22 @@ namespace bsf
 		void UniformMatrix4f(const std::string& name, const glm::mat4& matrix);
 
 		void Use();
+
+		template<typename T>
+		void UniformTexture(const std::string name, const Ref<T>& texture, uint32_t textureUnit)
+		{
+			static_assert(std::is_base_of_v<Texture, T>);
+			Uniform1i(name, { (int32_t)textureUnit });
+			texture->Bind(textureUnit);
+		}
+
+		uint32_t GetId() { return m_Id; }
 		
 		UNIFORM1_INL(i, int32_t, 1);
 		UNIFORM_DECL(i, int32_t, 1);
+
+		UNIFORM1_INL(ui, uint32_t, 1);
+		UNIFORM_DECL(ui, uint32_t, 1);
 
 		UNIFORM1_INL(f, float, 1);
 		UNIFORM1_INL(f, float, 2);

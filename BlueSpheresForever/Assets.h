@@ -32,7 +32,7 @@ namespace bsf
 		void Load();
 		void Dispose();
 			
-		Ref<Texture>& GetTexture(AssetName n);
+		const Ref<Texture>& GetTexture(AssetName n);
 
 		~Assets();
 	private:

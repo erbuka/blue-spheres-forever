@@ -15,6 +15,7 @@ namespace bsf
 
 		void Push();
 		void Pop();
+		void Reset();
 
 		void LoadIdentity();
 		void Translate(const glm::vec3& translate);

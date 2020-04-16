@@ -2,6 +2,7 @@
 #include "VertexArray.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
+#include "Assets.h"
 #include "Log.h"
 
 #include <glad/glad.h>
@@ -9,6 +10,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <vector>
+#include <numeric>
+
 
 static constexpr uint32_t s_MaxTriangleVertices = 30000;
 static constexpr uint32_t s_MaxTextureUnits = 32;
@@ -17,7 +20,7 @@ static constexpr uint32_t s_MaxTextureUnits = 32;
 
 static const std::string s_VertexSource = R"VERTEX(
 
-	#version 330
+	#version 330 core
 
 	uniform mat4 uProjection;
 
@@ -41,7 +44,7 @@ static const std::string s_VertexSource = R"VERTEX(
 
 static const std::string s_FragmentSource = R"FRAGMENT(
 	
-	#version 330
+	#version 330 core
 
 	uniform sampler2D uTextures[32];
 
@@ -52,7 +55,8 @@ static const std::string s_FragmentSource = R"FRAGMENT(
 	out vec4 oColor;
 
 	void main() {
-		oColor = fColor * texture(uTextures[fTexture], fUv);	
+		oColor = fColor * texture(uTextures[fTexture], fUv);
+		//oColor = vec4(fUv, 0.0, 1.0);
 	}	
 
 )FRAGMENT";
@@ -78,17 +82,13 @@ namespace bsf
 	{
 
 		// Init Vertex Arrays
-
-		m_TriangleVertices = new Vertex[s_MaxTriangleVertices];
-
-		
-
+		m_TriangleVertices = new Vertex2D[s_MaxTriangleVertices];
 
 		m_Triangles = Ref<VertexArray>(new VertexArray({
 			{ "aPosition", AttributeType::Float2  },
 			{ "aUv", AttributeType::Float2  },
 			{ "aColor", AttributeType::Float4  },
-			{ "aTexture", AttributeType::Int  },
+			{ "aTexture", AttributeType::UInt  },
 		}));
 		m_Triangles->SetData(nullptr, s_MaxTriangleVertices, GL_DYNAMIC_DRAW);
 
@@ -97,11 +97,15 @@ namespace bsf
 		m_TriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
 
 		// Init white texture;
+		m_WhiteTexture = Assets::Get().GetTexture(AssetName::TexWhite);
 
 		m_Textures.resize(s_MaxTextureUnits);
+		std::memset(m_Textures.data(), 0, m_Textures.size() * sizeof(uint32_t));
+		m_Textures[0] = m_WhiteTexture->GetId();
 
-		uint32_t data = 0xffffffff;
-		m_WhiteTexture = MakeRef<::bsf::Texture2D>(1, 1, &data);
+		m_TextureUnits.resize(s_MaxTextureUnits);
+		std::iota(m_TextureUnits.begin(), m_TextureUnits.end(), 0);
+
 
 	}
 
@@ -115,7 +119,7 @@ namespace bsf
 		m_Projection = projection;
 	}
 
-	void Renderer2D::DrawQuadInternal(const glm::vec2& position, const glm::vec2& size, const glm::vec2& pivot, const Ref<::bsf::Texture2D>& texture)
+	void Renderer2D::DrawQuadInternal(const glm::vec2& position, const glm::vec2& size, const glm::vec2& pivot)
 	{
 
 		std::array<glm::vec2, 4> positions = {
@@ -133,13 +137,13 @@ namespace bsf
 			glm::vec2{ 0.0f, 1.0f }
 		};
 
-		DrawTriangleInternal({ positions[0], positions[1], positions[2] }, { uvs[0], uvs[1], uvs[2] }, texture);
-		DrawTriangleInternal({ positions[0], positions[2], positions[3] }, { uvs[0], uvs[2], uvs[3] }, texture);
+		DrawTriangleInternal({ positions[0], positions[1], positions[2] }, { uvs[0], uvs[1], uvs[2] });
+		DrawTriangleInternal({ positions[0], positions[2], positions[3] }, { uvs[0], uvs[2], uvs[3] });
 
 	}
 
 
-	void Renderer2D::DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs, const Ref<::bsf::Texture2D>& texture)
+	void Renderer2D::DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs)
 	{
 
 		const auto& state = m_State.top();
@@ -147,32 +151,35 @@ namespace bsf
 		if (m_CurTriangleIndex == s_MaxTriangleVertices)
 			End();
 
-		uint32_t textureID = m_WhiteTexture->GetId();
+		uint32_t textureIndex = 0;
 
-		if (texture != nullptr)
+		if (state.CurrentTexture != nullptr)
 		{
-			uint32_t texIndex;
 
-			for (texIndex = 0; texIndex < m_Textures.size(); texIndex++)
+			auto cached = std::find(m_Textures.begin(), m_Textures.end(), state.CurrentTexture->GetId());
+
+			if (cached == m_Textures.end()) // texture not cached, try to find empty slot
 			{
-				if (m_Textures[texIndex] == texture->GetId()) // The texture is cached 
+				auto tex = std::find(m_Textures.begin(), m_Textures.end(), 0);
+
+				if (tex == m_Textures.end()) // Too many textures, need to flush
 				{
-					break;
+					End();
+					tex = m_Textures.begin() + 1;
 				}
+
+				*tex = state.CurrentTexture->GetId();
+
+				cached = tex;
+
 			}
 
-			if (texIndex == s_MaxTextureUnits) // Too many textures -> Need to flush
-			{
-				End();
-				texIndex = 0;
-			}
-
-			textureID = m_Textures[texIndex];
+			textureIndex = cached - m_Textures.begin();
 
 		}
 
 
-		std::array<Vertex, 3> transformed = { };
+		std::array<Vertex2D, 3> transformed = { };
 
 		for (size_t i = 0; i < positions.size(); i++)
 		{
@@ -181,10 +188,10 @@ namespace bsf
 			transformed[i].Postion = { worldPos.x, worldPos.y };
 			transformed[i].UV = uvs[i];
 			transformed[i].Color = m_State.top().Color;
-			transformed[i].TextureID = textureID;
+			transformed[i].TextureID = textureIndex;
 		}
 
-		std::memcpy((void*)&m_TriangleVertices[m_CurTriangleIndex], (void*)transformed.data(), transformed.size() * sizeof(Vertex));
+		std::memcpy((void*)&m_TriangleVertices[m_CurTriangleIndex], (void*)transformed.data(), transformed.size() * sizeof(Vertex2D));
 
 		m_CurTriangleIndex += transformed.size();
 
@@ -192,7 +199,7 @@ namespace bsf
 
 	void Renderer2D::DrawQuad(const glm::vec2& position)
 	{
-		DrawQuadInternal(position, { 1.0f, 1.0f }, m_State.top().QuadPivot, nullptr);
+		DrawQuadInternal(position, { 1.0f, 1.0f }, m_State.top().QuadPivot);
 	}
 
 
@@ -275,22 +282,23 @@ namespace bsf
 	void Renderer2D::End()
 	{
 
+		auto& assets = Assets::Get();
+
 		// Flush Triangles
 		if (m_CurTriangleIndex > 0)
 		{
-
 			m_TriangleProgram->Use();
 
 			m_TriangleProgram->UniformMatrix4f("uProjection", m_Projection);
-
-
+			
 			for (uint32_t i = 0; i < m_Textures.size(); i++)
 			{
 				BSF_GLCALL(glActiveTexture(GL_TEXTURE0 + i));
 				BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Textures[i]));
 			}
-
-			m_TriangleProgram->Uniform1iv("uTextures", m_Textures.size(), m_Textures.data());
+			
+			m_TriangleProgram->Uniform1iv("uTextures", m_Textures.size(), m_TextureUnits.data());
+			
 			m_Triangles->SetSubData(m_TriangleVertices, 0, m_CurTriangleIndex);
 
 			m_Triangles->Draw(GL_TRIANGLES, m_CurTriangleIndex);

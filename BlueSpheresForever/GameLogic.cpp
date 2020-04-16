@@ -83,6 +83,26 @@ namespace bsf
 			std::vector<TransformRingState> result;
 			result.reserve(s_Directions.size());
 
+			// First let's check if all the surrounding spheres are red
+			// If that's the case we should discard all the children of this state
+			// since they would not lead to a solution
+			// This is very big improvement on some stages (like sonic3 stage 6)
+
+			const glm::ivec2& position = CurrentPath.size() == 0 ? StartingPoint : CurrentPath.back();
+			bool allRed = true;
+			for (const auto& dir : s_AllDirections)
+			{
+				if (m_Stage->GetValueAt(position + dir) != EStageObject::RedSphere)
+				{
+					allRed = false;
+					break;
+				}
+			}
+
+			if (allRed)
+				return result;
+
+
 			// This is the root state. There's no previous
 			// direction so we can go to any close red sphere
 			if (CurrentDirection == glm::ivec2(0, 0))
@@ -197,9 +217,7 @@ namespace bsf
 		void Calculate()
 		{
 
-			
 			// Find a closed red spheres path with no sharp turns(no u turn or 2x2 turns)
-			
 
 			bool pathFound = false;
 			std::vector<glm::ivec2> path;

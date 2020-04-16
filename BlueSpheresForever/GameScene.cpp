@@ -3,9 +3,11 @@
 #include "Common.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
+#include "Framebuffer.h"
 #include "GameLogic.h"
 #include "Log.h"
 #include "Assets.h"
+#include "Renderer2D.h"
 
 #include <array>
 #include <vector>
@@ -18,6 +20,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#pragma region Shaders
+
+bool paused = false;
 
 static const std::string s_SkyVertex = R"Vertex(
 	#version 330 core
@@ -31,9 +36,11 @@ static const std::string s_SkyVertex = R"Vertex(
 	const float PI = 3.141592;
 
 	layout(location = 0) in vec2 aUv;
-	layout(location = 1) in float aSize;
+	layout(location = 1) in vec3 aColor;
+	layout(location = 2) in float aSize;
 	
 	flat out vec4 gPosition;
+	flat out vec3 gColor;
 	flat out float gSize;
 	
 	vec3 dome(in vec2 uv) {
@@ -41,9 +48,9 @@ static const std::string s_SkyVertex = R"Vertex(
 
 		float x = uv.x;
 		float y = uv.y;		
-		float z = -(x*x + y*y) + 1.0;			
-		//float z = sqrt(1.0 - x*x - y*y);
-		return vec3(x, y, z);
+		//float z = -(x*x + y*y) + 1.0;			
+		float z = sqrt(1.0 - x*x - y*y);
+		return vec3(x, y, z - 0.5);
 			
 	}	
 
@@ -54,6 +61,7 @@ static const std::string s_SkyVertex = R"Vertex(
 		
 		gPosition = position;
 		gSize = aSize;
+		gColor = aColor;
 
 		gl_Position =  position;
 	}	
@@ -69,8 +77,10 @@ static const std::string s_SkyGeometry = R"Geometry(
 	layout(triangle_strip, max_vertices = 4) out;	
 
 	flat in vec4 gPosition[1];
+	flat in vec3 gColor[1];
 	flat in float gSize[1];		
 	
+	flat out vec3 fColor;
 	out vec2 fUv;
 
 	void main() {
@@ -78,6 +88,7 @@ static const std::string s_SkyGeometry = R"Geometry(
 		float sx = uUnitSize.x * gSize[0] * 2.0f;
 		float sy = uUnitSize.y * gSize[0] * 2.0f;
 			
+		fColor = gColor[0];
 
 		gl_Position = position + vec4(+sx, -sy, position.z, position.w); fUv = vec2(1.0f, 0.0f); EmitVertex();
 		gl_Position = position + vec4(+sx, +sy, position.z, position.w); fUv = vec2(1.0f, 1.0f); EmitVertex();
@@ -96,12 +107,13 @@ static const std::string s_SkyFragment = R"Fragment(
 	
 	uniform sampler2D uMap;
 
+	flat in vec3 fColor;
 	in vec2 fUv;
-
+	
 	out vec4 oColor;
 
 	void main() {
-		oColor = texture(uMap, fUv);
+		oColor = texture(uMap, fUv) * vec4(fColor, 1.0);
 	}
 
 
@@ -118,12 +130,14 @@ static const std::string s_Vertex = R"Vertex(
 
 	layout(location = 0) in vec3 aPosition;
 	layout(location = 1) in vec3 aNormal;
-	layout(location = 2) in vec2 aUv;
+	layout(location = 2) in vec3 aTangent;
+	layout(location = 3) in vec3 aBinormal;
+	layout(location = 4) in vec2 aUv;
 
 	
 	out vec3 fPosition;
-	out vec3 fNormal;
 	out vec2 fUv;
+	out mat3 fTBN;
 	
 	void main() {
 		
@@ -131,7 +145,12 @@ static const std::string s_Vertex = R"Vertex(
 
 		gl_Position = uProjection * vec4(position, 1.0);
 
-		fNormal = aNormal;
+		// Compute TBN matrix
+		vec3 normal = (uModel * vec4(aNormal, 0.0)).xyz;
+		vec3 tangent = (uModel * vec4(aTangent, 0.0)).xyz;
+		vec3 binormal = (uModel * vec4(aBinormal, 0.0)).xyz;
+		fTBN = mat3(tangent, binormal, normal);
+
 		fPosition = aPosition;
 		fUv = aUv + uUvOffset;
 	}	
@@ -146,16 +165,21 @@ static const std::string s_Fragment = R"Fragment(
 	uniform mat4 uModel;
 	
 	uniform vec3 uCameraPos;
-	uniform vec3 uLightDir;
+	uniform vec3 uLightPos;
+
+	uniform vec4 uColor;
 
 	uniform sampler2D uMap;
+	uniform sampler2D uNormalMap;
 	uniform sampler2D uMetallic;
 	uniform sampler2D uRoughness;
-	uniform vec4 uColor;
+	uniform sampler2D uAo;
+	uniform sampler2D uPlanarReflections;
 	
 	in vec3 fPosition;
-	in vec3 fNormal;
 	in vec2 fUv;
+
+	in mat3 fTBN;
 
 	out vec4 oColor;
 
@@ -164,16 +188,22 @@ static const std::string s_Fragment = R"Fragment(
 	float DistributionGGX(vec3 N, vec3 H, float roughness);
 	float GeometrySchlickGGX(float NdotV, float roughness);
 	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-	vec3 fresnelSchlick(float cosTheta, vec3 F0);
+	vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
 
 	void main() {
 
+		vec4 screenPos = (uProjection * uView * uModel * vec4(fPosition, 1.0));
+
+		vec3 pref = texture(uPlanarReflections, screenPos.xy / screenPos.w * 0.5 + 0.5).rgb;
 		float metallic = texture(uMetallic, fUv).r;
 		float roughness = texture(uRoughness, fUv).r;
+		float ao = texture(uAo, fUv).r;
+		
+		vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
 
-		vec3 N = normalize((uModel * vec4(fNormal, 0.0)).xyz);
+		vec3 N = normalize(normal);
 		vec3 V = normalize(uCameraPos - (uModel * vec4(fPosition, 1.0)).xyz);
-		vec3 L = normalize(uLightDir - (uModel * vec4(fPosition, 1.0)).xyz);
+		vec3 L = normalize(uLightPos - (uModel * vec4(fPosition, 1.0)).xyz);
 		vec3 H = normalize(V + L);
 		vec3 R = reflect(-V, N);
 
@@ -187,7 +217,7 @@ static const std::string s_Fragment = R"Fragment(
 
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
-        vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0);       
+        vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);       
         
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
@@ -198,18 +228,18 @@ static const std::string s_Fragment = R"Fragment(
         vec3 specular     = numerator / max(denominator, 0.001);  
             
         // add to outgoing radiance Lo
-		vec3 radiance = vec3(23.0, 21.0, 20.0);
+		//vec3 radiance = vec3(23.0, 21.0, 20.0);
+		vec3 radiance = vec3(820.0, 810.0, 800.0);
         float NdotL = max(dot(N, L), 0.0);                
-        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
+        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL + pref * F; 
 	
-		vec3 ambient = vec3(0.03) * albedo;
+		vec3 ambient = vec3(0.03) * albedo * ao;
 
-		vec3 fragment = color + ambient;		
+		vec3 fragment = ambient + color;		
 
 		fragment = fragment / (fragment + vec3(1.0));
 
 		oColor = vec4(fragment, 1.0);
-		//oColor = vec4(F, 1.0);
 	}
 
 	float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -248,31 +278,39 @@ static const std::string s_Fragment = R"Fragment(
 	}
 
 
-	vec3 fresnelSchlick(float cosTheta, vec3 F0)
+	vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
 	{
-		return F0 + (1.0 - F0) * pow(1.0 - clamp(cosTheta, 0.0, 1.0), 5.0);
+		vec3 f = F0 + (1.0 - F0) * pow(1.0 - clamp(cosTheta, 0.0, 1.0), 5.0);
+		return f * (1.0 - pow(roughness, 0.25));
 	}  
 
 	
 )Fragment";
 
+#pragma endregion
+
 
 namespace bsf
 {
+
 	struct Vertex
 	{
 		glm::vec3 Position0;
 		glm::vec3 Normal0;
+		glm::vec3 Tangent0;
+		glm::vec3 Binormal0;
 		glm::vec2 UV;
 	};
 
 	struct StarVertex
 	{
 		glm::vec2 UV;
+		glm::vec3 Color;
 		float Size;
+
 	};
 
-	static Ref<VertexArray> CreateSkyDome()
+	static Ref<VertexArray> CreateSkyDome(const Stage& stage)
 	{
 		uint32_t starCount = 1000;
 		
@@ -281,11 +319,13 @@ namespace bsf
 		for (uint32_t i = 0; i < starCount; i++)
 		{
 			stars[i].UV = { float(rand()) / RAND_MAX, float(rand()) / RAND_MAX };
+			stars[i].Color = stage.StarColors[rand() % stage.StarColors.size()];
 			stars[i].Size = (float(rand()) / RAND_MAX) < 0.1f ? 5.0f : 1.0f;
 		}
 
 		auto result = Ref<VertexArray>(new VertexArray({
 			{ "aUV", AttributeType::Float2 },
+			{ "aColor", AttributeType::Float3 },
 			{ "aSize", AttributeType::Float }
 		}));
 
@@ -374,12 +414,14 @@ namespace bsf
 		{
 			float u = (std::atan2f(t.z, t.x) / (2.0f * glm::pi<float>()));
 			float v = (std::asinf(t.y) / glm::pi<float>()) + 0.5f;
-			vertices.push_back({ t * radius, glm::normalize(t), glm::vec2(u, v) });
+			vertices.push_back({ t * radius, glm::normalize(t), glm::vec3(), glm::vec3(), glm::vec2(u, v) });
 		}
 
 		Ref<VertexArray> result = Ref<VertexArray>(new VertexArray({
 			{ "aPosition", AttributeType::Float3 },
 			{ "aNormal", AttributeType::Float3 },
+			{ "aTangent", AttributeType::Float3 },
+			{ "aBinormal", AttributeType::Float3 },
 			{ "aUv", AttributeType::Float2 }
 		}));
 
@@ -388,17 +430,21 @@ namespace bsf
 		return result;
 	}
 
-	static glm::vec3 Project(const glm::vec3& position, glm::vec3& normal)
+	static std::array<glm::vec3, 4>  Project(const glm::vec3& position)
 	{
-		constexpr float radius = 10.0f;
+		constexpr float radius = 12.5f;
 		constexpr glm::vec3 center = { 0.0f, 0.0f, -radius };
 
 		float offset = position.z;
 		glm::vec3 ground = { position.x, position.y, 0.0f };
 
-		normal = glm::normalize(ground - center);
+		glm::vec3 normal = glm::normalize(ground - center);
+		glm::vec3 tangent = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), normal);
+		glm::vec3 binormal = glm::cross(normal, tangent);
+		glm::vec3 pos = center + normal * (radius + offset);
 
-		return center + normal * (radius + offset);
+		return { pos, normal, tangent, binormal };
+
 
 	}
 
@@ -422,14 +468,28 @@ namespace bsf
 						float u0 = (x % 2) * 0.5f + dx * step * 0.5f, v0 = (y % 2) * 0.5f + dy * step * 0.5f;
 						float u1 = (x % 2) * 0.5f + (dx + 1) * step * 0.5f, v1 = (y % 2) * 0.5f + (dy + 1) * step * 0.5f;
 						
-						std::array<glm::vec3, 4> normals;
-
-						std::array<Vertex, 4> v = {
-							Vertex{ Project(glm::vec3(x0, y0, 0.0f), normals[0]), normals[0], glm::vec2(u0, v0) },
-							Vertex{ Project(glm::vec3(x1, y0, 0.0f), normals[1]), normals[1], glm::vec2(u1, v0) },
-							Vertex{ Project(glm::vec3(x1, y1, 0.0f), normals[2]), normals[2], glm::vec2(u1, v1) },
-							Vertex{ Project(glm::vec3(x0, y1, 0.0f), normals[3]), normals[3], glm::vec2(u0, v1) }
+						std::array<glm::vec2, 4> coords = {
+							glm::vec2{ x0, y0 },
+							glm::vec2{ x1, y0 },
+							glm::vec2{ x1, y1 },
+							glm::vec2{ x0, y1 }
 						};
+
+						std::array<glm::vec2, 4> uvs = {
+							glm::vec2(u0, v0),
+							glm::vec2(u1, v0),
+							glm::vec2(u1, v1),
+							glm::vec2(u0, v1)
+						};
+
+						std::array<Vertex, 4> v = { };
+
+						for (uint32_t i = 0; i < 4; i++)
+						{
+							auto [pos, normal, tangent, binormal] = Project(glm::vec3(coords[i], 0.0f));
+							v[i] = { pos, normal, tangent, binormal, uvs[i] };
+						}
+
 
 						vertices.push_back(v[0]); vertices.push_back(v[1]); vertices.push_back(v[2]);
 						vertices.push_back(v[0]); vertices.push_back(v[2]); vertices.push_back(v[3]);
@@ -441,6 +501,8 @@ namespace bsf
 		Ref<VertexArray> result = Ref<VertexArray>(new VertexArray({
 			{ "aPosition", AttributeType::Float3 },
 			{ "aNormal", AttributeType::Float3 },
+			{ "aTangent", AttributeType::Float3 },
+			{ "aBinormal", AttributeType::Float3 },
 			{ "aUv", AttributeType::Float2 }
 		}));
 
@@ -513,6 +575,7 @@ namespace bsf
 
 	void GameScene::OnAttach(Application& app)
 	{
+		auto windowSize = app.GetWindowSize();
 
 		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
 
@@ -533,34 +596,80 @@ namespace bsf
 			{
 				m_GameLogic->Jump();
 			}
+			else if (evt.KeyCode == GLFW_KEY_ENTER)
+			{
+				paused = !paused;
+			}
 		});
 
 		m_GameLogic = MakeRef<GameLogic>(*m_Stage);
 
-		m_World = CreateWorld(-5, 5, -5, 5, 10);
-		m_Sphere = CreateIcosphere(0.15, 3);
-		m_Sky = CreateSkyDome();
 
-		m_Program = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
+		// Renderer2D
+		m_Renderer2D = MakeRef<Renderer2D>();
 
-		m_SkyProgram = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyGeometry, s_SkyFragment);
-
+		// Framebuffers
+		m_fbReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
+		m_fbReflections->AddColorAttachment();
+		if (!m_fbReflections->Check())
 		{
-			if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
-			{
-				m_Map = CreateCheckerBoard({ ToHexColor(m_Stage->CheckerColors[0]), ToHexColor(m_Stage->CheckerColors[1]) });
-			}
-			else
-			{
-				m_Map = Ref<Texture2D>(new Texture2D((std::filesystem::path("assets/textures") / m_Stage->Texture).string()));
-			} 
-
-			m_Map->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
-			m_Map->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
+			BSF_ERROR("Count't initialize reflection frame buffer");
 		}
 
-		m_GroundMetallic = MakeRef<Texture2D>(0x11111111);
-		m_GroundRoughness = MakeRef<Texture2D>(0xaaaaaaaa);
+		// Vertex arrays
+		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
+		m_vaSphere = CreateIcosphere(0.15, 3);
+		m_vaSky = CreateSkyDome(*m_Stage);
+
+		// Programs
+		m_pPBR = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
+		m_pSky = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyGeometry, s_SkyFragment);
+
+		// Ground map
+		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
+		{
+			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->CheckerColors[0]), ToHexColor(m_Stage->CheckerColors[1]) });
+			m_txGroundMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
+			m_txGroundMap->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
+		}
+		else
+		{
+			m_txGroundMap = Ref<Texture2D>(new Texture2D((std::filesystem::path("assets/textures") / m_Stage->Texture).string()));
+			m_txGroundMap->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			m_txGroundMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_txGroundMap->SetAnisotropy(16.0f);
+		} 
+
+			
+
+		// Ground normal map
+		if (m_Stage->BumpMappingEnabled)
+		{
+			m_txGroundNormalMap = Ref<Texture2D>(new Texture2D((std::filesystem::path("assets/textures") / m_Stage->NormalMap).string()));
+			m_txGroundNormalMap->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			m_txGroundNormalMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_txGroundNormalMap->SetAnisotropy(16.0f);
+		}
+		else
+		{
+			m_txGroundNormalMap = std::dynamic_pointer_cast<Texture2D>(Assets::Get().GetTexture(AssetName::TexNormalPosZ));
+		}
+
+		// Ground metallic/roughness/ao
+
+		m_txGroundNormalMap = Ref<Texture2D>(new Texture2D("assets/textures/titanium-normal.png"));
+		m_txGroundNormalMap->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+		m_txGroundNormalMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+
+		m_txGroundMetallic = Ref<Texture2D>(new Texture2D("assets/textures/titanium-metal.png"));
+		m_txGroundMetallic->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+		m_txGroundMetallic->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+		
+		m_txGroundRoughness = Ref<Texture2D>(new Texture2D("assets/textures/titanium-rough.png"));
+		m_txGroundRoughness->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+		m_txGroundRoughness->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+
+		m_txGroundAo = std::dynamic_pointer_cast<Texture2D>(Assets::Get().GetTexture(AssetName::TexWhite));
 
 
 	}
@@ -571,71 +680,173 @@ namespace bsf
 		float aspect = windowSize.x / windowSize.y;
 		auto& assets = Assets::Get();
 
-
-		//glPolygonMode(GL_FRONT, GL_LINE);
-
 		glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
 		glm::vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
 		glm::vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
 		glm::vec4 yellow(1.0f, 1.0f, 0.0f, 1.0f);
 
-		const int steps = 5;
-		for (int i = 0; i < steps; i++)
-			m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
+		if (!paused)
+		{
+			const int steps = 5;
+			for (int i = 0; i < steps; i++)
+				m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
+		}
 
-		glPointSize(4);
 		glEnable(GL_FRAMEBUFFER_SRGB);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::vec2 pos = m_GameLogic->GetPosition();
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
-		glm::vec3 normal;
 
-		m_Projection.LoadIdentity();
+
+		auto drawStageObject = [&](EStageObject val) {
+
+			if (val != EStageObject::None)
+			{
+				m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+
+				switch (val)
+				{
+				case EStageObject::RedSphere:
+					assets.GetTexture(AssetName::TexWhite)->Bind(0);
+					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(red));
+					m_vaSphere->Draw(GL_TRIANGLES);
+					break;
+				case EStageObject::BlueSphere:
+					assets.GetTexture(AssetName::TexWhite)->Bind(0);
+					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(blue));
+					m_vaSphere->Draw(GL_TRIANGLES);
+					break;
+				case EStageObject::YellowSphere:
+					assets.GetTexture(AssetName::TexWhite)->Bind(0);
+					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
+					m_vaSphere->Draw(GL_TRIANGLES);
+					break;
+				case EStageObject::StarSphere:
+					assets.GetTexture(AssetName::TexBumper)->Bind(0);
+					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+					m_vaSphere->Draw(GL_TRIANGLES);
+					break;
+				}
+
+			}
+		};
+
+		auto setupView = [&]() {
+			// Setup the player view
+			m_View.Reset();
+			m_Model.Reset();
+
+			m_View.LoadIdentity();
+			m_Model.LoadIdentity();
+
+			m_View.LookAt({ -1.5f, 2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
+			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
+			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
+		};
+	
+
+		m_Projection.Reset();
 		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
 
-		m_Model.LoadIdentity();
-		m_View.LoadIdentity();
-
-
-
-
-		// Draw sky
-
+		// Draw reflection buffer
 		{
+			m_fbReflections->Bind();
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			
+			setupView();
+
+			glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			glm::vec3 lightVector = { 0.0f, -10.0f, 0.0f };
+
+			// Draw spheres and rings
+
+
+			m_pPBR->Use();
+
+			m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+			m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
+
+			m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
+			m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
+
+			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+			m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
+
+			m_pPBR->UniformTexture("uPlanarReflections", assets.GetTexture(AssetName::TexBlack), 5);
+
+			m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
+			m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
+			m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
+
+
+			for (int32_t x = -10; x <= 10; x++)
+			{
+				for (int32_t y = -10; y <= 10; y++)
+				{
+					m_Model.Push();
+					m_Model.Translate(Project({ x - fx, y - fy, -0.15f })[0]);
+					//m_Model.Translate({ 0.0f, 0.0f, -0.3f });
+					m_pPBR->UniformMatrix4f("uModel", m_Model);
+					drawStageObject(m_Stage->GetValueAt(x + ix, y + iy));
+					m_Model.Pop();
+				}
+			}
+			
+			m_fbReflections->Unbind();
+		}
+
+		
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		/*
+		m_Renderer2D->Begin(glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+		m_Renderer2D->Texture(m_fbReflections->GetColorAttachments()[0]);
+		m_Renderer2D->DrawQuad({ 0, 0 });
+		m_Renderer2D->End();
+		return;
+		*/
+		// Draw sky
+		{
+
+			m_Model.Reset();
+			m_View.Reset();
+
 			// It's going to be centered at the camera and drawn like a cubemap
 			// so we just disable depth write
-				
-			float unit = 1.0f / 200.0f;
+
+			float unit = 1.0f / 200.0f; // The base unit size of a star, relative to the screen width
 			float ratio = windowSize.x / windowSize.y;
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glDepthMask(GL_FALSE);
 
+
 			m_View.LoadIdentity();
 			m_Model.LoadIdentity();
+			//m_View.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 15.0f);
+			m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f });
 			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 
 			float u = 1.0f - pos.x / m_Stage->GetWidth();
 			float v = 1.0f - pos.y / m_Stage->GetHeight();
 
-			assets.GetTexture(AssetName::TexStar)->Bind(0);
-
-			m_SkyProgram->Use();
-			m_SkyProgram->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-			m_SkyProgram->UniformMatrix4f("uView", m_View.GetMatrix());
-			m_SkyProgram->UniformMatrix4f("uModel", m_Model.GetMatrix());
-			m_SkyProgram->Uniform1i("uMap", { 0 });
-			m_SkyProgram->Uniform2f("uOffset", { u, v });
-			m_SkyProgram->Uniform2f("uUnitSize", { unit, ratio * unit });
-			m_Sky->Draw(GL_POINTS);
+			m_pSky->Use();
+			m_pSky->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+			m_pSky->UniformMatrix4f("uView", m_View.GetMatrix());
+			m_pSky->UniformMatrix4f("uModel", m_Model.GetMatrix());
+			m_pSky->UniformTexture("uMap", assets.GetTexture(AssetName::TexStar), 0);
+			m_pSky->Uniform2f("uOffset", { u, v });
+			m_pSky->Uniform2f("uUnitSize", { unit, ratio * unit });
+			m_vaSky->Draw(GL_POINTS);
 
 			glDepthMask(GL_TRUE);
 			glDisable(GL_BLEND);
@@ -643,100 +854,72 @@ namespace bsf
 		}
 
 
-		// Setup the player view
-
-		m_View.LoadIdentity();
-		m_Model.LoadIdentity();
-		m_View.LookAt({ -3.0f, 2.0f, 0.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
-		m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
-		m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
-
-		glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		glm::vec3 lightVector = { 0.0f, 10.0f, 0.0f };
-
-		// Draw ground
-		m_Map->Bind(0);
-		m_GroundMetallic->Bind(1);
-		m_GroundRoughness->Bind(2);
-
-		m_Program->Use();
-
-		m_Program->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-		m_Program->UniformMatrix4f("uView", m_View.GetMatrix());
-		m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
-
-		m_Program->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
-		m_Program->Uniform3fv("uLightDir", 1, glm::value_ptr(lightVector));
-
-		m_Program->Uniform1i("uMap", { 0 });
-		m_Program->Uniform1i("uMetallic", { 1 });
-		m_Program->Uniform1i("uRoughness", { 2 });
-
-		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
-		m_Program->Uniform2f("uUvOffset", { (ix % 2) * 0.5f +  fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
-		
-		m_World->Draw(GL_TRIANGLES);
-
-		m_Program->Uniform2f("uUvOffset", { 0, 0 });
-
-		// Draw player
-		m_Model.Push();
-		m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
-		m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
-		assets.GetTexture(AssetName::TexWhite)->Bind(0);
-		m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
-		m_Sphere->Draw(GL_TRIANGLES);
-		m_Model.Pop();
-
-
-		assets.GetTexture(AssetName::TexSphereMetallic)->Bind(1);
-		assets.GetTexture(AssetName::TexSphereRoughness)->Bind(2);
-
-		// Draw spheres and rings
-		for (int32_t x = -10; x < 10; x++)
+		// Draw scene
 		{
-			for (int32_t y = -10; y < 10; y++)
-			{
-				auto val = m_Stage->GetValueAt(x + ix, y + iy);
+			setupView();
 
-				if (val != EStageObject::None)
+			glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			glm::vec3 lightVector = { 0.0f, 10.0f, 0.0f };
+
+			// Draw ground
+
+			m_pPBR->Use();
+
+			m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+			m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
+			m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
+
+			m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
+			m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
+
+			m_pPBR->UniformTexture("uMap", m_txGroundMap, 0);
+			m_pPBR->UniformTexture("uNormalMap", m_txGroundNormalMap, 1);
+			m_pPBR->UniformTexture("uMetallic", m_txGroundMetallic, 2);
+			m_pPBR->UniformTexture("uRoughness", m_txGroundRoughness, 3);
+			m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
+			m_pPBR->UniformTexture("uPlanarReflections", m_fbReflections->GetColorAttachments()[0], 5);
+
+			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+			m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
+
+
+			m_vaWorld->Draw(GL_TRIANGLES);
+
+			m_pPBR->UniformTexture("uPlanarReflections", assets.GetTexture(AssetName::TexBlack), 5);
+
+			// Draw player
+			m_Model.Push();
+			m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
+			m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
+			m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+			m_pPBR->Uniform2f("uUvOffset", { 0, 0 });
+			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+			m_vaSphere->Draw(GL_TRIANGLES);
+			m_Model.Pop();
+
+
+
+
+			// Draw spheres and rings
+
+			m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
+			m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
+			m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
+
+			for (int32_t x = -10; x <= 10; x++)
+			{
+				for (int32_t y = -10; y <= 10; y++)
 				{
 					m_Model.Push();
-					m_Model.Translate(Project({ x - fx, y - fy, 0.15f }, normal));
-					m_Program->UniformMatrix4f("uModel", m_Model.GetMatrix());
-					m_Program->Uniform1i("uMap", { 0 });
-
-					
-					switch (val)
-					{
-					case EStageObject::RedSphere: 
-						assets.GetTexture(AssetName::TexWhite)->Bind(0);
-						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(red));
-						m_Sphere->Draw(GL_TRIANGLES);
-						break;
-					case EStageObject::BlueSphere:
-						assets.GetTexture(AssetName::TexWhite)->Bind(0);
-						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(blue));
-						m_Sphere->Draw(GL_TRIANGLES);
-						break;
-					case EStageObject::YellowSphere:
-						assets.GetTexture(AssetName::TexWhite)->Bind(0);
-						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
-						m_Sphere->Draw(GL_TRIANGLES);
-						break;
-					case EStageObject::StarSphere:
-						assets.GetTexture(AssetName::TexBumper)->Bind(0);
-						m_Program->Uniform4fv("uColor", 1, glm::value_ptr(white));
-						m_Sphere->Draw(GL_TRIANGLES);
-						break;
-					}
-
+					m_Model.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
+					m_pPBR->UniformMatrix4f("uModel", m_Model);
+					drawStageObject(m_Stage->GetValueAt(x + ix, y + iy));
 					m_Model.Pop();
 				}
-
 			}
 		}
 
+		
 	}
 	
 	void GameScene::OnDetach(Application& app)
@@ -748,5 +931,6 @@ namespace bsf
 	void GameScene::OnResize(const WindowResizedEvent& evt)
 	{
 		glViewport(0, 0, evt.Width, evt.Height);
+		m_fbReflections->Resize(evt.Width, evt.Height);
 	}
 }

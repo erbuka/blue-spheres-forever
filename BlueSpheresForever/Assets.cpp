@@ -28,7 +28,7 @@ namespace bsf
 	{
 		m_Textures[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));
 		m_Textures[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
-		m_Textures[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(0xffff0000));
+		m_Textures[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
@@ -67,7 +67,7 @@ namespace bsf
 		m_Textures.clear();
 	}
 
-	Ref<Texture>& Assets::GetTexture(AssetName n)
+	const Ref<Texture>& Assets::GetTexture(AssetName n)
 	{
 		return GetAssetStatic(n, m_Textures);
 	}

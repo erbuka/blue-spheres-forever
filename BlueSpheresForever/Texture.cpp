@@ -65,23 +65,20 @@ namespace bsf
 		{ TextureCubeFace::Bottom, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y  },
 	};
 
-	Texture2D::Texture2D(uint32_t color) : Texture2D(1, 1, &color)
+	Texture2D::Texture2D()
 	{
+		BSF_GLCALL(glGenTextures(1, &m_Id));
+	}
+
+	Texture2D::Texture2D(uint32_t color) : Texture2D()
+	{
+		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
+		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color));
+
 		Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
 		Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
 	}
 
-	Texture2D::Texture2D(uint32_t width, uint32_t height, const void* pixels)
-	{
-		uint32_t size = width * height;
-
-		BSF_GLCALL(glGenTextures(1, &m_Id));
-		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels));
-
-		Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
-		Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-	}
 
 	Texture2D::Texture2D(const std::string& fileName)
 	{
@@ -98,7 +95,6 @@ namespace bsf
 		std::swap(m_Height, other.m_Height);
 	}
 
-
 	void Texture2D::Filter(TextureFilter filter, TextureFilterMode mode)
 	{
 
@@ -109,6 +105,16 @@ namespace bsf
 		{
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
+
+	}
+
+	void Texture2D::SetAnisotropy(float value)
+	{
+		float max = 0.0f;
+		BSF_GLCALL(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max));
+		
+		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
+		BSF_GLCALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(max, value)));
 
 
 	}

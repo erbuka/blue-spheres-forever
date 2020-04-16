@@ -7,7 +7,7 @@ namespace bsf
 {
 	MatrixStack::MatrixStack() 
 	{
-		m_Stack.push(glm::identity<glm::mat4>());
+		Reset();
 	}
 	
 	MatrixStack::operator glm::mat4()
@@ -23,6 +23,11 @@ namespace bsf
 	{
 		assert(m_Stack.size() > 0);
 		m_Stack.pop();
+	}
+	void MatrixStack::Reset()
+	{
+		m_Stack = std::stack<glm::mat4>();
+		m_Stack.push(glm::identity<glm::mat4>());
 	}
 	void MatrixStack::LoadIdentity()
 	{

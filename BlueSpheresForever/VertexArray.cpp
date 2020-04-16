@@ -21,6 +21,10 @@ namespace bsf
 		{ AttributeType::Int2,	{ GL_INT, 2, 4 } },
 		{ AttributeType::Int3,	{ GL_INT, 3, 4 } },
 		{ AttributeType::Int4,	{ GL_INT, 4, 4 } },
+		{ AttributeType::UInt,	{ GL_UNSIGNED_INT, 1, 4 } },
+		{ AttributeType::UInt2,	{ GL_UNSIGNED_INT, 2, 4 } },
+		{ AttributeType::UInt3,	{ GL_UNSIGNED_INT, 3, 4 } },
+		{ AttributeType::UInt4,	{ GL_UNSIGNED_INT, 4, 4 } }
 	};
 
 
@@ -55,7 +59,7 @@ namespace bsf
 
 			BSF_GLCALL(glEnableVertexAttribArray(index));
 
-			if (descr.Type == GL_INT)
+			if (descr.Type == GL_INT || descr.Type == GL_UNSIGNED_INT)
 			{
 				BSF_GLCALL(glVertexAttribIPointer(index, descr.ElementCount, descr.Type, m_VertexSize, (const void*)pointer));
 			}

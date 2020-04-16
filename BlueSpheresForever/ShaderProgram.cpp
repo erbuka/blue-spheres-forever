@@ -1,6 +1,6 @@
 #include "ShaderProgram.h"
-#include "Common.h"
 #include "Log.h"
+#include "Texture.h"
 
 #include <glm/ext.hpp>
 
@@ -67,7 +67,9 @@ namespace bsf
 		BSF_GLCALL(glUseProgram(m_Id));
 	}
 
+
 	UNIFORM_IMPL(i, int32_t, 1);
+	UNIFORM_IMPL(ui, uint32_t, 1);
 
 	UNIFORM_IMPL(f, float, 1);
 	UNIFORM_IMPL(f, float, 2);

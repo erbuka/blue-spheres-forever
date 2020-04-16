@@ -16,6 +16,8 @@ namespace bsf
 	class GameLogic;
 	class Texture2D;
 	class TextureCube;
+	class Framebuffer;
+	class Renderer2D;
 
 	class GameScene : public Scene
 	{
@@ -31,13 +33,19 @@ namespace bsf
 
 	private:
 		
+
+
 		std::vector<Unsubscribe> m_Subscriptions;
 		MatrixStack m_Model, m_View, m_Projection;
 
-		Ref<VertexArray> m_World, m_Sphere, m_Sky;
-		Ref<ShaderProgram> m_Program, m_SkyProgram;
+		Ref<Renderer2D> m_Renderer2D;
+
+		Ref<Framebuffer> m_fbReflections;
+
+		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaSky;
+		Ref<ShaderProgram> m_pPBR, m_pSky;
 		
-		Ref<Texture2D> m_Map, m_GroundMetallic, m_GroundRoughness;
+		Ref<Texture2D> m_txGroundMap, m_txGroundNormalMap, m_txGroundMetallic, m_txGroundRoughness, m_txGroundAo;
 		Ref<GameLogic> m_GameLogic;
 		
 		Ref<Stage> m_Stage;

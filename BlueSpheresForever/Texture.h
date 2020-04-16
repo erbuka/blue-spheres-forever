@@ -31,6 +31,8 @@ namespace bsf
 	{
 	public:
 		Texture();
+		Texture(Texture&) = delete;
+
 		virtual ~Texture();
 
 		virtual void Bind(uint32_t textureUnit) = 0;
@@ -55,6 +57,7 @@ namespace bsf
 		TextureCube(TextureCube&&) = delete;
 
 		void SetPixels(TextureCubeFace face, const void* pixels);
+		
 
 		void Bind(uint32_t textureUnit) override;
 
@@ -66,14 +69,15 @@ namespace bsf
 	class Texture2D : public Texture
 	{
 	public:
+		Texture2D();
 		Texture2D(uint32_t color);
-		Texture2D(uint32_t width, uint32_t height, const void* pixels);
 		Texture2D(const std::string& fileName);
+
 		Texture2D(Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
 
 		void Filter(TextureFilter filter, TextureFilterMode mode);
-
+		void SetAnisotropy(float value);
 		void Bind(uint32_t textureUnit) override;
 
 	private:

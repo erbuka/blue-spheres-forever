@@ -14,15 +14,7 @@ namespace bsf
 {
 	class VertexArray;
 	class ShaderProgram;
-	class Texture2D;
-
-	struct Vertex
-	{
-		glm::vec2 Postion;
-		glm::vec2 UV;
-		glm::vec4 Color;
-		uint32_t TextureID;
-	};
+	class Texture;
 
 	enum class EQuadPivot
 	{
@@ -80,15 +72,23 @@ namespace bsf
 		void End();
 	private:
 
+		struct Vertex2D
+		{
+			glm::vec2 Postion;
+			glm::vec2 UV;
+			glm::vec4 Color;
+			uint32_t TextureID;
+		};
 
-		void DrawQuadInternal(const glm::vec2& position, const glm::vec2& size, const glm::vec2& pivot, const Ref<::bsf::Texture2D>& texture);
-		void DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs, const Ref<::bsf::Texture2D>& texture);
+		void DrawQuadInternal(const glm::vec2& position, const glm::vec2& size, const glm::vec2& pivot);
+		void DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs);
 
-		Ref<::bsf::Texture2D> m_WhiteTexture;
-		std::vector<int32_t> m_Textures;
+		Ref<::bsf::Texture> m_WhiteTexture;
+		std::vector<uint32_t> m_Textures;
+		std::vector<int32_t> m_TextureUnits;
 		std::stack<Renderer2DState> m_State;
 		glm::mat4 m_Projection;
-		Vertex* m_TriangleVertices;
+		Vertex2D* m_TriangleVertices;
 		uint32_t m_CurTriangleIndex;
 		Ref<VertexArray> m_Triangles;
 
