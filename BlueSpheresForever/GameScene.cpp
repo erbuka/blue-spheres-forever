@@ -111,10 +111,12 @@ static const std::string s_SkyFragment = R"Fragment(
 	flat in vec3 fColor;
 	in vec2 fUv;
 	
-	out vec4 oColor;
+	layout(location = 0) out vec4 oColor;
+	layout(location = 1) out vec4 oNormal;
 
 	void main() {
 		oColor = texture(uMap, fUv) * vec4(fColor, 1.0);
+		oNormal = vec4(1.0);
 	}
 
 
@@ -181,7 +183,8 @@ static const std::string s_Fragment = R"Fragment(
 
 	in mat3 fTBN;
 
-	out vec4 oColor;
+	layout(location = 0) out vec4 oColor;
+	layout(location = 1) out vec4 oNormal;
 
 	const float PI = 3.14159265359;
 
@@ -238,6 +241,8 @@ static const std::string s_Fragment = R"Fragment(
 		fragment = fragment / (fragment + vec3(1.0));
 
 		oColor = vec4(fragment, 1.0);
+		//oNormal = vec4((uView * vec4(N, 0.0)).xyz * 0.5 + 0.5, 1.0);
+		oNormal = vec4(1.0);
 	}
 
 	float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -292,7 +297,10 @@ static const std::string s_DeferredVertex = R"Vertex(
 
 	layout(location = 0) in vec2 aPosition;
 
+	out vec2 fUv;
+
 	void main() {
+		fUv = aPosition.xy * 0.5 + 0.5;
 		gl_Position = vec4(aPosition, 0.0, 1.0);
 	}
 )Vertex";
@@ -301,10 +309,15 @@ static const std::string s_DeferredVertex = R"Vertex(
 static const std::string s_DeferredFragment = R"Fragment(
 	#version 330 core
 
+	uniform sampler2D uColor;
+	uniform sampler2D uNormal;
+
 	out vec4 oColor;	
 
+	in vec2 fUv;
+
 	void main() {
-		oColor = vec4(1.0, 0.0, 0.0, 1.0);
+		oColor = texture(uColor, fUv);
 	}
 	
 )Fragment";
@@ -659,6 +672,8 @@ namespace bsf
 
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
+		m_fbDeferred->AddColorAttachment("color");
+		m_fbDeferred->AddColorAttachment("normal");
 
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
@@ -798,115 +813,128 @@ namespace bsf
 		m_Projection.Reset();
 		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
 
-		
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Draw sky
+		// Draw to deferred frame buffer
+		m_fbDeferred->Bind();
 		{
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			m_Model.Reset();
-			m_View.Reset();
-
-			// It's going to be centered at the camera and drawn like a cubemap
-			// so we just disable depth write
-
-			float unit = 1.0f / 200.0f; // The base unit size of a star, relative to the screen width
-			float ratio = windowSize.x / windowSize.y;
-
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDepthMask(GL_FALSE);
-
-
-			m_View.LoadIdentity();
-			m_Model.LoadIdentity();
-			//m_View.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 15.0f);
-			m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f });
-			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
-			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
-
-			float u = 1.0f - pos.x / m_Stage->GetWidth();
-			float v = 1.0f - pos.y / m_Stage->GetHeight();
-
-			m_pSky->Use();
-			m_pSky->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-			m_pSky->UniformMatrix4f("uView", m_View.GetMatrix());
-			m_pSky->UniformMatrix4f("uModel", m_Model.GetMatrix());
-			m_pSky->UniformTexture("uMap", assets.GetTexture(AssetName::TexStar), 0);
-			m_pSky->Uniform2f("uOffset", { u, v });
-			m_pSky->Uniform2f("uUnitSize", { unit, ratio * unit });
-			m_vaSky->Draw(GL_POINTS);
-
-			glDepthMask(GL_TRUE);
-			glDisable(GL_BLEND);
-
-		}
-
-
-		// Draw scene
-		{
-			setupView();
-
-			glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			glm::vec3 lightVector = { 0.0f, 10.0f, 0.0f };
-
-			// Draw ground
-
-			m_pPBR->Use();
-
-			m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-			m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
-			m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
-
-			m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
-			m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
-
-			m_pPBR->UniformTexture("uMap", m_txGroundMap, 0);
-			m_pPBR->UniformTexture("uNormalMap", m_txGroundNormalMap, 1);
-			m_pPBR->UniformTexture("uMetallic", m_txGroundMetallic, 2);
-			m_pPBR->UniformTexture("uRoughness", m_txGroundRoughness, 3);
-			m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
-
-			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
-			m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
-
-
-			m_vaWorld->Draw(GL_TRIANGLES);
-
-
-			// Draw player
-			m_Model.Push();
-			m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
-			m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
-			m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-			m_pPBR->Uniform2f("uUvOffset", { 0, 0 });
-			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
-			m_vaSphere->Draw(GL_TRIANGLES);
-			m_Model.Pop();
-
-
-
-
-			// Draw spheres and rings
-
-			m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
-			m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
-			m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
-
-			for (int32_t x = -10; x <= 10; x++)
+			// Draw sky
 			{
-				for (int32_t y = -10; y <= 10; y++)
+
+				m_Model.Reset();
+				m_View.Reset();
+
+				// It's going to be centered at the camera and drawn like a cubemap
+				// so we just disable depth write
+
+				float unit = 1.0f / 200.0f; // The base unit size of a star, relative to the screen width
+				float ratio = windowSize.x / windowSize.y;
+
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glDepthMask(GL_FALSE);
+
+
+				m_View.LoadIdentity();
+				m_Model.LoadIdentity();
+				//m_View.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 15.0f);
+				m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f });
+				m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
+				m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
+
+				float u = 1.0f - pos.x / m_Stage->GetWidth();
+				float v = 1.0f - pos.y / m_Stage->GetHeight();
+
+				m_pSky->Use();
+				m_pSky->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+				m_pSky->UniformMatrix4f("uView", m_View.GetMatrix());
+				m_pSky->UniformMatrix4f("uModel", m_Model.GetMatrix());
+				m_pSky->UniformTexture("uMap", assets.GetTexture(AssetName::TexStar), 0);
+				m_pSky->Uniform2f("uOffset", { u, v });
+				m_pSky->Uniform2f("uUnitSize", { unit, ratio * unit });
+				m_vaSky->Draw(GL_POINTS);
+
+				glDepthMask(GL_TRUE);
+				glDisable(GL_BLEND);
+
+			}
+
+
+			// Draw scene
+			{
+				setupView();
+
+				glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec3 lightVector = { 0.0f, 10.0f, 0.0f };
+
+				// Draw ground
+
+				m_pPBR->Use();
+
+				m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+				m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
+				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
+
+				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
+				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
+
+				m_pPBR->UniformTexture("uMap", m_txGroundMap, 0);
+				m_pPBR->UniformTexture("uNormalMap", m_txGroundNormalMap, 1);
+				m_pPBR->UniformTexture("uMetallic", m_txGroundMetallic, 2);
+				m_pPBR->UniformTexture("uRoughness", m_txGroundRoughness, 3);
+				m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
+
+				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+				m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
+
+
+				m_vaWorld->Draw(GL_TRIANGLES);
+
+
+				// Draw player
+				m_Model.Push();
+				m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
+				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
+				m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+				m_pPBR->Uniform2f("uUvOffset", { 0, 0 });
+				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+				m_vaSphere->Draw(GL_TRIANGLES);
+				m_Model.Pop();
+
+
+
+
+				// Draw spheres and rings
+				m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
+				m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
+				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
+
+				for (int32_t x = -10; x <= 10; x++)
 				{
-					m_Model.Push();
-					m_Model.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
-					m_pPBR->UniformMatrix4f("uModel", m_Model);
-					drawStageObject(m_Stage->GetValueAt(x + ix, y + iy));
-					m_Model.Pop();
+					for (int32_t y = -10; y <= 10; y++)
+					{
+						m_Model.Push();
+						m_Model.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
+						m_pPBR->UniformMatrix4f("uModel", m_Model);
+						drawStageObject(m_Stage->GetValueAt(x + ix, y + iy));
+						m_Model.Pop();
+					}
 				}
 			}
 		}
+		m_fbDeferred->Unbind();
 
+		// Draw to default frame buffer
+		{
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			m_pDeferred->Use();
+			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
+			m_pDeferred->UniformTexture("uNormal", m_fbDeferred->GetColorAttachment("normal"), 1);
+			m_vaQuad->Draw(GL_TRIANGLES);
+		}
 		
 	}
 	
