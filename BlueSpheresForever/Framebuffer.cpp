@@ -35,8 +35,14 @@ namespace bsf
 		BSF_GLCALL(glDeleteFramebuffers(1, &m_Id));
 	}
 
-	Ref<Texture2D> Framebuffer::AddColorAttachment()
+	Ref<Texture2D> Framebuffer::AddColorAttachment(const std::string& name)
 	{
+		if (m_ColorAttachments.find(name) != m_ColorAttachments.end())
+		{
+			BSF_ERROR("Color attachment '{0}' is already present", name);
+			return nullptr;
+		}
+
 		auto att = MakeRef<Texture2D>();
 		
 		att->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
@@ -50,13 +56,15 @@ namespace bsf
 		BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attIdx, GL_TEXTURE_2D, att->GetId(), 0));
 		Unbind();
 
-		m_ColorAttachments.push_back(att);
+		m_ColorAttachments[name] = att;
+
 		return att;
 	}
 
-	const std::vector<Ref<Texture2D>>& Framebuffer::GetColorAttachments() const
+	Ref<Texture2D> Framebuffer::GetColorAttachment(const std::string& name)
 	{
-		return m_ColorAttachments;
+		auto att = m_ColorAttachments.find(name);
+		return att == m_ColorAttachments.end() ? nullptr : m_ColorAttachments[name];
 	}
 
 	void Framebuffer::Resize(uint32_t width, uint32_t height)
@@ -67,7 +75,7 @@ namespace bsf
 
 		for (auto& ca : m_ColorAttachments)
 		{
-			ca->Bind(0);
+			ca.second->Bind(0);
 			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
 		}
 

@@ -660,8 +660,6 @@ namespace bsf
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 
-
-
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
 		m_vaSphere = CreateIcosphere(0.15, 3);
