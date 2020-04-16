@@ -610,7 +610,7 @@ namespace bsf
 
 		// Framebuffers
 		m_fbReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbReflections->AddColorAttachment();
+		m_fbReflections->AddColorAttachment("reflections");
 		if (!m_fbReflections->Check())
 		{
 			BSF_ERROR("Count't initialize reflection frame buffer");
@@ -877,7 +877,7 @@ namespace bsf
 			m_pPBR->UniformTexture("uMetallic", m_txGroundMetallic, 2);
 			m_pPBR->UniformTexture("uRoughness", m_txGroundRoughness, 3);
 			m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
-			m_pPBR->UniformTexture("uPlanarReflections", m_fbReflections->GetColorAttachments()[0], 5);
+			m_pPBR->UniformTexture("uPlanarReflections", m_fbReflections->GetColorAttachment("reflections"), 5);
 
 			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 			m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
