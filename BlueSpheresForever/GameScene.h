@@ -40,10 +40,10 @@ namespace bsf
 
 		Ref<Renderer2D> m_Renderer2D;
 
-		Ref<Framebuffer> m_fbReflections;
+		Ref<Framebuffer> m_fbDeferred;
 
-		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaSky;
-		Ref<ShaderProgram> m_pPBR, m_pSky;
+		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaSky, m_vaQuad;
+		Ref<ShaderProgram> m_pPBR, m_pSky, m_pDeferred;
 		
 		Ref<Texture2D> m_txGroundMap, m_txGroundNormalMap, m_txGroundMetallic, m_txGroundRoughness, m_txGroundAo;
 		Ref<GameLogic> m_GameLogic;

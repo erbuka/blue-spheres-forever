@@ -102,6 +102,7 @@ static const std::string s_SkyGeometry = R"Geometry(
 
 )Geometry";
 
+
 static const std::string s_SkyFragment = R"Fragment(
 	#version 330 core
 	
@@ -174,7 +175,6 @@ static const std::string s_Fragment = R"Fragment(
 	uniform sampler2D uMetallic;
 	uniform sampler2D uRoughness;
 	uniform sampler2D uAo;
-	uniform sampler2D uPlanarReflections;
 	
 	in vec3 fPosition;
 	in vec2 fUv;
@@ -192,9 +192,7 @@ static const std::string s_Fragment = R"Fragment(
 
 	void main() {
 
-		vec4 screenPos = (uProjection * uView * uModel * vec4(fPosition, 1.0));
 
-		vec3 pref = texture(uPlanarReflections, screenPos.xy / screenPos.w * 0.5 + 0.5).rgb;
 		float metallic = texture(uMetallic, fUv).r;
 		float roughness = texture(uRoughness, fUv).r;
 		float ao = texture(uAo, fUv).r;
@@ -231,7 +229,7 @@ static const std::string s_Fragment = R"Fragment(
 		//vec3 radiance = vec3(23.0, 21.0, 20.0);
 		vec3 radiance = vec3(820.0, 810.0, 800.0);
         float NdotL = max(dot(N, L), 0.0);                
-        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL + pref * F; 
+        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL;
 	
 		vec3 ambient = vec3(0.03) * albedo * ao;
 
@@ -287,6 +285,30 @@ static const std::string s_Fragment = R"Fragment(
 	
 )Fragment";
 
+
+
+static const std::string s_DeferredVertex = R"Vertex(
+	#version 330 core
+
+	layout(location = 0) in vec2 aPosition;
+
+	void main() {
+		gl_Position = vec4(aPosition, 0.0, 1.0);
+	}
+)Vertex";
+
+
+static const std::string s_DeferredFragment = R"Fragment(
+	#version 330 core
+
+	out vec4 oColor;	
+
+	void main() {
+		oColor = vec4(1.0, 0.0, 0.0, 1.0);
+	}
+	
+)Fragment";
+
 #pragma endregion
 
 
@@ -309,6 +331,30 @@ namespace bsf
 		float Size;
 
 	};
+
+#pragma region Utilities
+
+	static Ref<VertexArray> CreateClipSpaceQuad()
+	{
+		auto result = Ref<VertexArray>(new VertexArray({
+			{ "aPosition", AttributeType::Float2 }
+		}));
+
+		std::array<glm::vec2, 6> vertices = {
+			glm::vec2(-1.0f, -1.0f),
+			glm::vec2(1.0f, -1.0f),
+			glm::vec2(1.0f,  1.0f),
+
+			glm::vec2(-1.0f, -1.0f),
+			glm::vec2(1.0f, 1.0f),
+			glm::vec2(-1.0f, 1.0f)
+		};
+
+		result->SetData(vertices.data(), 6, GL_STATIC_DRAW);
+
+		return result;
+	}
+
 
 	static Ref<VertexArray> CreateSkyDome(const Stage& stage)
 	{
@@ -568,6 +614,9 @@ namespace bsf
  
 	}
 
+#pragma endregion
+
+
 	GameScene::GameScene(const Ref<Stage>& stage) :
 		m_Stage(stage)
 	{
@@ -609,21 +658,20 @@ namespace bsf
 		m_Renderer2D = MakeRef<Renderer2D>();
 
 		// Framebuffers
-		m_fbReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbReflections->AddColorAttachment();
-		if (!m_fbReflections->Check())
-		{
-			BSF_ERROR("Count't initialize reflection frame buffer");
-		}
+		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
+
+
 
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
 		m_vaSphere = CreateIcosphere(0.15, 3);
 		m_vaSky = CreateSkyDome(*m_Stage);
+		m_vaQuad = CreateClipSpaceQuad();
 
 		// Programs
 		m_pPBR = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
 		m_pSky = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyGeometry, s_SkyFragment);
+		m_pDeferred = MakeRef<ShaderProgram>(s_DeferredVertex, s_DeferredFragment);
 
 		// Ground map
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
@@ -747,71 +795,15 @@ namespace bsf
 			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 		};
-	
+
 
 		m_Projection.Reset();
 		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
 
-		// Draw reflection buffer
-		{
-			m_fbReflections->Bind();
-
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			
-			setupView();
-
-			glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			glm::vec3 lightVector = { 0.0f, -10.0f, 0.0f };
-
-			// Draw spheres and rings
-
-
-			m_pPBR->Use();
-
-			m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-			m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
-
-			m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
-			m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
-
-			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
-			m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
-
-			m_pPBR->UniformTexture("uPlanarReflections", assets.GetTexture(AssetName::TexBlack), 5);
-
-			m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
-			m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
-			m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
-
-
-			for (int32_t x = -10; x <= 10; x++)
-			{
-				for (int32_t y = -10; y <= 10; y++)
-				{
-					m_Model.Push();
-					m_Model.Translate(Project({ x - fx, y - fy, -0.15f })[0]);
-					//m_Model.Translate({ 0.0f, 0.0f, -0.3f });
-					m_pPBR->UniformMatrix4f("uModel", m_Model);
-					drawStageObject(m_Stage->GetValueAt(x + ix, y + iy));
-					m_Model.Pop();
-				}
-			}
-			
-			m_fbReflections->Unbind();
-		}
-
 		
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		/*
-		m_Renderer2D->Begin(glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
-		m_Renderer2D->Texture(m_fbReflections->GetColorAttachments()[0]);
-		m_Renderer2D->DrawQuad({ 0, 0 });
-		m_Renderer2D->End();
-		return;
-		*/
+
 		// Draw sky
 		{
 
@@ -877,7 +869,6 @@ namespace bsf
 			m_pPBR->UniformTexture("uMetallic", m_txGroundMetallic, 2);
 			m_pPBR->UniformTexture("uRoughness", m_txGroundRoughness, 3);
 			m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
-			m_pPBR->UniformTexture("uPlanarReflections", m_fbReflections->GetColorAttachments()[0], 5);
 
 			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 			m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
@@ -885,7 +876,6 @@ namespace bsf
 
 			m_vaWorld->Draw(GL_TRIANGLES);
 
-			m_pPBR->UniformTexture("uPlanarReflections", assets.GetTexture(AssetName::TexBlack), 5);
 
 			// Draw player
 			m_Model.Push();
@@ -931,6 +921,6 @@ namespace bsf
 	void GameScene::OnResize(const WindowResizedEvent& evt)
 	{
 		glViewport(0, 0, evt.Width, evt.Height);
-		m_fbReflections->Resize(evt.Width, evt.Height);
+		m_fbDeferred->Resize(evt.Width, evt.Height);
 	}
 }
