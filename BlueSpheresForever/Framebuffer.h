@@ -20,6 +20,8 @@ namespace bsf
 
 		Ref<Texture2D> GetColorAttachment(const std::string& name);
 
+		Ref<Texture2D> GetDepthAttachment() { return m_DepthAttachment; }
+
 		void Resize(uint32_t width, uint32_t height);
 
 		void Bind();

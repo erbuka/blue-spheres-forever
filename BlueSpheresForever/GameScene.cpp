@@ -241,8 +241,7 @@ static const std::string s_Fragment = R"Fragment(
 		fragment = fragment / (fragment + vec3(1.0));
 
 		oColor = vec4(fragment, 1.0);
-		//oNormal = vec4((uView * vec4(N, 0.0)).xyz * 0.5 + 0.5, 1.0);
-		oNormal = vec4(1.0);
+		oNormal = vec4((uView * vec4(N, 0.0)).xyz * 0.5 + 0.5, 1.0);
 	}
 
 	float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -308,16 +307,77 @@ static const std::string s_DeferredVertex = R"Vertex(
 
 static const std::string s_DeferredFragment = R"Fragment(
 	#version 330 core
+		
+
+	uniform mat4 uProjection;
+	uniform mat4 uProjectionInv;
 
 	uniform sampler2D uColor;
 	uniform sampler2D uNormal;
+	uniform sampler2D uDepth;
 
 	out vec4 oColor;	
 
 	in vec2 fUv;
 
+	const float cRayMarchStep = 0.03;
+	const float cRayMarchMaxSteps = 100;
+	
+
+	vec3 CalcViewPosition(in vec2 uv) {
+		vec3 rawPosition = vec3(uv, texture(uDepth, uv).r);
+		vec4 screenSpacePosition = vec4(rawPosition * 2.0 - 1.0, 1.0);
+		vec4 viewPosition = uProjectionInv * screenSpacePosition;
+		return viewPosition.xyz / viewPosition.w;
+	}
+
+	bool RayMarch(in vec3 dir, inout vec3 pos, out vec2 uv) {
+		
+		dir *= cRayMarchStep;
+
+		for(int i = 0; i < cRayMarchMaxSteps; i++) {
+			pos += dir;
+			
+			vec4 projectedPos = uProjection * vec4(pos, 1.0);
+
+			projectedPos /= projectedPos.w;			
+
+			uv = clamp(projectedPos.xy * 0.5 + 0.5, 0.0, 1.0);
+
+
+			float currentDepth = projectedPos.z * 0.5 + 0.5;
+			float sampledDepth = texture(uDepth, uv).r;
+
+			if(currentDepth > sampledDepth) {
+				return true;
+			}			
+
+		}
+
+		return false;
+
+	}
+
 	void main() {
-		oColor = texture(uColor, fUv);
+		vec3 albedo = texture(uColor, fUv).rgb;
+
+		vec3 V = CalcViewPosition(fUv);
+		vec3 N = normalize(texture(uNormal, fUv).xyz * 2.0 - 1.0);
+		vec3 R = normalize(reflect(normalize(V), N));
+			
+		vec2 hitUV;
+
+		vec3 color = vec3(0.0);
+		vec3 hitPos = V;
+
+		if(RayMarch(R, hitPos, hitUV)) {
+			color += texture(uColor, hitUV).rgb;
+		}
+
+
+		oColor = vec4(color, 1.0);
+
+	
 	}
 	
 )Fragment";
@@ -753,7 +813,6 @@ namespace bsf
 				m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
 		}
 
-		glEnable(GL_FRAMEBUFFER_SRGB);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
@@ -811,7 +870,7 @@ namespace bsf
 
 
 		m_Projection.Reset();
-		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 1000.0f);
+		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 30.0f);
 
 		// Draw to deferred frame buffer
 		m_fbDeferred->Bind();
@@ -922,18 +981,31 @@ namespace bsf
 					}
 				}
 			}
+
+
 		}
 		m_fbDeferred->Unbind();
 
 		// Draw to default frame buffer
 		{
+			glEnable(GL_FRAMEBUFFER_SRGB);
+
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			m_pDeferred->Use();
+				
+			m_pDeferred->UniformMatrix4f("uProjection", m_Projection);
+			m_pDeferred->UniformMatrix4f("uProjectionInv", glm::inverse(m_Projection.GetMatrix()));
+
 			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
 			m_pDeferred->UniformTexture("uNormal", m_fbDeferred->GetColorAttachment("normal"), 1);
+			m_pDeferred->UniformTexture("uDepth", m_fbDeferred->GetDepthAttachment(), 2);
 			m_vaQuad->Draw(GL_TRIANGLES);
+			
+			glDisable(GL_FRAMEBUFFER_SRGB);
+
+
 		}
 		
 	}

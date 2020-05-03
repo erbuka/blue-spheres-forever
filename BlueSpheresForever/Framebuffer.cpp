@@ -82,7 +82,7 @@ namespace bsf
 		if (m_DepthAttachment != nullptr)
 		{
 			m_DepthAttachment->Bind(0);
-			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_Width, m_Height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
+			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, m_Width, m_Height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
 		}
 
 	}
