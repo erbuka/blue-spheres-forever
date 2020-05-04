@@ -35,7 +35,7 @@ namespace bsf
 		BSF_GLCALL(glDeleteFramebuffers(1, &m_Id));
 	}
 
-	Ref<Texture2D> Framebuffer::AddColorAttachment(const std::string& name)
+	Ref<Texture2D> Framebuffer::AddColorAttachment(const std::string& name, GLenum internalFormat, GLenum format, GLenum type)
 	{
 		if (m_ColorAttachments.find(name) != m_ColorAttachments.end())
 		{
@@ -48,7 +48,7 @@ namespace bsf
 		att->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
 		att->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
 		att->Bind(0);
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
+		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_Width, m_Height, 0, format, type, 0));
 
 		uint32_t attIdx = m_ColorAttachments.size();
 		

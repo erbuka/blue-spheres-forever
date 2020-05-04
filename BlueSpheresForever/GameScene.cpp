@@ -113,10 +113,12 @@ static const std::string s_SkyFragment = R"Fragment(
 	
 	layout(location = 0) out vec4 oColor;
 	layout(location = 1) out vec4 oNormal;
+	layout(location = 2) out vec3 oPosition;
 
 	void main() {
 		oColor = texture(uMap, fUv) * vec4(fColor, 1.0);
-		oNormal = vec4(1.0);
+		oNormal = vec4(0.0);
+		oPosition = vec3(0.0, 0.0, 10000.0);
 	}
 
 
@@ -185,6 +187,7 @@ static const std::string s_Fragment = R"Fragment(
 
 	layout(location = 0) out vec4 oColor;
 	layout(location = 1) out vec4 oNormal;
+	layout(location = 2) out vec3 oPosition;
 
 	const float PI = 3.14159265359;
 
@@ -201,10 +204,12 @@ static const std::string s_Fragment = R"Fragment(
 		float ao = texture(uAo, fUv).r;
 		
 		vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
+		vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
+		vec3 viewPos = (uView * vec4(worldPos, 1.0)).xyz;
 
 		vec3 N = normalize(normal);
-		vec3 V = normalize(uCameraPos - (uModel * vec4(fPosition, 1.0)).xyz);
-		vec3 L = normalize(uLightPos - (uModel * vec4(fPosition, 1.0)).xyz);
+		vec3 V = normalize(uCameraPos - worldPos);
+		vec3 L = normalize(uLightPos - worldPos);
 		vec3 H = normalize(V + L);
 		vec3 R = reflect(-V, N);
 
@@ -242,6 +247,7 @@ static const std::string s_Fragment = R"Fragment(
 
 		oColor = vec4(fragment, 1.0);
 		oNormal = vec4((uView * vec4(N, 0.0)).xyz * 0.5 + 0.5, 1.0);
+		oPosition = viewPos;
 	}
 
 	float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -314,7 +320,7 @@ static const std::string s_DeferredFragment = R"Fragment(
 
 	uniform sampler2D uColor;
 	uniform sampler2D uNormal;
-	uniform sampler2D uDepth;
+	uniform sampler2D uPosition;
 
 	out vec4 oColor;	
 
@@ -325,10 +331,7 @@ static const std::string s_DeferredFragment = R"Fragment(
 	
 
 	vec3 CalcViewPosition(in vec2 uv) {
-		vec3 rawPosition = vec3(uv, texture(uDepth, uv).r);
-		vec4 screenSpacePosition = vec4(rawPosition * 2.0 - 1.0, 1.0);
-		vec4 viewPosition = uProjectionInv * screenSpacePosition;
-		return viewPosition.xyz / viewPosition.w;
+		return texture(uPosition, uv).xyz;
 	}
 
 	bool RayMarch(in vec3 dir, inout vec3 pos, out vec2 uv) {
@@ -345,10 +348,10 @@ static const std::string s_DeferredFragment = R"Fragment(
 			uv = clamp(projectedPos.xy * 0.5 + 0.5, 0.0, 1.0);
 
 
-			float currentDepth = projectedPos.z * 0.5 + 0.5;
-			float sampledDepth = texture(uDepth, uv).r;
+			float rayDepth = pos.z;
+			float sceneDepth = CalcViewPosition(uv).z;
 
-			if(currentDepth > sampledDepth) {
+			if(rayDepth < sceneDepth) {
 				return true;
 			}			
 
@@ -734,6 +737,7 @@ namespace bsf
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbDeferred->AddColorAttachment("color");
 		m_fbDeferred->AddColorAttachment("normal");
+		m_fbDeferred->AddColorAttachment("position", GL_RGB32F, GL_RGB, GL_FLOAT);
 
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
@@ -879,6 +883,7 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Draw sky
+			/*
 			{
 
 				m_Model.Reset();
@@ -918,6 +923,7 @@ namespace bsf
 				glDisable(GL_BLEND);
 
 			}
+			*/
 
 
 			// Draw scene
@@ -1000,7 +1006,7 @@ namespace bsf
 
 			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
 			m_pDeferred->UniformTexture("uNormal", m_fbDeferred->GetColorAttachment("normal"), 1);
-			m_pDeferred->UniformTexture("uDepth", m_fbDeferred->GetDepthAttachment(), 2);
+			m_pDeferred->UniformTexture("uPosition", m_fbDeferred->GetColorAttachment("position"), 2);
 			m_vaQuad->Draw(GL_TRIANGLES);
 			
 			glDisable(GL_FRAMEBUFFER_SRGB);

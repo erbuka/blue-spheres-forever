@@ -4,6 +4,7 @@
 
 #include <cinttypes>
 #include <unordered_map>
+#include <glad/glad.h>
 
 namespace bsf
 {
@@ -16,7 +17,7 @@ namespace bsf
 		Framebuffer(uint32_t width, uint32_t height, bool hasDepth);
 		~Framebuffer();
 
-		Ref<Texture2D> AddColorAttachment(const std::string& name);
+		Ref<Texture2D> AddColorAttachment(const std::string& name, GLenum internalFormat = GL_RGBA8, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE);
 
 		Ref<Texture2D> GetColorAttachment(const std::string& name);
 
