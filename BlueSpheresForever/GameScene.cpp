@@ -326,7 +326,7 @@ static const std::string s_DeferredFragment = R"Fragment(
 
 	in vec2 fUv;
 
-	const float cRayMarchStep = 0.03;
+	const float cRayMarchStep = 0.02;
 	const float cRayMarchMaxSteps = 100;
 	
 
@@ -351,8 +351,12 @@ static const std::string s_DeferredFragment = R"Fragment(
 			float rayDepth = pos.z;
 			float sceneDepth = CalcViewPosition(uv).z;
 			float diff = rayDepth - sceneDepth;
+			
+			if(diff < -cRayMarchStep) {
+				return false;
+			}	
 
-			if(diff < 0 && diff > -cRayMarchStep) {
+			if(diff < 0) {
 				return true;
 			}			
 
