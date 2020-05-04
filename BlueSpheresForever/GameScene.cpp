@@ -325,40 +325,47 @@ static const std::string s_DeferredFragment = R"Fragment(
 	out vec4 oColor;	
 
 	in vec2 fUv;
-
-	const float cRayMarchStep = 0.02;
-	const float cRayMarchMaxSteps = 100;
 	
+	const float cRayMarchDistance = 5.0;
+	const float cRayMarchMaxSteps = 100;
+	const float cRayMarchStep = cRayMarchDistance / cRayMarchMaxSteps;
+
 
 	vec3 CalcViewPosition(in vec2 uv) {
 		return texture(uPosition, uv).xyz;
 	}
 
-	bool RayMarch(in vec3 dir, inout vec3 pos, out vec2 uv) {
+	bool RayMarch(in vec3 rayDir, in vec3 rayPos, out vec3 hitPos, out vec2 hitUv) {
 		
-		dir *= cRayMarchStep;
+		rayDir *= cRayMarchStep;
+
+		vec3 pos0 = rayPos;
+		vec3 pos1 = rayPos + rayDir;
 
 		for(int i = 0; i < cRayMarchMaxSteps; i++) {
-			pos += dir;
 			
-			vec4 projectedPos = uProjection * vec4(pos, 1.0);
+			vec4 projectedPos = uProjection * vec4(pos1, 1.0);
 
 			projectedPos /= projectedPos.w;			
 
-			uv = clamp(projectedPos.xy * 0.5 + 0.5, 0.0, 1.0);
+			hitUv = clamp(projectedPos.xy * 0.5 + 0.5, 0.0, 1.0);
 
-
-			float rayDepth = pos.z;
-			float sceneDepth = CalcViewPosition(uv).z;
+			float rayDepth = pos1.z;
+			float sceneDepth = CalcViewPosition(hitUv).z;
 			float diff = rayDepth - sceneDepth;
 			
-			if(diff < -cRayMarchStep) {
-				return false;
-			}	
+			/*
+			if(diff < -cRayMarchStep / 2.0f) {
+				return false;				
+			}
+			*/	
 
 			if(diff < 0) {
 				return true;
 			}			
+
+			pos0 += rayDir;
+			pos1 += rayDir;
 
 		}
 
@@ -373,13 +380,13 @@ static const std::string s_DeferredFragment = R"Fragment(
 		vec3 N = normalize(texture(uNormal, fUv).xyz * 2.0 - 1.0);
 		vec3 R = normalize(reflect(normalize(V), N));
 			
-		vec2 hitUV;
-
 		vec3 color = vec3(0.0);
-		vec3 hitPos = V;
 
-		if(RayMarch(R, hitPos, hitUV)) {
-			color += texture(uColor, hitUV).rgb;
+		vec2 hitUv;
+		vec3 hitPos;
+
+		if(RayMarch(R, V, hitPos, hitUv)) {
+			color += texture(uColor, hitUv).rgb;
 		}
 
 
