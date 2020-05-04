@@ -313,7 +313,6 @@ static const std::string s_DeferredVertex = R"Vertex(
 
 static const std::string s_DeferredFragment = R"Fragment(
 	#version 330 core
-		
 
 	uniform mat4 uProjection;
 	uniform mat4 uProjectionInv;
@@ -322,77 +321,12 @@ static const std::string s_DeferredFragment = R"Fragment(
 	uniform sampler2D uNormal;
 	uniform sampler2D uPosition;
 
-	out vec4 oColor;	
-
 	in vec2 fUv;
+
+	out vec4 oColor;	
 	
-	const float cRayMarchDistance = 5.0;
-	const float cRayMarchMaxSteps = 100;
-	const float cRayMarchStep = cRayMarchDistance / cRayMarchMaxSteps;
-
-
-	vec3 CalcViewPosition(in vec2 uv) {
-		return texture(uPosition, uv).xyz;
-	}
-
-	bool RayMarch(in vec3 rayDir, in vec3 rayPos, out vec3 hitPos, out vec2 hitUv) {
-		
-		rayDir *= cRayMarchStep;
-
-		vec3 pos0 = rayPos;
-		vec3 pos1 = rayPos + rayDir;
-
-		for(int i = 0; i < cRayMarchMaxSteps; i++) {
-			
-			vec4 projectedPos = uProjection * vec4(pos1, 1.0);
-
-			projectedPos /= projectedPos.w;			
-
-			hitUv = clamp(projectedPos.xy * 0.5 + 0.5, 0.0, 1.0);
-
-			float rayDepth = pos1.z;
-			float sceneDepth = CalcViewPosition(hitUv).z;
-			float diff = rayDepth - sceneDepth;
-			
-			/*
-			if(diff < -cRayMarchStep / 2.0f) {
-				return false;				
-			}
-			*/	
-
-			if(diff < 0) {
-				return true;
-			}			
-
-			pos0 += rayDir;
-			pos1 += rayDir;
-
-		}
-
-		return false;
-
-	}
-
 	void main() {
-		vec3 albedo = texture(uColor, fUv).rgb;
-
-		vec3 V = CalcViewPosition(fUv);
-		vec3 N = normalize(texture(uNormal, fUv).xyz * 2.0 - 1.0);
-		vec3 R = normalize(reflect(normalize(V), N));
-			
-		vec3 color = vec3(0.0);
-
-		vec2 hitUv;
-		vec3 hitPos;
-
-		if(RayMarch(R, V, hitPos, hitUv)) {
-			color += texture(uColor, hitUv).rgb;
-		}
-
-
-		oColor = vec4(color, 1.0);
-
-	
+		oColor = vec4(texture(uColor, fUv).rgb, 1.0);
 	}
 	
 )Fragment";
@@ -748,7 +682,7 @@ namespace bsf
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbDeferred->AddColorAttachment("color");
-		m_fbDeferred->AddColorAttachment("normal");
+		m_fbDeferred->AddColorAttachment("normal", GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
 		m_fbDeferred->AddColorAttachment("position", GL_RGB32F, GL_RGB, GL_FLOAT);
 
 		// Vertex arrays
@@ -895,7 +829,7 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Draw sky
-			/*
+			
 			{
 
 				m_Model.Reset();
@@ -935,7 +869,7 @@ namespace bsf
 				glDisable(GL_BLEND);
 
 			}
-			*/
+			
 
 
 			// Draw scene
