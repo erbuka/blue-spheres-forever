@@ -22,7 +22,7 @@ namespace bsf
 			m_DepthAttachment->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
 			m_DepthAttachment->Bind(0);
 
-			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
+			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
 			BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_DepthAttachment->GetId(), 0));
 		}
 
@@ -56,7 +56,7 @@ namespace bsf
 		BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attIdx, GL_TEXTURE_2D, att->GetId(), 0));
 		Unbind();
 
-		m_ColorAttachments[name] = att;
+		m_ColorAttachments[name] = { internalFormat, format, type, att };
 
 		return att;
 	}
@@ -64,7 +64,7 @@ namespace bsf
 	Ref<Texture2D> Framebuffer::GetColorAttachment(const std::string& name)
 	{
 		auto att = m_ColorAttachments.find(name);
-		return att == m_ColorAttachments.end() ? nullptr : m_ColorAttachments[name];
+		return att == m_ColorAttachments.end() ? nullptr : m_ColorAttachments[name].Texture;
 	}
 
 	void Framebuffer::Resize(uint32_t width, uint32_t height)
@@ -75,8 +75,8 @@ namespace bsf
 
 		for (auto& ca : m_ColorAttachments)
 		{
-			ca.second->Bind(0);
-			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
+			ca.second.Texture->Bind(0);
+			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, ca.second.InternalFormat, m_Width, m_Height, 0, ca.second.Format, ca.second.Type, 0));
 		}
 
 		if (m_DepthAttachment != nullptr)

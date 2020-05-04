@@ -350,8 +350,9 @@ static const std::string s_DeferredFragment = R"Fragment(
 
 			float rayDepth = pos.z;
 			float sceneDepth = CalcViewPosition(uv).z;
+			float diff = rayDepth - sceneDepth;
 
-			if(rayDepth < sceneDepth) {
+			if(diff < 0 && diff > -cRayMarchStep) {
 				return true;
 			}			
 

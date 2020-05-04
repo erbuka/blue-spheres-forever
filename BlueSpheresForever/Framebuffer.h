@@ -14,6 +14,7 @@ namespace bsf
 	{
 	public:
 
+
 		Framebuffer(uint32_t width, uint32_t height, bool hasDepth);
 		~Framebuffer();
 
@@ -32,8 +33,14 @@ namespace bsf
 
 	private:
 
+		struct ColorAttachment
+		{
+			GLenum InternalFormat, Format, Type;
+			Ref<Texture2D> Texture;
+		};
+
 		Ref<Texture2D> m_DepthAttachment;
-		std::unordered_map<std::string, Ref<Texture2D>> m_ColorAttachments;
+		std::unordered_map<std::string, ColorAttachment> m_ColorAttachments;
 
 		uint32_t m_Id;
 		uint32_t m_Width, m_Height;
