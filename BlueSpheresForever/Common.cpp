@@ -41,11 +41,13 @@ namespace bsf
 			std::vector<GLchar> infoLog(maxLength);
 			glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
 
+
 			// We don't need the shader anymore.
 			glDeleteShader(shader);
 
 			// Use the infoLog as you see fit.
 			BSF_ERROR("There were some errors while compiling the shader: {0}", infoLog.data());
+			BSF_ERROR("**** Code ****\n{0}**** End Code ****", shaderSource.Source);
 
 			// In this simple program, we'll just leave
 			return 0;
@@ -93,6 +95,7 @@ namespace bsf
 
 			// Use the infoLog as you see fit.
 			BSF_ERROR("There were some errors while linking the program: {0}", infoLog.data());
+
 
 			// In this simple program, we'll just leave
 			return 0;

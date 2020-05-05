@@ -58,6 +58,13 @@ namespace bsf
 			m_Textures[AssetName::TexStar] = star;
 		}
 
+		{
+			auto brdf = MakeRef<Texture2D>("assets/textures/ibl_brdf_lut.png");
+			brdf->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			brdf->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_Textures[AssetName::TexBRDFLut] = brdf;
+		}
+
 
 
 	}

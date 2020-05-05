@@ -17,7 +17,8 @@ namespace bsf
 		TexBumper,
 		TexSphereMetallic,
 		TexSphereRoughness,
-		TexStar
+		TexStar,
+		TexBRDFLut,
 	};
 
 

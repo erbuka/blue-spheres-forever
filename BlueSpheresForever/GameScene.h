@@ -18,6 +18,7 @@ namespace bsf
 	class TextureCube;
 	class Framebuffer;
 	class Renderer2D;
+	class CubeCamera;
 
 	class GameScene : public Scene
 	{
@@ -32,19 +33,19 @@ namespace bsf
 		void OnResize(const WindowResizedEvent& evt);
 
 	private:
-		
 
+		void GenerateSkyBox(const glm::vec2& position, const glm::vec2& windowSize);
 
 		std::vector<Unsubscribe> m_Subscriptions;
 		MatrixStack m_Model, m_View, m_Projection;
 
 		Ref<Renderer2D> m_Renderer2D;
-
 		Ref<Framebuffer> m_fbDeferred;
 
-		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaSky, m_vaQuad;
-		Ref<ShaderProgram> m_pPBR, m_pSky, m_pDeferred;
+		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaStars, m_vaQuad, m_vaSkyBox;
+		Ref<ShaderProgram> m_pPBR, m_pStars, m_pSky, m_pDeferred, m_pSkyBox;
 		
+		Ref<CubeCamera> m_ccSkyBox;
 		Ref<Texture2D> m_txGroundMap, m_txGroundNormalMap, m_txGroundMetallic, m_txGroundRoughness, m_txGroundAo;
 		Ref<GameLogic> m_GameLogic;
 		

@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "Assets.h"
 #include "Renderer2D.h"
+#include "CubeCamera.h"
 
 #include <array>
 #include <vector>
@@ -24,7 +25,7 @@
 
 bool paused = false;
 
-static const std::string s_SkyVertex = R"Vertex(
+static const std::string s_StarsVertex = R"Vertex(
 	#version 330 core
 
 	uniform mat4 uProjection;
@@ -68,7 +69,7 @@ static const std::string s_SkyVertex = R"Vertex(
 
 )Vertex";
 
-static const std::string s_SkyGeometry = R"Geometry(
+static const std::string s_StarsGeometry = R"Geometry(
 	#version 330
 	
 	uniform vec2 uUnitSize;
@@ -103,7 +104,7 @@ static const std::string s_SkyGeometry = R"Geometry(
 )Geometry";
 
 
-static const std::string s_SkyFragment = R"Fragment(
+static const std::string s_StarsFragment = R"Fragment(
 	#version 330 core
 	
 	uniform sampler2D uMap;
@@ -112,13 +113,13 @@ static const std::string s_SkyFragment = R"Fragment(
 	in vec2 fUv;
 	
 	layout(location = 0) out vec4 oColor;
-	layout(location = 1) out vec4 oNormal;
+	layout(location = 1) out vec3 oNormal;
 	layout(location = 2) out vec3 oPosition;
 
 	void main() {
 		oColor = texture(uMap, fUv) * vec4(fColor, 1.0);
-		oNormal = vec4(0.0);
-		oPosition = vec3(0.0, 0.0, 10000.0);
+		oNormal = vec3(0.0);
+		oPosition = vec3(0.0, 0.0, -1000.0);
 	}
 
 
@@ -174,11 +175,16 @@ static const std::string s_Fragment = R"Fragment(
 
 	uniform vec4 uColor;
 
+	uniform vec3 uSkyColor0;
+	uniform vec3 uSkyColor1;
+
 	uniform sampler2D uMap;
 	uniform sampler2D uNormalMap;
 	uniform sampler2D uMetallic;
 	uniform sampler2D uRoughness;
 	uniform sampler2D uAo;
+
+	uniform sampler2D uBRDFLut;
 	
 	in vec3 fPosition;
 	in vec2 fUv;
@@ -186,7 +192,7 @@ static const std::string s_Fragment = R"Fragment(
 	in mat3 fTBN;
 
 	layout(location = 0) out vec4 oColor;
-	layout(location = 1) out vec4 oNormal;
+	layout(location = 1) out vec3 oNormal;
 	layout(location = 2) out vec3 oPosition;
 
 	const float PI = 3.14159265359;
@@ -196,6 +202,10 @@ static const std::string s_Fragment = R"Fragment(
 	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 	vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
 
+	vec3 GetSkyColor(in vec3 dir) {
+		return mix(uSkyColor1, uSkyColor0, clamp(dir.y, 0.0, 1.0));
+	} 
+
 	void main() {
 
 
@@ -203,16 +213,20 @@ static const std::string s_Fragment = R"Fragment(
 		float roughness = texture(uRoughness, fUv).r;
 		float ao = texture(uAo, fUv).r;
 		
-		vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
+		//vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
+		vec3 normal = fTBN[2];
 		vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
 		vec3 viewPos = (uView * vec4(worldPos, 1.0)).xyz;
 
 		vec3 N = normalize(normal);
 		vec3 V = normalize(uCameraPos - worldPos);
-		vec3 L = normalize(uLightPos - worldPos);
+		vec3 L = normalize(uLightPos);
 		vec3 H = normalize(V + L);
 		vec3 R = reflect(-V, N);
 
+        float NdotL = max(dot(N, L), 0.0);                
+		float NdotV = max(dot(N, V), 0.0);
+		
 		vec3 albedo = (texture(uMap, fUv) * uColor).rgb;
 			
 		albedo.r = pow(albedo.r, 2.2);
@@ -223,30 +237,32 @@ static const std::string s_Fragment = R"Fragment(
 
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
-        vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);       
+        vec3 F    = fresnelSchlick(max(dot(N, H), 0.0), F0, roughness);       
         
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
         kD *= 1.0 - metallic;	  
         
         vec3 numerator    = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        float denominator = 4.0 * NdotV * NdotL;
         vec3 specular     = numerator / max(denominator, 0.001);  
             
         // add to outgoing radiance Lo
-		//vec3 radiance = vec3(23.0, 21.0, 20.0);
 		vec3 radiance = vec3(820.0, 810.0, 800.0);
-        float NdotL = max(dot(N, L), 0.0);                
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL;
-	
-		vec3 ambient = vec3(0.03) * albedo * ao;
 
-		vec3 fragment = ambient + color;		
+		// sky reflections
+		vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
+		vec3 indirectSpecular = GetSkyColor(R) * (F * envBrdf.x + envBrdf.y);
+		vec3 ambient = (vec3(0.03) * albedo + indirectSpecular) * ao;
+
+		vec3 fragment = ambient + color;
 
 		fragment = fragment / (fragment + vec3(1.0));
 
+		//oColor = vec4(fragment, 1.0);
 		oColor = vec4(fragment, 1.0);
-		oNormal = vec4((uView * vec4(N, 0.0)).xyz * 0.5 + 0.5, 1.0);
+		oNormal = (uView * vec4(N, 0.0)).xyz * 0.5 + 0.5;
 		oPosition = viewPos;
 	}
 
@@ -297,7 +313,7 @@ static const std::string s_Fragment = R"Fragment(
 
 
 
-static const std::string s_DeferredVertex = R"Vertex(
+static const std::string s_ScreenVertex = R"Vertex(
 	#version 330 core
 
 	layout(location = 0) in vec2 aPosition;
@@ -310,6 +326,27 @@ static const std::string s_DeferredVertex = R"Vertex(
 	}
 )Vertex";
 
+static const std::string s_SkyFragment = R"Vertex(
+	#version 330 core
+
+	uniform vec3 uColor0;
+	uniform vec3 uColor1;
+
+	in vec2 fUv;
+	
+	layout(location = 0) out vec4 oColor;
+	layout(location = 1) out vec3 oNormal;
+	layout(location = 2) out vec3 oPosition;	
+
+	void main() {
+		float t = clamp(fUv.y * 2.0 - 1.0, 0.0, 1.0);
+
+		oColor = vec4(mix(uColor1, uColor0, t), 1.0);
+		oNormal = vec3(0.0);
+		oPosition = vec3(0.0, 0.0, -1000.0);
+	}
+
+)Vertex";
 
 static const std::string s_DeferredFragment = R"Fragment(
 	#version 330 core
@@ -327,6 +364,42 @@ static const std::string s_DeferredFragment = R"Fragment(
 	
 	void main() {
 		oColor = vec4(texture(uColor, fUv).rgb, 1.0);
+	}
+	
+)Fragment";
+
+
+static const std::string s_SkyBoxVertex = R"Vertex(
+	#version 330 core
+
+	uniform mat4 uProjection;	
+
+	layout(location = 0) in vec3 aPosition;
+
+	out vec3 fPosition;
+
+	void main() {
+		gl_Position = uProjection * vec4(aPosition, 1.0);
+		fPosition = aPosition;
+	}
+	
+)Vertex";
+
+static const std::string s_SkyBoxFragment = R"Fragment(
+	#version 330 core
+	
+	uniform samplerCube uSkyBox;
+
+	in vec3 fPosition;
+
+	layout(location = 0) out vec4 oColor;
+	layout(location = 1) out vec3 oNormal;
+	layout(location = 2) out vec3 oPosition;
+
+	void main() {
+		oColor = vec4(texture(uSkyBox, fPosition).rgb, 1.0);
+		oNormal = vec3(0.0);
+		oPosition = fPosition * 100.0;
 	}
 	
 )Fragment";
@@ -682,19 +755,22 @@ namespace bsf
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbDeferred->AddColorAttachment("color");
-		m_fbDeferred->AddColorAttachment("normal", GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
+		m_fbDeferred->AddColorAttachment("normal", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 		m_fbDeferred->AddColorAttachment("position", GL_RGB32F, GL_RGB, GL_FLOAT);
 
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
 		m_vaSphere = CreateIcosphere(0.15, 3);
-		m_vaSky = CreateSkyDome(*m_Stage);
+		m_vaStars = CreateSkyDome(*m_Stage);
 		m_vaQuad = CreateClipSpaceQuad();
+		m_vaSkyBox = CreateSkyBox();
 
 		// Programs
 		m_pPBR = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
-		m_pSky = MakeRef<ShaderProgram>(s_SkyVertex, s_SkyGeometry, s_SkyFragment);
-		m_pDeferred = MakeRef<ShaderProgram>(s_DeferredVertex, s_DeferredFragment);
+		m_pStars = MakeRef<ShaderProgram>(s_StarsVertex, s_StarsGeometry, s_StarsFragment);
+		m_pSky = MakeRef<ShaderProgram>(s_ScreenVertex, s_SkyFragment);
+		m_pDeferred = MakeRef<ShaderProgram>(s_ScreenVertex, s_DeferredFragment);
+		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
 
 		// Ground map
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
@@ -742,7 +818,8 @@ namespace bsf
 
 		m_txGroundAo = std::dynamic_pointer_cast<Texture2D>(Assets::Get().GetTexture(AssetName::TexWhite));
 
-
+		// Sky box camera
+		m_ccSkyBox = MakeRef<CubeCamera>(2048);
 	}
 	
 	void GameScene::OnRender(Application& app, const Time& time)
@@ -818,59 +895,37 @@ namespace bsf
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 		};
 
-
 		m_Projection.Reset();
 		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 30.0f);
+
+		// Render skybox
+		{
+			m_Model.Reset();
+			m_View.Reset();
+			GenerateSkyBox(pos, windowSize);
+		}
+
+		// Begin scene
+		glViewport(0, 0, windowSize.x, windowSize.y);
 
 		// Draw to deferred frame buffer
 		m_fbDeferred->Bind();
 		{
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+			glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// Draw sky
+			// Draw Sky
 			
 			{
-
-				m_Model.Reset();
-				m_View.Reset();
-
-				// It's going to be centered at the camera and drawn like a cubemap
-				// so we just disable depth write
-
-				float unit = 1.0f / 200.0f; // The base unit size of a star, relative to the screen width
-				float ratio = windowSize.x / windowSize.y;
-
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glDepthMask(GL_FALSE);
-
-
-				m_View.LoadIdentity();
-				m_Model.LoadIdentity();
-				//m_View.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 15.0f);
-				m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f });
-				m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
-				m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
-
-				float u = 1.0f - pos.x / m_Stage->GetWidth();
-				float v = 1.0f - pos.y / m_Stage->GetHeight();
-
-				m_pSky->Use();
-				m_pSky->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-				m_pSky->UniformMatrix4f("uView", m_View.GetMatrix());
-				m_pSky->UniformMatrix4f("uModel", m_Model.GetMatrix());
-				m_pSky->UniformTexture("uMap", assets.GetTexture(AssetName::TexStar), 0);
-				m_pSky->Uniform2f("uOffset", { u, v });
-				m_pSky->Uniform2f("uUnitSize", { unit, ratio * unit });
-				m_vaSky->Draw(GL_POINTS);
-
+				m_pSkyBox->Use();
+				m_pSkyBox->UniformMatrix4f("uProjection", m_Projection);
+				m_pSkyBox->UniformTexture("uSkyBox", m_ccSkyBox->GetTexture(), 0);
+				m_vaSkyBox->Draw(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
-				glDisable(GL_BLEND);
-
 			}
 			
-
 
 			// Draw scene
 			{
@@ -890,11 +945,17 @@ namespace bsf
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
 
+				m_pPBR->Uniform3fv("uSkyColor0", 1, glm::value_ptr(m_Stage->SkyColors[0]));
+				m_pPBR->Uniform3fv("uSkyColor1", 1, glm::value_ptr(m_Stage->SkyColors[1]));
+
 				m_pPBR->UniformTexture("uMap", m_txGroundMap, 0);
 				m_pPBR->UniformTexture("uNormalMap", m_txGroundNormalMap, 1);
 				m_pPBR->UniformTexture("uMetallic", m_txGroundMetallic, 2);
 				m_pPBR->UniformTexture("uRoughness", m_txGroundRoughness, 3);
 				m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
+
+				m_pPBR->UniformTexture("uBRDFLut", assets.GetTexture(AssetName::TexBRDFLut), 5);
+				
 
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 				m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
@@ -917,6 +978,7 @@ namespace bsf
 
 
 				// Draw spheres and rings
+				m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
 				m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
 				m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
 				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
@@ -972,5 +1034,75 @@ namespace bsf
 	{
 		glViewport(0, 0, evt.Width, evt.Height);
 		m_fbDeferred->Resize(evt.Width, evt.Height);
+	}
+
+	void GameScene::GenerateSkyBox(const glm::vec2& position, const glm::vec2& windowSize)
+	{
+		auto& assets = Assets::Get();
+
+		static std::array<TextureCubeFace, 6> faces = {
+			TextureCubeFace::Right,
+			TextureCubeFace::Left,
+			TextureCubeFace::Top,
+			TextureCubeFace::Bottom,
+			TextureCubeFace::Front,
+			TextureCubeFace::Back
+		};
+
+		for (auto face : faces) {
+			m_ccSkyBox->BindForRender(face);
+
+			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+			// Draw sky 
+			{
+				glDepthMask(GL_FALSE);
+				m_pSky->Use();
+				m_pSky->Uniform3fv("uColor0", 1, glm::value_ptr(m_Stage->SkyColors[0]));
+				m_pSky->Uniform3fv("uColor1", 1, glm::value_ptr(m_Stage->SkyColors[1]));
+				m_vaQuad->Draw(GL_TRIANGLES);
+				glDepthMask(GL_TRUE);
+			}
+
+			// Draw stars
+			{
+
+				m_Model.Reset();
+
+				// It's going to be centered at the camera and drawn like a cubemap
+				// so we just disable depth write
+
+				float unit = 1.0f / 200.0f; // The base unit size of a star, relative to the screen width
+				float ratio = windowSize.x / windowSize.y;
+
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glDepthMask(GL_FALSE);
+
+				m_Model.LoadIdentity();
+				m_Model.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f });
+				m_Model.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
+				m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
+
+				float u = 1.0f - position.x / m_Stage->GetWidth();
+				float v = 1.0f - position.y / m_Stage->GetHeight();
+
+				m_pStars->Use();
+				m_pStars->UniformMatrix4f("uProjection", m_ccSkyBox->GetProjectionMatrix());
+				m_pStars->UniformMatrix4f("uView", m_ccSkyBox->GetViewMatrix());
+				m_pStars->UniformMatrix4f("uModel", m_Model.GetMatrix());
+				m_pStars->UniformTexture("uMap", assets.GetTexture(AssetName::TexStar), 0);
+				m_pStars->Uniform2f("uOffset", { u, v });
+				m_pStars->Uniform2f("uUnitSize", { unit, ratio * unit });
+				m_vaStars->Draw(GL_POINTS);
+
+				glDepthMask(GL_TRUE);
+				glDisable(GL_BLEND);
+
+			}
+
+		}
+
+
 	}
 }

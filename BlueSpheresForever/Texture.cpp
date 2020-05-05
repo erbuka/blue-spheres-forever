@@ -185,8 +185,7 @@ namespace bsf
 
 		std::array<std::string, 6> files = { front, back, left, right, bottom, top };
 
-		BSF_GLCALL(glGenTextures(1, &m_Id));
-		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
+		Initialize();
 		
 		for (uint32_t i = 0; i < files.size(); i++)
 		{
@@ -203,9 +202,8 @@ namespace bsf
 	{
 		m_Width = width;
 		m_Height = height;
-
-		BSF_GLCALL(glGenTextures(1, &m_Id));
-		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
+			
+		Initialize();
 
 		std::vector<uint32_t> pixels(width * height);
 		std::fill(pixels.begin(), pixels.end(), 0xffffffff);
@@ -242,5 +240,12 @@ namespace bsf
 		{
 			BSF_GLCALL(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 		}
+	}
+	void TextureCube::Initialize()
+	{
+		BSF_GLCALL(glGenTextures(1, &m_Id));
+		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
+		Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
+		Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 	}
 }

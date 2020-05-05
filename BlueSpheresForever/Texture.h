@@ -22,9 +22,14 @@ namespace bsf
 		LinearMipmapLinear
 	};
 
-	enum class TextureCubeFace
+	enum class TextureCubeFace : int32_t
 	{
-		Front, Back, Left, Right, Bottom, Top
+		Right = 0,
+		Left = 1,
+		Top = 2,
+		Bottom = 3,
+		Front = 4,
+		Back = 5
 	};
 
 	class Texture
@@ -57,12 +62,12 @@ namespace bsf
 		TextureCube(TextureCube&&) = delete;
 
 		void SetPixels(TextureCubeFace face, const void* pixels);
-		
 
 		void Bind(uint32_t textureUnit) override;
 
 		void Filter(TextureFilter filter, TextureFilterMode mode);
-
+	private:
+		void Initialize();
 
 	};
 
