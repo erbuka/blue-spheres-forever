@@ -185,6 +185,7 @@ static const std::string s_Fragment = R"Fragment(
 	uniform sampler2D uAo;
 
 	uniform sampler2D uBRDFLut;
+	uniform samplerCube uEnvironment;
 	
 	in vec3 fPosition;
 	in vec2 fUv;
@@ -201,10 +202,6 @@ static const std::string s_Fragment = R"Fragment(
 	float GeometrySchlickGGX(float NdotV, float roughness);
 	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 	vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
-
-	vec3 GetSkyColor(in vec3 dir) {
-		return mix(uSkyColor1, uSkyColor0, clamp(dir.y, 0.0, 1.0));
-	} 
 
 	void main() {
 
@@ -253,7 +250,7 @@ static const std::string s_Fragment = R"Fragment(
 
 		// sky reflections
 		vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
-		vec3 indirectSpecular = GetSkyColor(R) * (F * envBrdf.x + envBrdf.y);
+		vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
 		vec3 ambient = (vec3(0.03) * albedo + indirectSpecular) * ao;
 
 		vec3 fragment = ambient + color;
@@ -373,13 +370,14 @@ static const std::string s_SkyBoxVertex = R"Vertex(
 	#version 330 core
 
 	uniform mat4 uProjection;	
+	uniform mat4 uView;
 
 	layout(location = 0) in vec3 aPosition;
 
 	out vec3 fPosition;
 
 	void main() {
-		gl_Position = uProjection * vec4(aPosition, 1.0);
+		gl_Position = uProjection * uView * vec4(aPosition, 1.0);
 		fPosition = aPosition;
 	}
 	
@@ -918,9 +916,13 @@ namespace bsf
 			// Draw Sky
 			
 			{
+				m_View.Reset();
+				m_View.LookAt({ 0, -1, 3 }, { 0, 0, 0 });
+
 				glDepthMask(GL_FALSE);
 				m_pSkyBox->Use();
 				m_pSkyBox->UniformMatrix4f("uProjection", m_Projection);
+				m_pSkyBox->UniformMatrix4f("uView", m_View);
 				m_pSkyBox->UniformTexture("uSkyBox", m_ccSkyBox->GetTexture(), 0);
 				m_vaSkyBox->Draw(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
@@ -928,6 +930,7 @@ namespace bsf
 			
 
 			// Draw scene
+			/*
 			{
 				setupView();
 
@@ -955,6 +958,7 @@ namespace bsf
 				m_pPBR->UniformTexture("uAo", m_txGroundAo, 4);
 
 				m_pPBR->UniformTexture("uBRDFLut", assets.GetTexture(AssetName::TexBRDFLut), 5);
+				m_pPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 6);
 				
 
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
@@ -996,7 +1000,7 @@ namespace bsf
 				}
 			}
 
-
+			*/
 		}
 		m_fbDeferred->Unbind();
 
