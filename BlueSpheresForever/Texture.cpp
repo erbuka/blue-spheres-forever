@@ -70,6 +70,7 @@ namespace bsf
 		BSF_GLCALL(glGenTextures(1, &m_Id));
 	}
 
+
 	Texture2D::Texture2D(uint32_t color) : Texture2D()
 	{
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));

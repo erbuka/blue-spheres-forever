@@ -1,6 +1,7 @@
 #include "Assets.h"
 #include "Texture.h"
 #include "Log.h"
+#include "Common.h"
 
 namespace bsf
 {
@@ -30,6 +31,30 @@ namespace bsf
 		m_Textures[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
 		m_Textures[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
+		m_Textures[AssetName::TexSphereMetallic] = CreateGray(0.95f);
+		m_Textures[AssetName::TexSphereRoughness] = CreateGray(0.1f);
+
+
+		{
+			
+			auto groundMetallic = MakeRef<Texture2D>("assets/textures/titanium-metal.png");
+			groundMetallic->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			groundMetallic->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_Textures[AssetName::TexGroundMetallic] = groundMetallic;
+			
+			m_Textures[AssetName::TexGroundMetallic] = CreateGray(0.95f);
+		}
+
+		{
+			auto groundRoughness = MakeRef<Texture2D>("assets/textures/titanium-rough.png");
+			groundRoughness->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			groundRoughness->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_Textures[AssetName::TexGroundRoughness] = groundRoughness;
+			
+
+			m_Textures[AssetName::TexGroundRoughness] = CreateGray(0.2f);
+		}
+
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
 			bumper->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
@@ -37,19 +62,7 @@ namespace bsf
 			m_Textures[AssetName::TexBumper] = bumper;
 		}
 
-		{
-			auto sphereMetallic = MakeRef<Texture2D>("assets/textures/sphere-metallic.png");
-			sphereMetallic->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			sphereMetallic->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-			m_Textures[AssetName::TexSphereMetallic] = sphereMetallic;
-		}
 
-		{
-			auto sphereRoughness = MakeRef<Texture2D>("assets/textures/sphere-roughness.png");
-			sphereRoughness->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			sphereRoughness->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-			m_Textures[AssetName::TexSphereRoughness] = sphereRoughness;
-		}
 
 		{
 			auto star = MakeRef<Texture2D>("assets/textures/star.png");

@@ -123,6 +123,10 @@ namespace bsf
 		return  (a << 24) | (b << 16) | (g << 8) | (r << 0);
 	}
 
+	Ref<Texture2D> CreateGray(float value) {
+		return MakeRef<Texture2D>(ToHexColor({ value, value, value, 1.0 }));
+	}
+
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors)
 	{
 		std::array<uint32_t, 4> data = {

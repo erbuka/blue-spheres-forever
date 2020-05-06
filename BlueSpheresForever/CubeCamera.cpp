@@ -24,8 +24,9 @@ namespace bsf
 
 		m_TextureCube = MakeRef<TextureCube>(size, size);
 
-		m_Projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+		m_Projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 1000.0f);
 
+		
 		m_Views = {
 		   { TextureCubeFace::Right, glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)) }, // +X
 		   { TextureCubeFace::Left, glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)) }, // -X
@@ -34,6 +35,7 @@ namespace bsf
 		   { TextureCubeFace::Front, glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)) }, // +Z
 		   { TextureCubeFace::Back, glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f)) } // -Z
 		};
+		
 
 	}
 

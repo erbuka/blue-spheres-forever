@@ -14,9 +14,15 @@ namespace bsf
 		TexWhite,
 		TexBlack,
 		TexNormalPosZ,
+		
 		TexBumper,
+
 		TexSphereMetallic,
 		TexSphereRoughness,
+		
+		TexGroundMetallic,
+		TexGroundRoughness,
+
 		TexStar,
 		TexBRDFLut,
 	};

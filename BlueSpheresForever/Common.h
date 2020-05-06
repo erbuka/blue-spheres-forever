@@ -126,6 +126,7 @@ namespace bsf
 	uint32_t ToHexColor(const glm::vec4& rgb);
 
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
+	Ref<Texture2D> CreateGray(float value);
 
 	#pragma endregion
 

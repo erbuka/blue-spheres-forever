@@ -42,11 +42,12 @@ namespace bsf
 		Ref<Renderer2D> m_Renderer2D;
 		Ref<Framebuffer> m_fbDeferred;
 
-		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaStars, m_vaQuad, m_vaSkyBox;
-		Ref<ShaderProgram> m_pPBR, m_pStars, m_pSky, m_pDeferred, m_pSkyBox;
+		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaStars, m_vaQuad, m_vaSkyBox, m_vaSkyPlane;
+		Ref<ShaderProgram> m_pPBR, m_pStars, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pSkyPlane;
 		
+		Ref<TextureCube> m_txEnv;
 		Ref<CubeCamera> m_ccSkyBox;
-		Ref<Texture2D> m_txGroundMap, m_txGroundNormalMap, m_txGroundMetallic, m_txGroundRoughness, m_txGroundAo;
+		Ref<Texture2D> m_txGroundMap, m_txClouds;
 		Ref<GameLogic> m_GameLogic;
 		
 		Ref<Stage> m_Stage;
