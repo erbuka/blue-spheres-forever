@@ -379,6 +379,7 @@ namespace bsf
 
 		m_State = EState::Starting;
 		m_Position = stage.StartPoint;
+		m_DeltaPosition = { 0, 0 };
 		m_Direction = stage.StartDirection;
 		m_Velocity = s_BaseVelocity;
 		m_VelocityScale = 1.0f;
@@ -390,6 +391,13 @@ namespace bsf
 		m_LastBounceDistance = 1.0f;
 	}
 
+
+	glm::vec2 GameLogic::GetDeltaPosition()
+	{
+		auto result = m_DeltaPosition;
+		m_DeltaPosition = { 0, 0 };
+		return result;
+	}
 
 	glm::vec2 GameLogic::GetPosition() const
 	{
@@ -426,7 +434,8 @@ namespace bsf
 				// Getting the next position position;
 				glm::vec2 prevPos = m_Position;
 				float step = m_Velocity * m_VelocityScale * time.Delta;
-				m_Position += glm::vec2(m_Direction) * step ;
+				m_Position += glm::vec2(m_Direction) * step;
+				m_DeltaPosition += glm::vec2(m_Direction) * step;
 				glm::ivec2 roundedPosition = glm::round(m_Position);
 
 				// Update last bounce distance

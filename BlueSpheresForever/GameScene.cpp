@@ -33,19 +33,40 @@ static const std::string s_TestVertex = R"Vertex(
 	uniform mat4 uModel;
 
 	layout(location = 0) in vec3 aPosition;
+	layout(location = 1) in vec3 aNormal;
+	layout(location = 2) in vec3 aTangent;
+	layout(location = 3) in vec3 aBinormal;
+	layout(location = 4) in vec2 aUv;
+
+	out vec3 fNormal;
+	out vec3 fPosition;
 
 	void main() {
-		gl_Position =  uProjection * uView * uModel * vec4(aPosition, 1.0);;
+		gl_Position =  uProjection * uView * uModel * vec4(aPosition, 1.0);
+		fNormal = aNormal;
+		fPosition = aPosition;
 	}	
 )Vertex";
 
 static const std::string s_TestFragment = R"Fragment(
 	#version 330 core
-	
+
+	uniform mat4 uProjection;
+	uniform mat4 uView;
+	uniform mat4 uModel;	
+
+	in vec3 fNormal;
+	in vec3 fPosition;
+
 	out vec4 oColor;
 	
 	void main() {
-		oColor = vec4(1.0);
+		vec3 N = normalize((uView * uModel * vec4(fNormal, 0.0)).xyz);
+		vec3 V = -normalize((uView * uModel * vec4(fPosition, 1.0)).xyz);
+	
+		vec3 diffuse = vec3(1.0, 0.2, 0.3) * max(0.0, dot(N, V));
+
+		oColor = vec4(diffuse, 1.0);
 	}	
 )Fragment";
 
@@ -232,8 +253,7 @@ static const std::string s_Fragment = R"Fragment(
 		float roughness = texture(uRoughness, fUv).r;
 		float ao = texture(uAo, fUv).r;
 		
-		//vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
-		vec3 normal = fTBN[2];
+		vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
 		vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
 		vec3 viewPos = (uView * vec4(worldPos, 1.0)).xyz;
 
@@ -272,8 +292,7 @@ static const std::string s_Fragment = R"Fragment(
             
         // add to outgoing radiance Lo
 		vec3 radiance = vec3(820.0, 810.0, 800.0) * attenuation;
-		//vec3 radiance = vec3(10.0, 9.0, 10.0) * attenuation;
-		//vec3 radiance = vec3(1.0) * attenuation;
+		//vec3 radiance = vec3(200.0, 200.0, 200.0) * attenuation;
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL;
 
 		// sky reflections
@@ -281,7 +300,7 @@ static const std::string s_Fragment = R"Fragment(
 		vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
 		vec3 ambient = (vec3(0.03) * albedo + indirectSpecular) * ao;
 
-		vec3 fragment = ambient + color;
+		vec3 fragment = ambient;
 
 		fragment = fragment / (fragment + vec3(1.0));
 
@@ -415,11 +434,14 @@ static const std::string s_SkyBoxVertex = R"Vertex(
 	uniform mat4 uModel;
 
 	layout(location = 0) in vec3 aPosition;
+	layout(location = 1) in vec3 aUv;
 
 	out vec3 fPosition;
+	out vec3 fUv;
 
 	void main() {
 		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+		fUv = aUv;
 		fPosition = aPosition;
 	}
 	
@@ -430,6 +452,7 @@ static const std::string s_SkyBoxFragment = R"Fragment(
 	
 	uniform samplerCube uSkyBox;
 
+	in vec3 fUv;
 	in vec3 fPosition;
 
 	layout(location = 0) out vec4 oColor;
@@ -437,49 +460,13 @@ static const std::string s_SkyBoxFragment = R"Fragment(
 	layout(location = 2) out vec3 oPosition;
 
 	void main() {
-		oColor = vec4(texture(uSkyBox, fPosition).rgb, 1.0);
+		oColor = vec4(texture(uSkyBox, fUv).rgb, 1.0);
 		oNormal = vec3(0.0);
 		oPosition = fPosition * 100.0;
 	}
 	
 )Fragment";
 
-static const std::string s_SkyPlaneVertex = R"Vertex(
-	#version 330 core
-	
-	uniform mat4 uProjection;
-	uniform mat4 uView;
-	uniform mat4 uModel;
-
-	layout(location = 0) in vec3 aPosition;
-	layout(location = 1) in vec2 aUv;
-
-	out vec2 fUv;
-
-	void main() {
-		fUv = aUv;
-		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-	}
-		
-)Vertex";
-
-static const std::string s_SkyPlaneFragment = R"Fragment(
-	#version 330 core
-	
-	uniform vec2 uOffset;
-	uniform sampler2D uMap;
-
-	in vec2 fUv;		
-	
-	out vec4 oColor;	
-
-	void main() {
-		oColor = vec4(texture(uMap, fUv - uOffset).rgb, 1.0);
-	}
-	
-)Fragment";
-
-#pragma endregion
 
 
 namespace bsf
@@ -499,8 +486,8 @@ namespace bsf
 		glm::vec2 UV;
 		glm::vec3 Color;
 		float Size;
-
 	};
+;
 
 #pragma region Utilities
 
@@ -519,75 +506,6 @@ namespace bsf
 		glm::vec3 pos = center + normal * (radius + offset);
 
 		return { pos, normal, tangent, binormal };
-
-
-	}
-
-
-	static Ref<VertexArray> CreateSkyPlane(float size = 100.0f, uint32_t divisions = 50, float height = 4.0f)
-	{
-		struct SkyVertex {
-			glm::vec3 Position;
-			glm::vec2 Uv;
-		};
-
-		float step = size / divisions;
-
-		std::vector<SkyVertex> vertices;
-
-		vertices.reserve(divisions * divisions * 6);
-
-		for (uint32_t y = 0; y < divisions; y++)
-		{
-			for (uint32_t x = 0; x < divisions; x++)
-			{
-				float x0 = x * step - size / 2.0f;
-				float y0 = y * step - size / 2.0f;
-				float x1 = (x + 1) * step - size / 2.0f;
-				float y1 = (y + 1) * step - size / 2.0f;
-
-				float u0 = float(x) / divisions;
-				float u1 = float(x + 1) / divisions;
-				float v0 = float(y) / divisions;
-				float v1 = float(y + 1) / divisions;
-					
-				std::array<glm::vec3, 4> positions = {
-					glm::vec3{ x0, y0, height },
-					glm::vec3{ x1, y0, height },
-					glm::vec3{ x1, y1, height },
-					glm::vec3{ x0, y1, height }
-				};
-
-				std::array<glm::vec2, 4> uvs = {
-					glm::vec2{ u0, v0 },
-					glm::vec2{ u1, v0 },
-					glm::vec2{ u1, v1 },
-					glm::vec2{ u0, v1 }
-				};
-
-				std::array<SkyVertex, 4> v = { };
-
-				for (int i = 0; i < 4; i++)
-				{
-					auto [pos, normal, tangent, binormal] = Project(positions[i]);
-					v[i] = { pos, uvs[i] };
-				}
-
-				vertices.push_back(v[0]); vertices.push_back(v[2]); vertices.push_back(v[1]);
-				vertices.push_back(v[0]); vertices.push_back(v[3]); vertices.push_back(v[2]);
-
-			}
-
-		}
-
-		auto result = Ref<VertexArray>(new VertexArray({
-			{ "aPosition", AttributeType::Float3 },
-			{ "aUv", AttributeType::Float2 }
-		}));
-
-		result->SetData(vertices.data(), vertices.size(), GL_STATIC_DRAW);
-
-		return result;
 
 	}
 
@@ -797,7 +715,8 @@ namespace bsf
 
 	}
 
-	static Ref<VertexArray> CreateSkyBox()
+
+	static std::vector<BoxVertex> CreateSkyBoxData()
 	{
 
 		std::array<glm::vec3, 8> v = {
@@ -815,7 +734,7 @@ namespace bsf
 
 		};
 
-		std::vector<glm::vec3> verts;
+		std::vector<BoxVertex> verts;
 		verts.reserve(36);
 
 		// Front
@@ -842,16 +761,27 @@ namespace bsf
 		verts.push_back(v[0]); verts.push_back(v[1]); verts.push_back(v[5]);
 		verts.push_back(v[0]); verts.push_back(v[5]); verts.push_back(v[4]);
 
+		return verts;
 
-		Ref<VertexArray> result(new VertexArray({
-			{ "aPosition", AttributeType::Float3 }
+	}
+
+
+	static Ref<VertexArray> CreateSkyBox()
+	{
+		auto vertices = CreateSkyBoxData();
+
+		auto result = Ref<VertexArray>(new VertexArray({
+			{ "aPosition", AttributeType::Float3 },
+			{ "aUv", AttributeType::Float3 },
 		}));
 
-		result->SetData(verts.data(), verts.size(), GL_STATIC_DRAW);
+
+		result->SetData(vertices.data(), vertices.size(), GL_DYNAMIC_DRAW);
 
 		return result;
- 
+
 	}
+
 
 #pragma endregion
 
@@ -908,7 +838,9 @@ namespace bsf
 		m_vaStars = CreateSkyDome(*m_Stage);
 		m_vaQuad = CreateClipSpaceQuad();
 		m_vaSkyBox = CreateSkyBox();
-		m_vaSkyPlane = CreateSkyPlane();
+		m_vaDynSkyBox = CreateSkyBox();
+
+		m_vDynSkyBoxVertices = CreateSkyBoxData();
 
 		// Programs
 		m_pPBR = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
@@ -916,8 +848,8 @@ namespace bsf
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
 		m_pDeferred = MakeRef<ShaderProgram>(s_ScreenVertex, s_DeferredFragment);
 		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
-		m_pSkyPlane = MakeRef<ShaderProgram>(s_SkyPlaneVertex, s_SkyPlaneFragment);
-
+		m_pTest = MakeRef<ShaderProgram>(s_TestVertex, s_TestFragment);
+		
 		// Textures
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
 		{
@@ -933,24 +865,9 @@ namespace bsf
 			m_txGroundMap->SetAnisotropy(16.0f);
 		} 
 
+		
+		m_txSkyBox = CreateBaseSkyBox();
 
-		m_txEnv = Ref<TextureCube>(new TextureCube(
-			"assets/textures/front.png",
-			"assets/textures/back.png",
-			"assets/textures/left.png",
-			"assets/textures/right.png",
-			"assets/textures/bottom.png",
-			"assets/textures/top.png"
-		));
-
-		m_txClouds = MakeRef<Texture2D>("assets/textures/clouds.png");
-		m_txClouds->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-		m_txClouds->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
-			
-
-		// Ground normal map
-
-		// Ground metallic/roughness/ao
 
 		// Sky box camera
 		m_ccSkyBox = MakeRef<CubeCamera>(2048);
@@ -979,6 +896,7 @@ namespace bsf
 		glCullFace(GL_BACK);
 
 		glm::vec2 pos = m_GameLogic->GetPosition();
+		glm::vec2 deltaPos = m_GameLogic->GetDeltaPosition();
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
 
@@ -1036,7 +954,7 @@ namespace bsf
 		{
 			m_Model.Reset();
 			m_View.Reset();
-			GenerateSkyBox(pos, windowSize);
+			GenerateSkyBox(pos, deltaPos, windowSize);
 		}
 
 		// Begin scene
@@ -1045,21 +963,18 @@ namespace bsf
 		// Draw to deferred frame buffer
 		m_fbDeferred->Bind();
 		{
-
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			
-
 			// Draw Sky
 			
+
 			{
 
 				m_View.Reset();
 				m_View.LoadIdentity();
-				//m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f }, { 0.0f, 1.0f, 0.0f });
-				m_View.LookAt({ 0.0f, 0.0f, 3.0f }, { 0.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
-				//m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
+				m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f }, { 0.0f, 1.0f, 0.0f });
+				m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
 				
 				m_Model.Reset();
 				m_Model.LoadIdentity();
@@ -1076,7 +991,9 @@ namespace bsf
 			
 
 			// Draw scene
-			/*
+			
+			
+			
 			{
 				setupView();
 
@@ -1098,7 +1015,7 @@ namespace bsf
 				m_pPBR->Uniform3fv("uSkyColor1", 1, glm::value_ptr(m_Stage->SkyColors[1]));
 
 				m_pPBR->UniformTexture("uMap", m_txGroundMap, 0);
-				m_pPBR->UniformTexture("uNormalMap", assets.GetTexture(AssetName::TexNormalPosZ), 1);
+				m_pPBR->UniformTexture("uNormalMap", assets.GetTexture(AssetName::TexGroundNormal), 1);
 				m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexGroundMetallic), 2);
 				m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexGroundRoughness), 3);
 				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4);
@@ -1148,7 +1065,7 @@ namespace bsf
 			
 
 			}
-			*/
+			
 		}
 		m_fbDeferred->Unbind();
 
@@ -1188,7 +1105,53 @@ namespace bsf
 		m_fbDeferred->Resize(evt.Width, evt.Height);
 	}
 
-	void GameScene::GenerateSkyBox(const glm::vec2& position, const glm::vec2& windowSize)
+	Ref<TextureCube> GameScene::CreateBaseSkyBox()
+	{
+		constexpr uint32_t resolution = 2048;
+
+		auto camera = MakeRef<CubeCamera>(resolution);
+		static std::array<TextureCubeFace, 6> faces = {
+			TextureCubeFace::Right,
+			TextureCubeFace::Left,
+			TextureCubeFace::Top,
+			TextureCubeFace::Bottom,
+			TextureCubeFace::Front,
+			TextureCubeFace::Back
+		};
+
+
+		auto skyBox = Ref<TextureCube>(new TextureCube(
+			"assets/textures/sky_front5.png",
+			"assets/textures/sky_back6.png",
+			"assets/textures/sky_left2.png",
+			"assets/textures/sky_right1.png",
+			"assets/textures/sky_bottom4.png",
+			"assets/textures/sky_top3.png"
+		));
+		
+
+		for (auto face : faces)
+		{
+			camera->BindForRender(face);
+
+			glEnable(GL_DEPTH_TEST);
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			m_pSkyBox->Use();
+			m_pSkyBox->UniformTexture("uSkyBox", skyBox, 0);
+			m_pSkyBox->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
+			m_pSkyBox->UniformMatrix4f("uView", camera->GetViewMatrix());
+			m_pSkyBox->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+			m_vaSkyBox->Draw(GL_TRIANGLES);
+
+		}
+		
+
+		return Ref<TextureCube>(camera->GetTexture());
+	}
+
+	void GameScene::GenerateSkyBox(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize)
 	{
 		auto& assets = Assets::Get();
 
@@ -1201,14 +1164,25 @@ namespace bsf
 			TextureCubeFace::Back
 		};
 
-		
 
+		float du = deltaPosition.x / m_Stage->GetWidth();
+		float dv = deltaPosition.y / m_Stage->GetHeight();
 		float u = 1.0f - position.x / m_Stage->GetWidth();
 		float v = 1.0f - position.y / m_Stage->GetHeight();
+		
 		uint32_t ix = position.x;
 		uint32_t iy = position.y;
 		float fx = position.x - ix;
 		float fy = position.y - iy;
+
+		glm::mat4 rotateZ = glm::rotate(glm::identity<glm::mat4>(), du * glm::pi<float>() * 2.0f, { 0.0f, 0.0f, 1.0f });
+		glm::mat4 rotateX = glm::rotate(glm::identity<glm::mat4>(), dv * glm::pi<float>() * 2.0f, { 1.0f, 0.0f, 0.0f });
+		glm::mat rotate = rotateZ * rotateX;
+
+		for (auto& v : m_vDynSkyBoxVertices)
+			v.Position = rotate * glm::vec4(v.Position, 1.0);
+
+		m_vaDynSkyBox->SetSubData(m_vDynSkyBoxVertices.data(), 0, m_vDynSkyBoxVertices.size());
 
 		for (auto face : faces) {
 			m_ccSkyBox->BindForRender(face);
@@ -1219,19 +1193,13 @@ namespace bsf
 			// Test
 			
 			{
-				float a = m_GameLogic->GetRotationAngle();
-
-				m_Model.Reset();
-
-				m_Model.Rotate({ 1.0f, 0.0, 0.0f }, -v * glm::pi<float>() * 2.0f);
-				m_Model.Rotate({ 0.0f, 0.0, 1.0f }, -u * glm::pi<float>() * 2.0f);
 
 				m_pSkyBox->Use();
 				m_pSkyBox->UniformMatrix4f("uProjection", m_ccSkyBox->GetProjectionMatrix());
 				m_pSkyBox->UniformMatrix4f("uView", m_ccSkyBox->GetViewMatrix());
 				m_pSkyBox->UniformMatrix4f("uModel", m_Model);
-				m_pSkyBox->UniformTexture("uSkyBox", m_txEnv, 0);
-				m_vaSkyBox->Draw(GL_TRIANGLES);
+				m_pSkyBox->UniformTexture("uSkyBox", m_txSkyBox, 0);
+				m_vaDynSkyBox->Draw(GL_TRIANGLES);
 			}
 			
 

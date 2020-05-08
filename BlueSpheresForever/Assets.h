@@ -20,6 +20,7 @@ namespace bsf
 		TexSphereMetallic,
 		TexSphereRoughness,
 		
+		TexGroundNormal,
 		TexGroundMetallic,
 		TexGroundRoughness,
 

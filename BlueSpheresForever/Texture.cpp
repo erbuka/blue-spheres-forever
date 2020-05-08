@@ -246,7 +246,13 @@ namespace bsf
 	{
 		BSF_GLCALL(glGenTextures(1, &m_Id));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
+
 		Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
 		Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+
 	}
 }

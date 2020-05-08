@@ -33,6 +33,7 @@ namespace bsf
 		GameLogic(Stage& stage);
 
 		float GetHeight() const { return m_Height; }
+		glm::vec2 GetDeltaPosition();
 		glm::ivec2 GetDirection() const { return m_Direction; }
 		glm::vec2 GetPosition() const;
 		float GetRotationAngle() const { return m_RotationAngle; }
@@ -52,7 +53,7 @@ namespace bsf
 		float m_Velocity, m_VelocityScale;
 
 		glm::ivec2 m_Direction;
-		glm::vec2 m_Position;
+		glm::vec2 m_Position, m_DeltaPosition;
 		glm::ivec2 m_LastCrossedPosition;
 		float m_Height;
 		float m_LastBounceDistance;

@@ -31,13 +31,21 @@ namespace bsf
 		m_Textures[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
 		m_Textures[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
-		m_Textures[AssetName::TexSphereMetallic] = CreateGray(0.95f);
+		m_Textures[AssetName::TexSphereMetallic] = CreateGray(0.9f);
 		m_Textures[AssetName::TexSphereRoughness] = CreateGray(0.1f);
 
+		{
+			auto groundNormal = MakeRef<Texture2D>("assets/textures/normal6.png");
+			groundNormal->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
+			groundNormal->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_Textures[AssetName::TexGroundNormal] = groundNormal;
+
+			m_Textures[AssetName::TexGroundNormal] = m_Textures[AssetName::TexNormalPosZ];
+		}
 
 		{
 			
-			auto groundMetallic = MakeRef<Texture2D>("assets/textures/titanium-metal.png");
+			auto groundMetallic = MakeRef<Texture2D>("assets/textures/scuffed-plastic-metal.png");
 			groundMetallic->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
 			groundMetallic->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 			m_Textures[AssetName::TexGroundMetallic] = groundMetallic;
@@ -45,14 +53,14 @@ namespace bsf
 			m_Textures[AssetName::TexGroundMetallic] = CreateGray(0.95f);
 		}
 
+
 		{
-			auto groundRoughness = MakeRef<Texture2D>("assets/textures/titanium-rough.png");
+			auto groundRoughness = MakeRef<Texture2D>("assets/textures/scuffed-plastic-rough.png");
 			groundRoughness->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
 			groundRoughness->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 			m_Textures[AssetName::TexGroundRoughness] = groundRoughness;
-			
 
-			m_Textures[AssetName::TexGroundRoughness] = CreateGray(0.2f);
+			m_Textures[AssetName::TexGroundRoughness] = CreateGray(0.3f);
 		}
 
 		{
