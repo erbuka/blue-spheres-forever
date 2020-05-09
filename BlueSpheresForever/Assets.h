@@ -8,6 +8,7 @@ namespace bsf
 {
 
 	class Texture;
+	class Font;
 
 	enum class AssetName
 	{
@@ -26,6 +27,9 @@ namespace bsf
 
 		TexStar,
 		TexBRDFLut,
+
+		FontMain,
+
 	};
 
 
@@ -41,6 +45,7 @@ namespace bsf
 		void Dispose();
 			
 		const Ref<Texture>& GetTexture(AssetName n);
+		const Ref<Font>& GetFont(AssetName n);
 
 		~Assets();
 	private:
@@ -48,6 +53,7 @@ namespace bsf
 		Assets() {}
 
 		std::unordered_map<AssetName, Ref<Texture>> m_Textures;
+		std::unordered_map<AssetName, Ref<Font>> m_Fonts;
 	};
 }
 

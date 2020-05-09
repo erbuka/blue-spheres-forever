@@ -13,7 +13,6 @@
 #include "CubeCamera.h"
 #include "Stage.h"
 
-
 #pragma region Shaders
 
 bool paused = false;

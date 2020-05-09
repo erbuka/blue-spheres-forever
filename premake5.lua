@@ -93,7 +93,8 @@ project "BlueSpheresForever"
         "vendor/glad/include",
         "vendor/glfw/include",
         "vendor/spdlog/include",
-        "vendor/lodepng/include"
+        "vendor/lodepng/include",
+        "vendor/stb/include"
     }
 
     pchheader "BsfPch.h"
@@ -106,3 +107,5 @@ project "BlueSpheresForever"
     postbuildcommands {
         "{COPY} ./assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
     }
+
+        

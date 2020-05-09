@@ -8,6 +8,8 @@
 #include "Log.h"
 
 
+
+
 static constexpr uint32_t s_MaxTriangleVertices = 30000;
 static constexpr uint32_t s_MaxTextureUnits = 32;
 

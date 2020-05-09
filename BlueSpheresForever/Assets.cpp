@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include "Log.h"
 #include "Common.h"
+#include "Font.h";
 
 namespace bsf
 {
@@ -29,6 +30,11 @@ namespace bsf
 
 	void Assets::Load()
 	{
+
+		// Fonts
+		//m_Fonts[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf"));
+
+		// Textures
 		m_Textures[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));
 		m_Textures[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
 		m_Textures[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
@@ -75,6 +81,11 @@ namespace bsf
 	const Ref<Texture>& Assets::GetTexture(AssetName n)
 	{
 		return GetAssetStatic(n, m_Textures);
+	}
+
+	const Ref<Font>& Assets::GetFont(AssetName n)
+	{
+		return GetAssetStatic(n, m_Fonts);
 	}
 
 	Assets::~Assets()
