@@ -44,20 +44,16 @@ namespace bsf
 
 		uint32_t GetId() const { return m_Id; }
 
-		uint32_t GetWidth() const { return m_Width; }
-		uint32_t GetHeight() const { return m_Height; }
-
 	protected:
 		uint32_t m_Id;
-		uint32_t m_Width, m_Height;
 	};
 
 	
 	class TextureCube : public Texture
 	{
 	public:
-		TextureCube(const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top);
-		TextureCube(uint32_t width, uint32_t height);
+		TextureCube(uint32_t size, const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top);
+		TextureCube(uint32_t size, GLenum internalFormat, GLenum format, GLenum type);
 		TextureCube(TextureCube&) = delete;
 		TextureCube(TextureCube&&) = delete;
 
@@ -68,6 +64,8 @@ namespace bsf
 		void Filter(TextureFilter filter, TextureFilterMode mode);
 	private:
 		void Initialize();
+		uint32_t m_Size;
+		GLenum m_InternalFormat, m_Format, m_Type;
 
 	};
 
@@ -80,6 +78,8 @@ namespace bsf
 
 		Texture2D(Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
+
+		void SetPixels(void * pixels, uint32_t width, uint32_t height, GLenum internalFormat, GLenum format, GLenum type);
 
 		void Filter(TextureFilter filter, TextureFilterMode mode);
 		void SetAnisotropy(float value);

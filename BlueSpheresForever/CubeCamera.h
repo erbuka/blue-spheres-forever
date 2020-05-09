@@ -15,7 +15,7 @@ namespace bsf
 	class CubeCamera
 	{
 	public:
-		CubeCamera(uint32_t size, GLenum internalFormat = GL_RGBA8, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE);
+		CubeCamera(uint32_t size, GLenum internalFormat, GLenum format, GLenum type);
 		~CubeCamera();
 
 		const glm::mat4& GetProjectionMatrix() const { return m_Projection; } 

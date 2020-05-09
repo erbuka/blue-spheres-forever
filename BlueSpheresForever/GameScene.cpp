@@ -874,12 +874,12 @@ namespace bsf
 
 		
 		m_txBaseSkyBox = CreateBaseSkyBox();
-		m_txBaseIrradiance = CreateBaseIrradianceMap(m_txBaseSkyBox);
+		m_txBaseIrradiance = CreateBaseIrradianceMap(m_txBaseSkyBox, 32);
 
 
 		// Sky box camera
-		m_ccSkyBox = MakeRef<CubeCamera>(1024);
-		m_ccIrradiance = MakeRef<CubeCamera>(32);
+		m_ccSkyBox = MakeRef<CubeCamera>(1024, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+		m_ccIrradiance = MakeRef<CubeCamera>(32, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 	}
 	
 	void GameScene::OnRender(Application& app, const Time& time)
@@ -1117,7 +1117,7 @@ namespace bsf
 	{
 		constexpr uint32_t resolution = 2048;
 
-		auto camera = MakeRef<CubeCamera>(resolution);
+		auto camera = MakeRef<CubeCamera>(resolution, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 		static std::array<TextureCubeFace, 6> faces = {
 			TextureCubeFace::Right,
 			TextureCubeFace::Left,
@@ -1129,6 +1129,7 @@ namespace bsf
 
 
 		auto skyBox = Ref<TextureCube>(new TextureCube(
+			1024,
 			"assets/textures/sky_front5.png",
 			"assets/textures/sky_back6.png",
 			"assets/textures/sky_left2.png",
@@ -1158,9 +1159,9 @@ namespace bsf
 		return Ref<TextureCube>(camera->GetTexture());
 	}
 
-	Ref<TextureCube> GameScene::CreateBaseIrradianceMap(const Ref<TextureCube>& source)
+	Ref<TextureCube> GameScene::CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size)
 	{
-		auto camera = MakeRef<CubeCamera>(source->GetWidth());
+		auto camera = MakeRef<CubeCamera>(size, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 		static std::array<TextureCubeFace, 6> faces = {
 			TextureCubeFace::Right,
 			TextureCubeFace::Left,

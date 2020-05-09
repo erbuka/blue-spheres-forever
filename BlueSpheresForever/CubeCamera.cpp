@@ -21,7 +21,7 @@ namespace bsf
 			BSF_ERROR("Could not initialize cube camera");
 		}
 
-		m_TextureCube = MakeRef<TextureCube>(size, size);
+		m_TextureCube = MakeRef<TextureCube>(size, internalFormat, format, type);
 
 		m_Projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 1000.0f);
 
