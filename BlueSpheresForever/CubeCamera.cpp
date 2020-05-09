@@ -1,7 +1,6 @@
+#include "BsfPch.h"
+
 #include "CubeCamera.h"
-
-#include <glm/ext.hpp>
-
 #include "Log.h"
 #include "ShaderProgram.h"
 

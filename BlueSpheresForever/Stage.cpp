@@ -1,8 +1,9 @@
+#include "BsfPch.h"
+
 #include "Stage.h"
 #include "Common.h"
 #include "Log.h";
 
-#include <fstream>
 
 namespace bsf
 {

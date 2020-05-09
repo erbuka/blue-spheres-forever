@@ -1,3 +1,5 @@
+#include "BsfPch.h"
+
 #include "Subscription.h"
 
 namespace bsf

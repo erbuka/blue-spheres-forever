@@ -1,16 +1,11 @@
+#include "BsfPch.h"
+
 #include "Renderer2D.h"
 #include "VertexArray.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
 #include "Assets.h"
 #include "Log.h"
-
-#include <glad/glad.h>
-#include <glm/ext.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <vector>
-#include <numeric>
 
 
 static constexpr uint32_t s_MaxTriangleVertices = 30000;

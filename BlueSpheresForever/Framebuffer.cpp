@@ -1,9 +1,9 @@
+#include "BsfPch.h"
+
 #include "Framebuffer.h"
 #include "Texture.h"
 #include "Log.h"
 
-
-#include <glad/glad.h>
 
 namespace bsf
 {

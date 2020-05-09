@@ -1,3 +1,5 @@
+#include "BsfPch.h"
+
 #include "Assets.h"
 #include "Texture.h"
 #include "Log.h"

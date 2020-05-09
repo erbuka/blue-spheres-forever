@@ -96,6 +96,9 @@ project "BlueSpheresForever"
         "vendor/lodepng/include"
     }
 
+    pchheader "BsfPch.h"
+    pchsource "BsfPch.cpp"
+
     files { "BlueSpheresForever/**.cpp", "BlueSpheresForever/**.h"  }
 
     links { "opengl32", "Glad", "GLFW", "LodePng" }

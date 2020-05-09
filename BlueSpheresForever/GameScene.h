@@ -1,16 +1,13 @@
 #pragma once
 
-#include "Common.h"
 #include "Application.h"
+#include "Common.h"
 #include "Scene.h"
 #include "MatrixStack.h"
 #include "EventEmitter.h"
-#include "Stage.h"
 
 namespace bsf
 {
-
-
 
 	class ShaderProgram;
 	class VertexArray;

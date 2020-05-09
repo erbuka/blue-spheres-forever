@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+
 namespace bsf
 {
 	class Application;

@@ -1,14 +1,8 @@
+#include "BsfPch.h"
+
 #include "GameLogic.h"
 #include "Stage.h"
 #include "Log.h"
-
-#include <glm/ext.hpp>
-#include <cmath>
-#include <algorithm>
-#include <list>
-#include <limits>
-#include <numeric>
-#include <iostream>
 
 namespace bsf
 {

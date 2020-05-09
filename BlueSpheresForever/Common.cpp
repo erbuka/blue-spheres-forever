@@ -1,11 +1,8 @@
+#include "BsfPch.h"
+
 #include "Common.h"
 #include "Log.h"
 #include "Texture.h";
-
-#include <unordered_map>
-#include <initializer_list>
-
-#include <glad/glad.h>
 
 namespace bsf
 {

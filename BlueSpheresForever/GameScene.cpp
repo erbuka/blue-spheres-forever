@@ -1,3 +1,5 @@
+#include "BsfPch.h"
+
 #include "GameScene.h"
 #include "VertexArray.h"
 #include "Common.h"
@@ -9,17 +11,8 @@
 #include "Assets.h"
 #include "Renderer2D.h"
 #include "CubeCamera.h"
+#include "Stage.h"
 
-#include <array>
-#include <vector>
-#include <filesystem>
-
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
-#include <glm/gtx/matrix_transform_2d.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #pragma region Shaders
 

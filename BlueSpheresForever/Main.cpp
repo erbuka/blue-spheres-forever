@@ -1,12 +1,11 @@
+#include "BsfPch.h"
+
 #include "Application.h"
+#include "Stage.h"
 #include "GameScene.h"
 #include "Common.h"
 #include "Log.h"
 #include "Texture.h"
-
-
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
 
 using namespace bsf;
 using namespace glm;

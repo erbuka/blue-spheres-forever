@@ -1,10 +1,9 @@
+#include "BsfPch.h"
+
 #include "Texture.h"
 #include "Log.h"
 
 #include <lodepng.h>
-#include <glad/glad.h>
-#include <vector>
-#include <unordered_map>
 
 
 namespace bsf

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include "Subscription.h"
 
-#include <functional>
 
 namespace bsf
 {

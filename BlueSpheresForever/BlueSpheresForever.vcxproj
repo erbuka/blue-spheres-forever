@@ -56,7 +56,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\lodepng\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -74,7 +75,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\lodepng\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -99,15 +101,14 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Assets.h" />
+    <ClInclude Include="BsfPch.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="CubeCamera.h" />
     <ClInclude Include="EventEmitter.h" />
     <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="GameLogic.h" />
     <ClInclude Include="GameScene.h" />
-    <ClInclude Include="GameSceneTest.h" />
     <ClInclude Include="Log.h" />
-    <ClInclude Include="Material.h" />
     <ClInclude Include="MatrixStack.h" />
     <ClInclude Include="Renderer2D.h" />
     <ClInclude Include="Scene.h" />
@@ -120,14 +121,15 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Assets.cpp" />
+    <ClCompile Include="BsfPch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="CubeCamera.cpp" />
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="GameScene.cpp" />
-    <ClCompile Include="GameSceneTest.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Material.cpp" />
     <ClCompile Include="MatrixStack.cpp" />
     <ClCompile Include="Renderer2D.cpp" />
     <ClCompile Include="Scene.cpp" />

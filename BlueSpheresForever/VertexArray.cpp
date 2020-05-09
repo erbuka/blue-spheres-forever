@@ -1,6 +1,7 @@
+#include "BsfPch.h"
+
 #include "VertexArray.h"
 #include "Log.h"
-#include <map>
 
 namespace bsf
 {

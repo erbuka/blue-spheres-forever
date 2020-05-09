@@ -7,6 +7,7 @@
 
 #include "Texture.h"
 
+
 namespace bsf
 {
 	class ShaderProgram;

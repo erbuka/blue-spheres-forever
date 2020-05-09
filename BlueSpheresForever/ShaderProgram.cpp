@@ -1,10 +1,8 @@
+#include "BsfPch.h"
+
 #include "ShaderProgram.h"
 #include "Log.h"
 #include "Texture.h"
-
-#include <glm/ext.hpp>
-
-#include <glad/glad.h>
 
 
 #define UNIFORM_IMPL(type, varType, size) \

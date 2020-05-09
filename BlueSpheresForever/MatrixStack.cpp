@@ -1,7 +1,6 @@
-#include "MatrixStack.h"
+#include "BsfPch.h"
 
-#include <glm/ext.hpp>
-#include <glm/gtx/transform.hpp>
+#include "MatrixStack.h"
 
 namespace bsf
 {

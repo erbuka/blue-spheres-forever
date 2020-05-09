@@ -1,8 +1,7 @@
+#include "BsfPch.h"
+
 #include "Scene.h"
-
 #include "Application.h"
-
-#include <glad/glad.h>
 
 namespace bsf
 {

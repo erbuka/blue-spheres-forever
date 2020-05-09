@@ -1,12 +1,10 @@
+#include "BsfPch.h"
+
 #include "Application.h"
 #include "Log.h"
 #include "Scene.h"
 #include "Assets.h"
 
-#include <chrono>
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 namespace bsf
 {
