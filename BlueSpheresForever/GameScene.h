@@ -42,8 +42,11 @@ namespace bsf
 	private:
 
 		Ref<TextureCube> CreateBaseSkyBox();
+		Ref<TextureCube> CreateBaseIrradianceMap(const Ref<TextureCube>& source);
 
-		void GenerateSkyBox(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
+
+		void RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
+		void GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source);
 
 		std::vector<Unsubscribe> m_Subscriptions;
 		MatrixStack m_Model, m_View, m_Projection;
@@ -52,10 +55,10 @@ namespace bsf
 		Ref<Framebuffer> m_fbDeferred;
 
 		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaStars, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;
-		Ref<ShaderProgram> m_pPBR, m_pStars, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pTest;
+		Ref<ShaderProgram> m_pPBR, m_pStars, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance;
 		
-		Ref<TextureCube> m_txSkyBox;
-		Ref<CubeCamera> m_ccSkyBox;
+		Ref<TextureCube> m_txBaseSkyBox, m_txBaseIrradiance;
+		Ref<CubeCamera> m_ccSkyBox, m_ccIrradiance;
 		Ref<Texture2D> m_txGroundMap;
 		Ref<GameLogic> m_GameLogic;
 		

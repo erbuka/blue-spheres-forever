@@ -218,7 +218,6 @@ namespace bsf
 
 	}
 
-
 	void TextureCube::SetPixels(TextureCubeFace face, const void* pixels)
 	{
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
