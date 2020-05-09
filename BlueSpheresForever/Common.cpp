@@ -133,9 +133,8 @@ namespace bsf
 
 
 		auto result = MakeRef<Texture2D>();
-		result->Bind(0);
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data()));
-
+		result->SetPixels(data.data(), 2, 2, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+	
 		return result;
 
 	}

@@ -12,6 +12,7 @@
 #include "Renderer2D.h"
 #include "CubeCamera.h"
 #include "Stage.h"
+#include "Font.h"
 
 #pragma region Shaders
 

@@ -32,7 +32,7 @@ namespace bsf
 	{
 
 		// Fonts
-		//m_Fonts[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf"));
+		m_Fonts[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf"));
 
 		// Textures
 		m_Textures[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));

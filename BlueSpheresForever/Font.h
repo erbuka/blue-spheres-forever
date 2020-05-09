@@ -19,6 +19,8 @@ namespace bsf
 	public:
 		Font(const std::string& fileName);
 
+		const Ref<Texture2D>& GetTexture();
+
 	private:
 		struct Impl;
 		Ref<Impl> m_Impl;

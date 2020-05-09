@@ -15,10 +15,16 @@ namespace bsf
 	static constexpr char s_FirstChar = 'A';
 	static constexpr char s_LastChar = 'z';
 	static constexpr uint32_t s_CharCount = s_LastChar - s_FirstChar;
-	static constexpr uint32_t s_FontSize = 64;
+	static constexpr uint32_t s_FontSize = 128;
 	static constexpr uint32_t s_BitmapSize = 512;
 
 	struct Font::Impl {
+
+		unsigned char* m_FontFileData = nullptr;
+		unsigned char* m_BitmapData = nullptr;
+		std::vector<Glyph> m_Glyphs;
+		std::shared_ptr<Texture2D> m_Texture = nullptr;
+
 		Impl(const std::string& fileName)
 		{
 			std::ifstream is;
@@ -44,8 +50,11 @@ namespace bsf
 			
 			// Bake the font
 			m_BitmapData = new unsigned char[s_BitmapSize * s_BitmapSize];
+			std::memset(m_BitmapData, 0, s_BitmapSize * s_BitmapSize);
+
+
 			stbtt_bakedchar* bakedChars = new stbtt_bakedchar[s_CharCount];
-			stbtt_BakeFontBitmap(m_FontFileData, 0, s_FontSize, m_BitmapData, s_BitmapSize, s_BitmapSize, s_FirstChar, s_CharCount, bakedChars);
+			auto res = stbtt_BakeFontBitmap(m_FontFileData, 0, s_FontSize, m_BitmapData, s_BitmapSize, s_BitmapSize, s_FirstChar, s_CharCount, bakedChars);
 			
 			// Create glyphs
 			CreateGlyphs(bakedChars);
@@ -55,10 +64,9 @@ namespace bsf
 
 			// Create font texture
 			m_Texture = MakeRef<Texture2D>();
-			m_Texture->Bind(0);
-
-
-
+			m_Texture->SetPixels(m_BitmapData, s_BitmapSize, s_BitmapSize, GL_R8, GL_RED, GL_UNSIGNED_BYTE);
+			m_Texture->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
+			m_Texture->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 		}
 
 		~Impl()
@@ -71,11 +79,6 @@ namespace bsf
 
 		}
 
-	private:
-		unsigned char* m_FontFileData = nullptr;
-		unsigned char* m_BitmapData = nullptr;
-		std::vector<Glyph> m_Glyphs;
-		std::shared_ptr<Texture2D> m_Texture = nullptr;
 
 		void CreateGlyphs(stbtt_bakedchar* chars)
 		{
@@ -100,5 +103,9 @@ namespace bsf
 	Font::Font(const std::string& fileName)
 	{
 		m_Impl = MakeRef<Impl>(fileName);
+	}
+	const Ref<Texture2D>& Font::GetTexture()
+	{
+		return m_Impl->m_Texture;
 	}
 }
