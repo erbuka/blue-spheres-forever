@@ -7,7 +7,7 @@
 namespace bsf
 {
 
-	struct Glyph
+	struct GlyphInfo
 	{
 		glm::vec2 Min, Max;
 		glm::vec2 UvMin, UvMax;
@@ -18,8 +18,9 @@ namespace bsf
 	{
 	public:
 		Font(const std::string& fileName);
-
-		const Ref<Texture2D>& GetTexture();
+		const GlyphInfo& GetGlyphInfo(char c) const;
+		const Ref<Texture2D>& GetTexture() const;
+		float GetStringWidth(const std::string& s) const;
 
 	private:
 		struct Impl;

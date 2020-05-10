@@ -15,8 +15,9 @@ namespace bsf
 	class VertexArray;
 	class ShaderProgram;
 	class Texture;
+	class Font;
 
-	enum class EQuadPivot
+	enum class EPivot
 	{
 		TopLeft,
 		Left,
@@ -37,7 +38,7 @@ namespace bsf
 		glm::mat4 Matrix = glm::identity<glm::mat4>();
 		glm::vec4 Color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-		glm::vec2 QuadPivot = { 0, 0 };
+		glm::vec2 Pivot = { 0, 0 };
 	};
 
 	class Renderer2D
@@ -52,6 +53,7 @@ namespace bsf
 		void Begin(const glm::mat4& projection);
 
 		void DrawQuad(const glm::vec2& position);
+		void DrawString(const Ref<Font>& font, const std::string& text);
 		
 		void LoadIdentity();
 		void Scale(const glm::vec2& scale);
@@ -61,8 +63,8 @@ namespace bsf
 		void Texture(const Ref<::bsf::Texture2D>& texture);
 		void NoTexture();
 
-		void QuadPivot(EQuadPivot mode);
-		void QuadPivot(const glm::vec2& pivot);
+		void Pivot(EPivot mode);
+		void Pivot(const glm::vec2& pivot);
 
 		void Color(const glm::vec4& color);
 

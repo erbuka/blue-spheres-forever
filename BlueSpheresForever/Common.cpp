@@ -139,5 +139,22 @@ namespace bsf
 
 	}
 
+	GLEnableScope::GLEnableScope(const std::initializer_list<GLenum>& bits)
+	{
+		GLboolean value;
+
+		for (auto bit : bits)
+		{
+			BSF_GLCALL(glGetBooleanv(bit, &value));
+			m_SavedState[bit] = value;
+		}
+	}
+
+	GLEnableScope::~GLEnableScope()
+	{
+		for (const auto& bit : m_SavedState)
+			bit.second ? glEnable(bit.first) : glDisable(bit.first);
+	}
+
 }
 

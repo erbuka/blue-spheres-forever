@@ -48,8 +48,7 @@ namespace bsf
 
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
-			bumper->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			bumper->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			bumper->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_Textures[AssetName::TexBumper] = bumper;
 		}
 
@@ -57,15 +56,12 @@ namespace bsf
 
 		{
 			auto star = MakeRef<Texture2D>("assets/textures/star.png");
-			star->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			star->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
 			m_Textures[AssetName::TexStar] = star;
 		}
 
 		{
 			auto brdf = MakeRef<Texture2D>("assets/textures/ibl_brdf_lut.png");
-			brdf->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			brdf->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			brdf->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_Textures[AssetName::TexBRDFLut] = brdf;
 		}
 
@@ -76,6 +72,7 @@ namespace bsf
 	void Assets::Dispose()
 	{
 		m_Textures.clear();
+		m_Fonts.clear();
 	}
 
 	const Ref<Texture>& Assets::GetTexture(AssetName n)

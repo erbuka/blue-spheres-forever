@@ -11,12 +11,6 @@ namespace bsf
 
 	enum class TextureFilter
 	{
-		MinFilter,
-		MagFilter
-	};
-
-	enum class TextureFilterMode
-	{
 		Nearest,
 		Linear,
 		LinearMipmapLinear
@@ -42,6 +36,8 @@ namespace bsf
 
 		virtual void Bind(uint32_t textureUnit) = 0;
 
+		virtual void SetFilter(TextureFilter minFilter, TextureFilter magFilter) = 0;
+
 		uint32_t GetId() const { return m_Id; }
 
 	protected:
@@ -61,7 +57,8 @@ namespace bsf
 
 		void Bind(uint32_t textureUnit) override;
 
-		void Filter(TextureFilter filter, TextureFilterMode mode);
+		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
+
 	private:
 		void Initialize();
 		uint32_t m_Size;
@@ -81,7 +78,8 @@ namespace bsf
 
 		void SetPixels(void * pixels, uint32_t width, uint32_t height, GLenum internalFormat, GLenum format, GLenum type);
 
-		void Filter(TextureFilter filter, TextureFilterMode mode);
+		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
+
 		void SetAnisotropy(float value);
 		void Bind(uint32_t textureUnit) override;
 

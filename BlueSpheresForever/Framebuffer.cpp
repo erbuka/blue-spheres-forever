@@ -18,8 +18,7 @@ namespace bsf
 		if (hasDepth)
 		{
 			m_DepthAttachment = MakeRef<Texture2D>();
-			m_DepthAttachment->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
-			m_DepthAttachment->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
+			m_DepthAttachment->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 			m_DepthAttachment->Bind(0);
 
 			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
@@ -44,12 +43,9 @@ namespace bsf
 		}
 
 		auto att = MakeRef<Texture2D>();
-		
-		att->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
-		att->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
 		att->Bind(0);
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_Width, m_Height, 0, format, type, 0));
-
+		att->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+		att->SetPixels(0, m_Width, m_Height, internalFormat, format, type);
 		uint32_t attIdx = m_ColorAttachments.size();
 		
 		Bind();

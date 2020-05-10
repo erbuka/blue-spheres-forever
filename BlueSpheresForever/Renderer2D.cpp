@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include "Assets.h"
 #include "Log.h"
+#include "Font.h"
 
 
 
@@ -196,7 +197,42 @@ namespace bsf
 
 	void Renderer2D::DrawQuad(const glm::vec2& position)
 	{
-		DrawQuadInternal(position, { 1.0f, 1.0f }, m_State.top().QuadPivot);
+		DrawQuadInternal(position, { 1.0f, 1.0f }, m_State.top().Pivot);
+	}
+
+	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text)
+	{
+		static std::array<glm::vec2, 4> pos, uvs = {};
+
+		float strWidth = font->GetStringWidth(text);
+
+		Texture(font->GetTexture());
+
+		float offsetX = -m_State.top().Pivot.x * strWidth;
+		float offsetY = m_State.top().Pivot.y;
+
+		for (auto c : text)
+		{
+			const auto& glyph = font->GetGlyphInfo(c);
+
+			pos[0] = { offsetX + glyph.Min.x, offsetY + glyph.Min.y };
+			pos[1] = { offsetX + glyph.Max.x, offsetY + glyph.Min.y };
+			pos[2] = { offsetX + glyph.Max.x, offsetY + glyph.Max.y };
+			pos[3] = { offsetX + glyph.Min.x, offsetY + glyph.Max.y };
+
+			
+			uvs[0] = { glyph.UvMin.x, glyph.UvMin.y };
+			uvs[1] = { glyph.UvMax.x, glyph.UvMin.y };
+			uvs[2] = { glyph.UvMax.x, glyph.UvMax.y };
+			uvs[3] = { glyph.UvMin.x, glyph.UvMax.y };
+			
+
+			DrawTriangleInternal({ pos[0], pos[1], pos[2] }, { uvs[0], uvs[1], uvs[2] });
+			DrawTriangleInternal({ pos[0], pos[2], pos[3] }, { uvs[0], uvs[2], uvs[3] });
+
+			offsetX += glyph.Advance;
+
+		}
 	}
 
 
@@ -234,28 +270,28 @@ namespace bsf
 		m_State.top().CurrentTexture = nullptr;
 	}
 
-	void Renderer2D::QuadPivot(EQuadPivot mode)
+	void Renderer2D::Pivot(EPivot mode)
 	{
 		switch (mode)
 		{
 
-		case EQuadPivot::Center: QuadPivot({ 0.5f, 0.5f }); break;
-		case EQuadPivot::Top: QuadPivot({ 0.5f, 1.0f }); break;
-		case EQuadPivot::Bottom: QuadPivot({ 0.5f, 0.0f }); break;
+		case EPivot::Center: Pivot({ 0.5f, 0.5f }); break;
+		case EPivot::Top: Pivot({ 0.5f, 1.0f }); break;
+		case EPivot::Bottom: Pivot({ 0.5f, 0.0f }); break;
 
-		case EQuadPivot::TopLeft: QuadPivot({ 0.0f, 1.0f }); break;
-		case EQuadPivot::Left: QuadPivot({ 0.0f, 0.5f }); break;
-		case EQuadPivot::BottomLeft: QuadPivot({ 0.0f, 0.0f }); break;
+		case EPivot::TopLeft: Pivot({ 0.0f, 1.0f }); break;
+		case EPivot::Left: Pivot({ 0.0f, 0.5f }); break;
+		case EPivot::BottomLeft: Pivot({ 0.0f, 0.0f }); break;
 
-		case EQuadPivot::TopRight: QuadPivot({ 1.0f, 1.0f }); break;
-		case EQuadPivot::Right: QuadPivot({ 1.0f, 0.5f }); break;
-		case EQuadPivot::BottomRight: QuadPivot({ 1.0f, 0.0f }); break;
+		case EPivot::TopRight: Pivot({ 1.0f, 1.0f }); break;
+		case EPivot::Right: Pivot({ 1.0f, 0.5f }); break;
+		case EPivot::BottomRight: Pivot({ 1.0f, 0.0f }); break;
 		}
 	}
 
-	void Renderer2D::QuadPivot(const glm::vec2& pivot)
+	void Renderer2D::Pivot(const glm::vec2& pivot)
 	{
-		m_State.top().QuadPivot = pivot;
+		m_State.top().Pivot = pivot;
 	}
 
 
@@ -279,11 +315,16 @@ namespace bsf
 	void Renderer2D::End()
 	{
 
-		auto& assets = Assets::Get();
-
 		// Flush Triangles
 		if (m_CurTriangleIndex > 0)
 		{
+			GLEnableScope scope({ GL_CULL_FACE, GL_DEPTH_TEST, GL_BLEND });
+
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_CULL_FACE);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 			m_TriangleProgram->Use();
 
 			m_TriangleProgram->UniformMatrix4f("uProjection", m_Projection);

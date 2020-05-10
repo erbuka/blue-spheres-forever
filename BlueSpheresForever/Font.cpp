@@ -12,17 +12,16 @@
 namespace bsf
 {
 
-	static constexpr char s_FirstChar = 'A';
+	static constexpr char s_FirstChar = ' ';
 	static constexpr char s_LastChar = 'z';
-	static constexpr uint32_t s_CharCount = s_LastChar - s_FirstChar;
+	static constexpr uint32_t s_CharCount = s_LastChar - s_FirstChar + 1;
 	static constexpr uint32_t s_FontSize = 128;
 	static constexpr uint32_t s_BitmapSize = 512;
 
 	struct Font::Impl {
 
 		unsigned char* m_FontFileData = nullptr;
-		unsigned char* m_BitmapData = nullptr;
-		std::vector<Glyph> m_Glyphs;
+		std::vector<GlyphInfo> m_Glyphs;
 		std::shared_ptr<Texture2D> m_Texture = nullptr;
 
 		Impl(const std::string& fileName)
@@ -49,34 +48,32 @@ namespace bsf
 			is.close();
 			
 			// Bake the font
-			m_BitmapData = new unsigned char[s_BitmapSize * s_BitmapSize];
-			std::memset(m_BitmapData, 0, s_BitmapSize * s_BitmapSize);
+			auto bitmap = new unsigned char[s_BitmapSize * s_BitmapSize];
+			std::memset(bitmap, 0, s_BitmapSize * s_BitmapSize);
 
-
-			stbtt_bakedchar* bakedChars = new stbtt_bakedchar[s_CharCount];
-			auto res = stbtt_BakeFontBitmap(m_FontFileData, 0, s_FontSize, m_BitmapData, s_BitmapSize, s_BitmapSize, s_FirstChar, s_CharCount, bakedChars);
-			
 			// Create glyphs
+			stbtt_bakedchar* bakedChars = new stbtt_bakedchar[s_CharCount];
+			auto res = stbtt_BakeFontBitmap(m_FontFileData, 0, s_FontSize, bitmap, s_BitmapSize, s_BitmapSize, s_FirstChar, s_CharCount, bakedChars);
 			CreateGlyphs(bakedChars);
-
-			// Delete baked characters
 			delete[] bakedChars;
 
 			// Create font texture
+			// Convert to rgba
+			std::vector<uint32_t> pixels(s_BitmapSize * s_BitmapSize);
+			for (uint32_t i = 0; i < s_BitmapSize*s_BitmapSize; i++)
+				pixels[i] = (bitmap[i] << 24) | 0xffffff;
+			delete[] bitmap;
+
+
 			m_Texture = MakeRef<Texture2D>();
-			m_Texture->SetPixels(m_BitmapData, s_BitmapSize, s_BitmapSize, GL_R8, GL_RED, GL_UNSIGNED_BYTE);
-			m_Texture->Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
-			m_Texture->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_Texture->SetPixels(pixels.data(), s_BitmapSize, s_BitmapSize, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+			m_Texture->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
 		}
 
 		~Impl()
 		{
 			if(m_FontFileData)
 				delete[] m_FontFileData;
-			
-			if(m_BitmapData)
-				delete[] m_BitmapData;
-
 		}
 
 
@@ -86,14 +83,17 @@ namespace bsf
 
 			for (uint32_t i = 0; i < s_CharCount; i++)
 			{
+
 				const auto& c = chars[i];
+				
 				m_Glyphs.push_back({
 					glm::vec2(c.xoff / s_FontSize, c.yoff / s_FontSize),  // Min
 					glm::vec2((c.xoff + c.x1 - c.x0) / s_FontSize, (c.yoff + c.y1 - c.y0) / s_FontSize),  // Max
-					glm::vec2(c.x0 / s_BitmapSize, c.y0 / s_BitmapSize), // UvMin
-					glm::vec2(c.x1 / s_BitmapSize, c.y1 / s_BitmapSize), // UvMax
+					glm::vec2(c.x0 / float(s_BitmapSize), c.y0 / float(s_BitmapSize)), // UvMin
+					glm::vec2(c.x1 / float(s_BitmapSize), c.y1 / float(s_BitmapSize)), // UvMax
 					c.xadvance / s_FontSize
 				});
+
 			}
 		}
 
@@ -104,8 +104,26 @@ namespace bsf
 	{
 		m_Impl = MakeRef<Impl>(fileName);
 	}
-	const Ref<Texture2D>& Font::GetTexture()
+
+	const GlyphInfo& Font::GetGlyphInfo(char c) const
+	{
+		assert(c >= s_FirstChar && c <= s_LastChar);
+		return m_Impl->m_Glyphs[c - s_FirstChar];
+	}
+
+	const Ref<Texture2D>& Font::GetTexture() const
 	{
 		return m_Impl->m_Texture;
+	}
+
+	float Font::GetStringWidth(const std::string& s) const
+	{
+		float result = 0.0f;
+
+		for (uint32_t i = 0; i < s.size(); i++)
+			result += GetGlyphInfo(s[i]).Advance;
+
+		return result;
+
 	}
 }

@@ -99,6 +99,7 @@ static const std::string s_StarsGeometry = R"Geometry(
 )Geometry";
 
 
+
 static const std::string s_StarsFragment = R"Fragment(
 	#version 330 core
 	
@@ -165,9 +166,6 @@ static const std::string s_Fragment = R"Fragment(
 	uniform vec3 uLightPos;
 
 	uniform vec4 uColor;
-
-	uniform vec3 uSkyColor0;
-	uniform vec3 uSkyColor1;
 
 	uniform sampler2D uMap;
 	uniform sampler2D uNormalMap;
@@ -861,14 +859,12 @@ namespace bsf
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
 		{
 			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->CheckerColors[0]), ToHexColor(m_Stage->CheckerColors[1]) });
-			m_txGroundMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
-			m_txGroundMap->Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
+			m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
 		}
 		else
 		{
 			m_txGroundMap = Ref<Texture2D>(new Texture2D("assets/textures/metalgrid2_basecolor.png"));
-			m_txGroundMap->Filter(TextureFilter::MinFilter, TextureFilterMode::LinearMipmapLinear);
-			m_txGroundMap->Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+			m_txGroundMap->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_txGroundMap->SetAnisotropy(16.0f);
 		} 
 
@@ -901,8 +897,6 @@ namespace bsf
 				m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
 		}
 
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
 
 		glm::vec2 pos = m_GameLogic->GetPosition();
@@ -981,6 +975,9 @@ namespace bsf
 			
 
 			{
+				GLEnableScope scope({ GL_DEPTH_TEST });
+
+				glDisable(GL_DEPTH_TEST);
 
 				m_View.Reset();
 				m_View.LoadIdentity();
@@ -1006,6 +1003,11 @@ namespace bsf
 			
 			
 			{
+				GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE });
+
+				glEnable(GL_CULL_FACE);
+				glEnable(GL_DEPTH_TEST);
+
 				setupView();
 
 				glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1080,6 +1082,8 @@ namespace bsf
 
 		// Draw to default frame buffer
 		{
+			GLEnableScope scope({ GL_FRAMEBUFFER_SRGB });
+
 			glEnable(GL_FRAMEBUFFER_SRGB);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1094,9 +1098,29 @@ namespace bsf
 			m_pDeferred->UniformTexture("uNormal", m_fbDeferred->GetColorAttachment("normal"), 1);
 			m_pDeferred->UniformTexture("uPosition", m_fbDeferred->GetColorAttachment("position"), 2);
 			m_vaQuad->Draw(GL_TRIANGLES);
-			
-			glDisable(GL_FRAMEBUFFER_SRGB);
 
+		}
+
+		{
+			std::string str = "Get Blue Spheres!";
+			float strWidth = assets.GetFont(AssetName::FontMain)->GetStringWidth(str);
+			float sw = 20.0f * windowSize.x / windowSize.y;
+			float sh = 20.0f;
+
+
+			m_Renderer2D->Begin(glm::ortho(0.0f, sw, sh, 0.0f, -1.0f, 1.0f));
+			m_Renderer2D->Pivot({ 0.5f, 0.25f });
+			m_Renderer2D->Translate({ sw / 2.0f, sh / 2.0f });
+			m_Renderer2D->Scale({ 4, 4 });
+			{
+				m_Renderer2D->Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), "Get Blue Spheres!");
+
+				m_Renderer2D->Translate({ -0.02, -0.02 });
+				m_Renderer2D->Color({ 1.0f, 1.0f, 1.0f, 1.0f });
+				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), "Get Blue Spheres!");
+			}
+			m_Renderer2D->End();
 
 		}
 		
@@ -1129,6 +1153,7 @@ namespace bsf
 		};
 
 
+		
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			1024,
 			"assets/textures/sky_front5.png",
@@ -1139,6 +1164,19 @@ namespace bsf
 			"assets/textures/sky_top3.png"
 		));
 		
+
+		/*
+		auto skyBox = Ref<TextureCube>(new TextureCube(
+			256,
+			"assets/textures/front.png",
+			"assets/textures/back.png",
+			"assets/textures/left.png",
+			"assets/textures/right.png",
+			"assets/textures/bottom.png",
+			"assets/textures/top.png"
+		));
+		*/
+
 		for (auto face : faces)
 		{
 			camera->BindForRender(face);
@@ -1172,12 +1210,13 @@ namespace bsf
 			TextureCubeFace::Back
 		};
 
+		GLEnableScope scope({ GL_DEPTH_TEST });
+		glEnable(GL_DEPTH_TEST);
 
 		for (auto face : faces)
 		{
 			camera->BindForRender(face);
 
-			glEnable(GL_DEPTH_TEST);
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

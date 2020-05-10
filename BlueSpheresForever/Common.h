@@ -3,6 +3,7 @@
 #include <fstream>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include <glm/glm.hpp>
 
 namespace bsf
@@ -50,6 +51,15 @@ namespace bsf
 	struct KeyReleasedEvent
 	{
 		int32_t KeyCode;
+	};
+	
+	struct GLEnableScope
+	{
+	public:
+		GLEnableScope(const std::initializer_list<GLenum>& bits);
+		~GLEnableScope();
+	private:
+		std::unordered_map<GLenum, GLboolean> m_SavedState;
 	};
 
 

@@ -44,15 +44,11 @@ namespace bsf
 		}
 	}
 
-	static std::unordered_map<TextureFilter, GLenum> s_glFilter = {
-		{ TextureFilter::MinFilter, GL_TEXTURE_MIN_FILTER },
-		{ TextureFilter::MagFilter, GL_TEXTURE_MAG_FILTER }
-	};
 
-	static std::unordered_map<TextureFilterMode, GLenum> s_glMode = {
-		{ TextureFilterMode::Linear, GL_LINEAR },
-		{ TextureFilterMode::LinearMipmapLinear, GL_LINEAR_MIPMAP_LINEAR },
-		{ TextureFilterMode::Nearest, GL_NEAREST },
+	static std::unordered_map<TextureFilter, GLenum> s_glTextureFilter = {
+		{ TextureFilter::Linear, GL_LINEAR },
+		{ TextureFilter::LinearMipmapLinear, GL_LINEAR_MIPMAP_LINEAR },
+		{ TextureFilter::Nearest, GL_NEAREST },
 	};
 
 	static std::unordered_map<TextureCubeFace, GLenum> s_glTexCubeFace = {
@@ -75,8 +71,8 @@ namespace bsf
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
 		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color));
 
-		Filter(TextureFilter::MinFilter, TextureFilterMode::Nearest);
-		Filter(TextureFilter::MagFilter, TextureFilterMode::Nearest);
+		SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+
 	}
 
 
@@ -97,19 +93,20 @@ namespace bsf
 		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels));
 	}
 
-	void Texture2D::Filter(TextureFilter filter, TextureFilterMode mode)
+	void Texture2D::SetFilter(TextureFilter minFilter, TextureFilter magFilter)
 	{
 
-		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
-		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, s_glFilter[filter], s_glMode[mode]));
+		Bind(0);
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, s_glTextureFilter[minFilter]));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, s_glTextureFilter[magFilter]));
 
-		if (filter == TextureFilter::MinFilter && mode == TextureFilterMode::LinearMipmapLinear)
+		if (minFilter == TextureFilter::LinearMipmapLinear)
 		{
-			glGenerateMipmap(GL_TEXTURE_2D);
+			BSF_GLCALL(glGenerateMipmap(GL_TEXTURE_2D));
 		}
-
 	}
 
+	
 	void Texture2D::SetAnisotropy(float value)
 	{
 		float max = 0.0f;
@@ -151,6 +148,7 @@ namespace bsf
 		if (m_Id != 0)
 		{
 			BSF_GLCALL(glDeleteTextures(1, &m_Id));
+			m_Id = 0;
 		}
 	}
 
@@ -217,24 +215,25 @@ namespace bsf
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
 	}
 
-	void TextureCube::Filter(TextureFilter filter, TextureFilterMode mode)
+	void TextureCube::SetFilter(TextureFilter minFilter, TextureFilter magFilter)
 	{
 
-		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
-		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, s_glFilter[filter], s_glMode[mode]));
+		Bind(0);
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, s_glTextureFilter[minFilter]));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, s_glTextureFilter[magFilter]));
 
-		if (filter == TextureFilter::MinFilter && mode == TextureFilterMode::LinearMipmapLinear)
+		if (minFilter == TextureFilter::LinearMipmapLinear)
 		{
 			BSF_GLCALL(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 		}
 	}
+
 	void TextureCube::Initialize()
 	{
 		BSF_GLCALL(glGenTextures(1, &m_Id));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
 
-		Filter(TextureFilter::MinFilter, TextureFilterMode::Linear);
-		Filter(TextureFilter::MagFilter, TextureFilterMode::Linear);
+		SetFilter(TextureFilter::Linear, TextureFilter::Linear);
 
 		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
