@@ -126,6 +126,7 @@
     <ClCompile Include="Assets.cpp" />
     <ClCompile Include="BsfPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="CubeCamera.cpp" />

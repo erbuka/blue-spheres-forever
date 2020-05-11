@@ -73,8 +73,6 @@ namespace bsf
 			m_Models[AssetName::ModRing] = WavefrontLoader().Load("assets/models/ring.obj")->CreateModel();
 		}
 
-
-
 	}
 
 	void Assets::Dispose()

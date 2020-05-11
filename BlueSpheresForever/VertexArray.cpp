@@ -69,7 +69,6 @@ namespace bsf
 				BSF_GLCALL(glVertexAttribPointer(index, descr.ElementCount, descr.Type, GL_FALSE, m_VertexSize, (const void*)pointer));
 			}
 
-
 			pointer += descr.ElementCount * descr.ElementSize;
 
 			index++;
