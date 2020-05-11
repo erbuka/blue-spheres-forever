@@ -98,7 +98,7 @@ namespace bsf
             return;
         }
 
-        m_Window = glfwCreateWindow(800, 800, "Hello World", NULL, NULL);
+        m_Window = glfwCreateWindow(1280, 780, "Hello World", NULL, NULL);
         if (!m_Window)
         {
             BSF_ERROR("Can't create the window");
@@ -122,33 +122,42 @@ namespace bsf
         auto prevTime = std::chrono::high_resolution_clock::now();
         auto currTime = std::chrono::high_resolution_clock::now();
 
+
         m_CurrentScene = std::make_shared<Scene>();
+        m_CurrentScene->m_App = this;
 
         // Load Assets 
         Assets::Get().Load();
 
         while (!glfwWindowShouldClose(m_Window))
         {
+
+            if (m_NextScene != nullptr)
+            {
+                m_CurrentScene->OnDetach();
+                
+                m_CurrentScene = std::move(m_NextScene); // m_NextScene = nullptr implicit
+                m_CurrentScene->m_App = this;
+                m_CurrentScene->OnAttach();
+
+                // Reset time on scene change
+                startTime = std::chrono::high_resolution_clock::now();
+                prevTime = std::chrono::high_resolution_clock::now();
+            }
+
             auto now = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> delta = now - prevTime;
             std::chrono::duration<float> elapsed = now - startTime;
             prevTime = now;
 
-            if (m_NextScene != nullptr)
-            {
-                m_CurrentScene->OnDetach(*this);
-                m_CurrentScene = std::move(m_NextScene); // m_NextScene = nullptr
-                m_CurrentScene->OnAttach(*this);
-            }
-
-            m_CurrentScene->OnRender(*this, { delta.count(), elapsed.count() });
+            m_CurrentScene->OnRender({ delta.count(), elapsed.count() });
 
             glfwSwapBuffers(m_Window);
 
             glfwPollEvents();
         }
 
-        m_CurrentScene->OnDetach(*this);
+        m_CurrentScene->OnDetach();
 
         m_CurrentScene = nullptr;
 

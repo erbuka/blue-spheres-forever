@@ -365,13 +365,13 @@ namespace bsf
 	GameLogic::GameLogic(Stage& stage) :
 		m_Stage(stage)
 	{
-		m_State = EState::Starting;
+		m_State = EGameState::Starting;
 		
 		m_RotateCommand = ERotate::None;
 		m_JumpCommand = false;
 		m_RunForwardCommand = false;
 
-		m_State = EState::Starting;
+		m_State = EGameState::None;
 		m_Position = stage.StartPoint;
 		m_DeltaPosition = { 0, 0 };
 		m_Direction = stage.StartDirection;
@@ -403,18 +403,22 @@ namespace bsf
 
 		// In the starting state, we can rotate in place
 		// until the game starts
-		if (m_State == EState::Starting)
+		
+		if (m_State == EGameState::None)
+		{
+			ChangeState(EGameState::Starting);
+		}
+
+		if (m_State == EGameState::Starting)
 		{
 			PullRotateCommand();
 			DoRotation(time);
 
 			if (time.Elapsed >= 3.0f)
-			{
-				m_State = EState::Playing;
-			}
+				ChangeState(EGameState::Playing);
 		
 		}
-		else if (m_State == EState::Playing)
+		else if (m_State == EGameState::Playing)
 		{
 			// Update the current rotation, if any
 			DoRotation(time);
@@ -546,6 +550,12 @@ namespace bsf
 		{
 			m_RunForwardCommand = true;
 		}
+	}
+
+	void GameLogic::ChangeState(EGameState newState)
+	{
+		GameStateChanged.Emit({ m_State, newState });
+		m_State = newState;
 	}
 
 	glm::vec2 GameLogic::WrapPosition(const glm::vec2& p) const

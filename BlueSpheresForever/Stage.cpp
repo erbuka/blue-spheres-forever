@@ -9,48 +9,56 @@ namespace bsf
 {
 	bool Stage::FromFile(const std::string& filename)
 	{
-		std::ifstream is;
+		std::ifstream stdIs;
 
-		is.open(filename, std::ios_base::binary);
+		stdIs.open(filename, std::ios_base::binary);
 
-		if (!is.good())
+		if (!stdIs.good())
 		{
 			BSF_ERROR("Bad file: {0}", filename);
 			return false;
 		}
 
-		Read(is, Version); // uint32
+		InputStream<ByteOrder::LittleEndian> is(stdIs);
 
-		Read<uint32_t>(is); // Width
-		Read<uint32_t>(is); // Height
+		is.Read<uint32_t>(Version);
 
-		Read(is, FloorRenderingMode); // uint8;
-		Read(is, BumpMappingEnabled); // uint8;
+		auto width = is.Read<uint32_t>(); // Width
+		auto height = is.Read<uint32_t>(); // Height
 
-		uint32_t texStrSize = Read<uint32_t>(is);
-		uint32_t bumpStrSize = Read<uint32_t>(is);
+		is.Read(FloorRenderingMode); // uint8;
+		is.Read(BumpMappingEnabled); // uint8;
+
+		uint32_t texStrSize = is.Read<uint32_t>();
+		uint32_t bumpStrSize = is.Read<uint32_t>();
 	
 		if (texStrSize > 0)
-			Texture = std::string(Read<char>(is, texStrSize).data(), texStrSize);
+		{
+			Texture.resize(texStrSize);
+			is.ReadSome<char>(texStrSize, Texture.data());
+		}
 
 		if (bumpStrSize > 0)
-			NormalMap = std::string(Read<char>(is, bumpStrSize).data(), bumpStrSize);
+		{
+			NormalMap.resize(bumpStrSize);
+			is.ReadSome(bumpStrSize, NormalMap.data());
+		}
+		
 
+		is.Read(StartPoint); // ivec2
+		is.Read(StartDirection); // ivec2
+		is.Read(EmeraldColor);// vec3
 
-		Read(is, StartPoint); // ivec2
-		Read(is, StartDirection); // ivec2
-		Read(is, EmeraldColor); // vec3
+		is.ReadSome(2, CheckerColors.data()); // 2 * vec3
+		is.ReadSome(2, SkyColors.data()); // 2 * vec3
+		is.ReadSome(2, StarColors.data()); // 2 * vec3
 
-		Read(is, CheckerColors); // 2 * vec3
-		Read(is, SkyColors); // 2 * vec3
-		Read(is, StarColors); // 2 * vec3
+		is.Read(MaxRings); // uint32
 
-		Read(is, MaxRings); // uint32
+		is.ReadSome(m_Data.size(), m_Data.data()); // 1024 bytes
+		is.ReadSome(m_AvoidSearch.size(), m_Data.data()); // 1024 bytes;
 
-		Read(is, m_Data); // 1024 bytes
-		Read(is, m_AvoidSearch); // 1024 bytes;
-
-		is.close();
+		stdIs.close();
 
 	}
 

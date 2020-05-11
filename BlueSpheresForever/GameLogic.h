@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "EventEmitter.h"
 
 #include <glm/glm.hpp>
 
@@ -9,18 +10,24 @@ namespace bsf
 {
 	class Stage;
 
+	enum class EGameState : uint8_t
+	{
+		None,
+		Starting,
+		Playing,
+		Emerald,
+		GameOver,
+		Finished
+	};
+
+	struct GameStateChangedEvent
+	{
+		EGameState Old, Current;
+	};
+
 	class GameLogic
 	{
 	public:
-
-		enum class EState : uint8_t
-		{
-			Starting,
-			Playing,
-			Emerald,
-			GameOver,
-			Finished
-		};
 
 		enum class ERotate : int8_t 
 		{
@@ -29,6 +36,7 @@ namespace bsf
 			Right = -1
 		};
 
+		EventEmitter<GameStateChangedEvent> GameStateChanged;
 
 		GameLogic(Stage& stage);
 
@@ -49,6 +57,7 @@ namespace bsf
 
 	private:
 
+		void ChangeState(EGameState newState);
 
 		float m_Velocity, m_VelocityScale;
 
@@ -71,7 +80,7 @@ namespace bsf
 
 		float m_RotationAngle, m_TargetRotationAngle;
 
-		EState m_State;
+		EGameState m_State;
 		Stage& m_Stage;
 
 		bool PullRotateCommand();

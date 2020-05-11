@@ -11,7 +11,7 @@ using namespace bsf;
 using namespace glm;
 
 int main() {
-	
+
 	auto stage = MakeRef<Stage>();
 		
 	stage->FromFile("assets/data/s3stage1.bss");

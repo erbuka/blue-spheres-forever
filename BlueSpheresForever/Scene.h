@@ -10,9 +10,15 @@ namespace bsf
 	{
 	public:
 		virtual ~Scene();
-		virtual void OnAttach(Application& app);
-		virtual void OnRender(Application& app, const Time& time);
-		virtual void OnDetach(Application& app);
+		virtual void OnAttach();
+		virtual void OnRender(const Time& time);
+		virtual void OnDetach();
+
+		Application& GetApplication();
+
+	private:
+		friend class Application;
+		Application* m_App;
 	};
 
 }

@@ -19,9 +19,24 @@ namespace bsf
 	class Renderer2D;
 	class CubeCamera;
 
+	struct GameStateChangedEvent;
+
 	struct BoxVertex {
 		glm::vec3 Position, Uv;
 		BoxVertex(const glm::vec3 v) : Position(v), Uv(v) {}
+	};
+
+	struct GameMessage
+	{
+		static constexpr float s_SlideDuration = 0.5f;
+		static constexpr float s_MessageDuration = 2.0f;
+		static constexpr float s_SlideInTime = s_SlideDuration;
+		static constexpr float s_MessageTime = s_SlideDuration + s_MessageDuration;
+		static constexpr float s_SlideOutTime = s_SlideDuration * 2.0f + s_MessageDuration;
+		
+		GameMessage(const std::string& message) : Message(message), Time(0.0f) {}
+		std::string Message;
+		float Time ;
 	};
 
 	class GameScene : public Scene
@@ -29,21 +44,14 @@ namespace bsf
 	public:
 			
 		GameScene(const Ref<Stage>& stage);
-
-		void OnAttach(Application& app) override;
-		void OnRender(Application& app, const Time& time) override;
-		void OnDetach(Application& app) override;
+		
+		void OnAttach() override;
+		void OnRender(const Time& time) override;
+		void OnDetach() override;
 
 		void OnResize(const WindowResizedEvent& evt);
 
 	private:
-
-		Ref<TextureCube> CreateBaseSkyBox();
-		Ref<TextureCube> CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size);
-
-
-		void RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
-		void GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source);
 
 		std::vector<Unsubscribe> m_Subscriptions;
 		MatrixStack m_Model, m_View, m_Projection;
@@ -62,6 +70,18 @@ namespace bsf
 		Ref<Stage> m_Stage;
 
 		std::vector<BoxVertex> m_vDynSkyBoxVertices;
+
+		std::list<GameMessage> m_GameMessages;
+
+		void RenderGameUI(const Time& time);
+		void OnGameStateChanged(const GameStateChangedEvent& evt);
+
+		Ref<TextureCube> CreateBaseSkyBox();
+		Ref<TextureCube> CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size);
+
+		void RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
+		void GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source);
+
 
 	};
 }

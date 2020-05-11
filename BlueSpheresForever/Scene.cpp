@@ -9,17 +9,23 @@ namespace bsf
 	{
 	}
 
-	void Scene::OnAttach(Application& app)
+	void Scene::OnAttach()
 	{
 	}
 
-	void Scene::OnRender(Application& app, const Time& time)
+	void Scene::OnRender(const Time& time)
 	{
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
-	void Scene::OnDetach(Application& app)
+	void Scene::OnDetach()
 	{
+	}
+
+	Application& Scene::GetApplication()
+	{
+		assert(m_App != nullptr);
+		return *m_App;
 	}
 }

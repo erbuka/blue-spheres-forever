@@ -19,7 +19,6 @@
 bool paused = false;
 
 
-
 static const std::string s_StarsVertex = R"Vertex(
 	#version 330 core
 
@@ -472,6 +471,7 @@ static std::string s_IrradianceFragment = R"Fragment(
 	}
 )Fragment";
 
+#pragma endregion
 
 namespace bsf
 {
@@ -491,7 +491,9 @@ namespace bsf
 		glm::vec3 Color;
 		float Size;
 	};
-;
+
+
+
 
 #pragma region Utilities
 
@@ -795,37 +797,14 @@ namespace bsf
 	{
 	}
 
-	void GameScene::OnAttach(Application& app)
+
+	void GameScene::OnAttach()
 	{
+		auto& app = GetApplication();
+
 		auto windowSize = app.GetWindowSize();
 
-		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
-
-		app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
-			if (evt.KeyCode == GLFW_KEY_LEFT)
-			{
-				m_GameLogic->Rotate(GameLogic::ERotate::Left);
-			}
-			else if (evt.KeyCode == GLFW_KEY_RIGHT)
-			{
-				m_GameLogic->Rotate(GameLogic::ERotate::Right);
-			}
-			else if (evt.KeyCode == GLFW_KEY_UP)
-			{
-				m_GameLogic->RunForward();
-			}
-			else if (evt.KeyCode == GLFW_KEY_SPACE)
-			{
-				m_GameLogic->Jump();
-			}
-			else if (evt.KeyCode == GLFW_KEY_ENTER)
-			{
-				paused = !paused;
-			}
-		});
-
 		m_GameLogic = MakeRef<GameLogic>(*m_Stage);
-
 
 		// Renderer2D
 		m_Renderer2D = MakeRef<Renderer2D>();
@@ -877,11 +856,47 @@ namespace bsf
 		// Sky box camera
 		m_ccSkyBox = MakeRef<CubeCamera>(1024, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 		m_ccIrradiance = MakeRef<CubeCamera>(32, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+
+		// Event hanlders
+
+
+		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
+		m_Subscriptions.push_back(m_GameLogic->GameStateChanged.Subscribe(this, &GameScene::OnGameStateChanged));
+
+		app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
+			if (evt.KeyCode == GLFW_KEY_LEFT)
+			{
+				m_GameLogic->Rotate(GameLogic::ERotate::Left);
+			}
+			else if (evt.KeyCode == GLFW_KEY_RIGHT)
+			{
+				m_GameLogic->Rotate(GameLogic::ERotate::Right);
+			}
+			else if (evt.KeyCode == GLFW_KEY_UP)
+			{
+				m_GameLogic->RunForward();
+			}
+			else if (evt.KeyCode == GLFW_KEY_SPACE)
+			{
+				m_GameLogic->Jump();
+			}
+			else if (evt.KeyCode == GLFW_KEY_ENTER)
+			{
+				paused = !paused;
+			}
+			else if (evt.KeyCode == GLFW_KEY_A)
+			{
+				m_GameMessages.emplace_back("Message Test");
+			}
+
+		});
+
+
 	}
 	
-	void GameScene::OnRender(Application& app, const Time& time)
+	void GameScene::OnRender(const Time& time)
 	{
-		auto windowSize = app.GetWindowSize();
+		auto windowSize = GetApplication().GetWindowSize();
 		float aspect = windowSize.x / windowSize.y;
 		auto& assets = Assets::Get();
 
@@ -1100,42 +1115,70 @@ namespace bsf
 			m_vaQuad->Draw(GL_TRIANGLES);
 
 		}
-
-		{
-			std::string str = "Get Blue Spheres!";
-			float strWidth = assets.GetFont(AssetName::FontMain)->GetStringWidth(str);
-			float sw = 20.0f * windowSize.x / windowSize.y;
-			float sh = 20.0f;
-
-
-			m_Renderer2D->Begin(glm::ortho(0.0f, sw, sh, 0.0f, -1.0f, 1.0f));
-			m_Renderer2D->Pivot({ 0.5f, 0.25f });
-			m_Renderer2D->Translate({ sw / 2.0f, sh / 2.0f });
-			m_Renderer2D->Scale({ 4, 4 });
-			{
-				m_Renderer2D->Color({ 0.0f, 0.0f, 0.0f, 1.0f });
-				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), "Get Blue Spheres!");
-
-				m_Renderer2D->Translate({ -0.02, -0.02 });
-				m_Renderer2D->Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), "Get Blue Spheres!");
-			}
-			m_Renderer2D->End();
-
-		}
+	
+		RenderGameUI(time);
 		
 	}
 	
-	void GameScene::OnDetach(Application& app)
+	void GameScene::OnDetach()
 	{
 		for (auto& unsub : m_Subscriptions)
 			unsub();
+
+		m_Subscriptions.clear();
 	}
 
 	void GameScene::OnResize(const WindowResizedEvent& evt)
 	{
 		glViewport(0, 0, evt.Width, evt.Height);
 		m_fbDeferred->Resize(evt.Width, evt.Height);
+	}
+
+	void GameScene::RenderGameUI(const Time& time)
+	{
+		auto windowSize = GetApplication().GetWindowSize();
+		auto& assets = Assets::Get();
+
+		float sw = 5.0f * windowSize.x / windowSize.y;
+		float sh = 5.0f;
+
+		for (auto it = m_GameMessages.begin(); it != m_GameMessages.end(); ++it)
+		{
+			it->Time += time.Delta;
+
+			float x = 0.0f;
+
+			if (it->Time < GameMessage::s_SlideInTime)
+				x = sw / 2.0f + sw * (1.0f - it->Time / GameMessage::s_SlideDuration);
+			else if (it->Time < GameMessage::s_MessageTime)
+				x = sw / 2.0f;
+			else
+				x = sw / 2.0f - sw * (it->Time - GameMessage::s_MessageTime) / GameMessage::s_SlideDuration;
+
+			m_Renderer2D->Begin(glm::ortho(0.0f, sw, sh, 0.0f, -1.0f, 1.0f));
+			m_Renderer2D->Pivot({ 0.5f, 0.5f });
+			m_Renderer2D->Translate({ x, sh / 4.0f });
+			{
+				m_Renderer2D->Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), it->Message);
+
+				m_Renderer2D->Translate({ -0.02, -0.02 });
+				m_Renderer2D->Color({ 1.0f, 1.0f, 1.0f, 1.0f });
+				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), it->Message);
+			}
+			m_Renderer2D->End();
+		}
+
+		m_GameMessages.remove_if([](auto& x) { return x.Time >= GameMessage::s_SlideOutTime; });
+
+	}
+
+	void GameScene::OnGameStateChanged(const GameStateChangedEvent& evt)
+	{
+		if (evt.Current == EGameState::Starting)
+		{
+			m_GameMessages.emplace_back("Get Blue Spheres!");
+		}
 	}
 
 	Ref<TextureCube> GameScene::CreateBaseSkyBox()
@@ -1153,7 +1196,6 @@ namespace bsf
 		};
 
 
-		
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			1024,
 			"assets/textures/sky_front5.png",
@@ -1163,7 +1205,6 @@ namespace bsf
 			"assets/textures/sky_bottom4.png",
 			"assets/textures/sky_top3.png"
 		));
-		
 
 		/*
 		auto skyBox = Ref<TextureCube>(new TextureCube(
@@ -1176,6 +1217,7 @@ namespace bsf
 			"assets/textures/top.png"
 		));
 		*/
+		
 
 		for (auto face : faces)
 		{

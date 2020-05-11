@@ -27,7 +27,7 @@ namespace bsf {
 
 		Application();
 		~Application();
-
+		
 		Application(Application&) = delete;
 		Application(Application&&) = delete;
 

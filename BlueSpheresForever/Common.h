@@ -5,6 +5,9 @@
 #include <vector>
 #include <unordered_map>
 #include <glm/glm.hpp>
+#include <algorithm>
+
+#include "Log.h"
 
 namespace bsf
 {
@@ -70,8 +73,13 @@ namespace bsf
 
 	struct Time
 	{
-		float Delta, Elapsed;
+		float Delta = 0.0f, Elapsed = 0.0f;
+
+		Time& operator+=(const Time & other);
+
 	};
+
+
 	#pragma endregion
 
 	#pragma region Ref
@@ -90,26 +98,86 @@ namespace bsf
 
 	#pragma region Utilities
 
-	template<typename T>
-	void Read(std::istream& is, T& target) {
-		is.read((char*)&target, sizeof(T));
-	}
-
-
-	template<typename T>
-	T Read(std::istream& is)
+	enum class ByteOrder
 	{
-		T value;
-		is.read((char*)&value, sizeof(T));
-		return value;
+		BigEndian,
+		LittleEndian
+	};
+
+	static struct 
+	{
+		uint32_t x = 1;
+		uint8_t* p = reinterpret_cast<uint8_t*>(&x);
+	} s_ByteOrderHelper;
+
+	/// Retrieves the local system's byte order
+	constexpr ByteOrder SystemByteOrder() {
+		return *(s_ByteOrderHelper.p) == 1 ? ByteOrder::LittleEndian : ByteOrder::BigEndian;
 	}
 
 	template<typename T>
-	std::vector<T> Read(std::istream& is, uint32_t count) {
-		std::vector<T> result(count);
-		is.read((char*)result.data(), count * sizeof(T));
-		return result;
+	void SwapBytes(std::enable_if_t<std::is_arithmetic_v<T>, T>& value)
+	{
+		
+		constexpr uint32_t count = sizeof(value);
+		uint8_t* base = reinterpret_cast<uint8_t*>(&value);
+
+		for (int32_t i = 0; i < count / 2; i++)
+			std::swap(*(base + i), *(base + count - (i + 1)));
 	}
+
+
+	template<ByteOrder B>
+	class InputStream
+	{
+	public:
+		InputStream(std::istream& source) : m_Source(source) {}
+
+		// Generic read function. Doesn't care about endianness
+		template<typename T>
+		void Read(T& target) { 
+			m_Source.read((char*)&target, sizeof(T)); 
+			BSF_INFO("Read {0} bytes", sizeof(T));
+		}
+
+		// This gets enabled if the system byte order is different than the InputStream byte order
+		// It's defined for numeric types
+		template<typename T>
+		void Read(std::enable_if_t<B != SystemByteOrder() && std::is_arithmetic_v<T>, T>& target)
+		{
+			m_Source.read((char*)&target, sizeof(T)); 
+			SwapBytes(target);
+			BSF_INFO("Read {0} bytes with byte order inversion", sizeof(T));
+		}
+
+		// Special case for glm vectors
+		template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
+		void Read(V<N, T, Q>& target)
+		{
+			for (uint32_t i = 0; i < N; i++)
+				Read(*(glm::value_ptr(target) + i));
+		}
+
+		template<typename T>
+		T Read() {
+			T result;
+			Read(result);
+			return result;
+		}
+
+		template<typename T>
+		void ReadSome(uint32_t count, T* ptr)
+		{
+			for (uint32_t i = 0; i < count; i++)
+				Read(*(ptr + i));
+		}
+
+
+
+	private:
+		std::istream& m_Source;
+	};
+
 
 	template <typename T>
 	typename std::enable_if<std::is_unsigned<T>::value, int>::type
