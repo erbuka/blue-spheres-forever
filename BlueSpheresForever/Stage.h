@@ -6,8 +6,6 @@
 
 namespace bsf
 {
-	static constexpr int32_t s_StageSize = 32;
-
 
 	enum class EAvoidSearch : uint8_t
 	{
@@ -20,7 +18,7 @@ namespace bsf
 		None = 0,
 		RedSphere = 1,
 		BlueSphere = 2,
-		StarSphere = 3,
+		Bumper = 3,
 		Ring = 4,
 		YellowSphere = 5
 	};
@@ -51,22 +49,26 @@ namespace bsf
 
 		bool FromFile(const std::string& filename);
 
-		Stage();
+		Stage() = default;
 		
 		EStageObject GetValueAt(const glm::ivec2& position) const;
 		EStageObject GetValueAt(int32_t x, int32_t y) const;
 		void SetValueAt(int32_t x, int32_t y, EStageObject obj);
 		void SetValueAt(const glm::ivec2& position, EStageObject obj);
 
-		int32_t GetWidth() const { return s_StageSize; }
-		int32_t GetHeight() const { return s_StageSize; }
+		int32_t GetWidth() const { return m_Width; }
+		int32_t GetHeight() const { return m_Height; }
 
 	private:
+
+		int32_t m_Width, m_Height;
 	
-		void WrapCoordinate(int32_t& coord) const;
-		std::array<std::array<EStageObject, s_StageSize>, s_StageSize> m_Data;
-		std::array<std::array<EAvoidSearch, s_StageSize>, s_StageSize> m_AvoidSearch;
-	
+		void WrapX(int32_t& x) const;
+		void WrapY(int32_t& y) const;
+
+		std::vector<EStageObject> m_Data;
+		std::vector<EAvoidSearch> m_AvoidSearch;
+
 	};
 }
 

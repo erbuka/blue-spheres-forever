@@ -5,6 +5,7 @@
 #include "Log.h"
 #include "Common.h"
 #include "Font.h";
+#include "WafefrontLoader.h"
 
 namespace bsf
 {
@@ -46,6 +47,9 @@ namespace bsf
 		m_Textures[AssetName::TexGroundMetallic] = CreateGray(0.1f);
 		m_Textures[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
+		m_Textures[AssetName::TexRingMetallic] = CreateGray(0.4f);
+		m_Textures[AssetName::TexRingRoughness] = CreateGray(0.1f);
+
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
 			bumper->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
@@ -63,6 +67,10 @@ namespace bsf
 			auto brdf = MakeRef<Texture2D>("assets/textures/ibl_brdf_lut.png");
 			brdf->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_Textures[AssetName::TexBRDFLut] = brdf;
+		}
+
+		{
+			m_Models[AssetName::ModRing] = WavefrontLoader().Load("assets/models/ring.obj")->CreateModel();
 		}
 
 
@@ -83,6 +91,11 @@ namespace bsf
 	const Ref<Font>& Assets::GetFont(AssetName n)
 	{
 		return GetAssetStatic(n, m_Fonts);
+	}
+
+	const Ref<Model>& Assets::GetModel(AssetName n)
+	{
+		return GetAssetStatic(n, m_Models);
 	}
 
 	Assets::~Assets()

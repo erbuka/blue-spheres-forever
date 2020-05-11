@@ -476,14 +476,6 @@ static std::string s_IrradianceFragment = R"Fragment(
 namespace bsf
 {
 
-	struct Vertex
-	{
-		glm::vec3 Position0;
-		glm::vec3 Normal0;
-		glm::vec3 Tangent0;
-		glm::vec3 Binormal0;
-		glm::vec2 UV;
-	};
 
 	struct StarVertex
 	{
@@ -536,32 +528,6 @@ namespace bsf
 		return result;
 	}
 
-
-	static Ref<VertexArray> CreateSkyDome(const Stage& stage)
-	{
-		uint32_t starCount = 1000;
-		
-		std::vector<StarVertex> stars(1000);
-
-		for (uint32_t i = 0; i < starCount; i++)
-		{
-			stars[i].UV = { float(rand()) / RAND_MAX, float(rand()) / RAND_MAX };
-			stars[i].Color = stage.StarColors[rand() % stage.StarColors.size()];
-			stars[i].Size = (float(rand()) / RAND_MAX) < 0.1f ? 5.0f : 1.0f;
-		}
-
-		auto result = Ref<VertexArray>(new VertexArray({
-			{ "aUV", AttributeType::Float2 },
-			{ "aColor", AttributeType::Float3 },
-			{ "aSize", AttributeType::Float }
-		}));
-
-		result->SetData(stars.data(), stars.size(), GL_STATIC_DRAW);
-
-		return result;
-
-		
-	}
 
 	static Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion)
 	{
@@ -818,7 +784,6 @@ namespace bsf
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
 		m_vaSphere = CreateIcosphere(0.15, 3);
-		m_vaStars = CreateSkyDome(*m_Stage);
 		m_vaQuad = CreateClipSpaceQuad();
 		m_vaSkyBox = CreateSkyBox();
 		m_vaDynSkyBox = CreateSkyBox();
@@ -827,7 +792,6 @@ namespace bsf
 
 		// Programs
 		m_pPBR = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
-		m_pStars = MakeRef<ShaderProgram>(s_StarsVertex, s_StarsGeometry, s_StarsFragment);
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
 		m_pDeferred = MakeRef<ShaderProgram>(s_ScreenVertex, s_DeferredFragment);
 		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
@@ -904,6 +868,7 @@ namespace bsf
 		glm::vec4 blue(0.1f, 0.2f, 0.8f, 1.0f);
 		glm::vec4 red(0.9f, 0.2f, 0.3f, 1.0f);
 		glm::vec4 yellow(0.8f, 0.8f, 0.1f, 1.0f);
+		glm::vec4 gold(0.8f, 0.8f, 0.0f, 1.0f);
 
 		if (!paused)
 		{
@@ -921,35 +886,7 @@ namespace bsf
 
 		auto drawStageObject = [&](EStageObject val) {
 
-			if (val != EStageObject::None)
-			{
-				m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-
-				switch (val)
-				{
-				case EStageObject::RedSphere:
-					assets.GetTexture(AssetName::TexWhite)->Bind(0);
-					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(red));
-					m_vaSphere->Draw(GL_TRIANGLES);
-					break;
-				case EStageObject::BlueSphere:
-					assets.GetTexture(AssetName::TexWhite)->Bind(0);
-					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(blue));
-					m_vaSphere->Draw(GL_TRIANGLES);
-					break;
-				case EStageObject::YellowSphere:
-					assets.GetTexture(AssetName::TexWhite)->Bind(0);
-					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
-					m_vaSphere->Draw(GL_TRIANGLES);
-					break;
-				case EStageObject::StarSphere:
-					assets.GetTexture(AssetName::TexBumper)->Bind(0);
-					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
-					m_vaSphere->Draw(GL_TRIANGLES);
-					break;
-				}
-
-			}
+			
 		};
 
 		auto setupView = [&]() {
@@ -1071,19 +1008,67 @@ namespace bsf
 
 
 				// Draw spheres and rings
-				m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-				m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
-				m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
-				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4); // Sphere ao
+				m_pPBR->UniformTexture("uNormalMap", assets.GetTexture(AssetName::TexNormalPosZ), 1);
+				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 4);
 
 				for (int32_t x = -12; x <= 12; x++)
 				{
 					for (int32_t y = -12; y <= 12; y++)
 					{
+						auto value = m_Stage->GetValueAt(x + ix, y + iy);
+						
+						if (value == EStageObject::None)
+							continue;
+
 						m_Model.Push();
 						m_Model.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
+					
+						if (value == EStageObject::Ring)
+							m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
+
 						m_pPBR->UniformMatrix4f("uModel", m_Model);
-						drawStageObject(m_Stage->GetValueAt(x + ix, y + iy));
+
+						switch (value)
+						{
+						case EStageObject::Ring:
+
+							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexRingMetallic), 2); // Sphere metallic
+							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexRingRoughness), 3); // Sphere roughness
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(gold));
+							assets.GetModel(AssetName::ModRing)->at(0)->Draw(GL_TRIANGLES);
+							break;
+						case EStageObject::RedSphere:
+							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); 
+							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3);
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(red));
+							m_vaSphere->Draw(GL_TRIANGLES);
+							break;
+						case EStageObject::BlueSphere:
+							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); 
+							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3);
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(blue));
+							m_vaSphere->Draw(GL_TRIANGLES);
+							break;
+						case EStageObject::YellowSphere:
+							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
+							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
+							m_vaSphere->Draw(GL_TRIANGLES);
+							break;
+						case EStageObject::Bumper:
+							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexBumper), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 2); // Sphere metallic
+							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 3); // Sphere roughness
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+							m_vaSphere->Draw(GL_TRIANGLES);
+							break;
+						}
+
+	
 						m_Model.Pop();
 					}
 				}
@@ -1195,7 +1180,7 @@ namespace bsf
 			TextureCubeFace::Back
 		};
 
-
+		
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			1024,
 			"assets/textures/sky_front5.png",
@@ -1205,7 +1190,7 @@ namespace bsf
 			"assets/textures/sky_bottom4.png",
 			"assets/textures/sky_top3.png"
 		));
-
+		
 		/*
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			256,

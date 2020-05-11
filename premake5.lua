@@ -6,6 +6,7 @@ workspace "BlueSpheresForever"
     filter "configurations:Debug"
         symbols "On"
         optimize "Off"
+        defines "DEBUG"
 
     filter "configurations:Release"
         symbols "Off"

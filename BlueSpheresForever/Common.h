@@ -1,17 +1,36 @@
 #pragma once
 
+#include <string>
 #include <fstream>
 #include <memory>
 #include <vector>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <algorithm>
+#include <glad/glad.h>
 
 #include "Log.h"
 
 namespace bsf
 {
 	class Texture2D;
+	class VertexArray;
+	
+	#pragma region Ref
+
+	template<typename T>
+	using Ref = std::shared_ptr<T>;
+
+
+	template<typename T, typename... Args>
+	Ref<T> MakeRef(Args&&... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
+
+	#pragma endregion
+
+	#pragma region Shaders
 
 	enum class ShaderType
 	{
@@ -26,6 +45,22 @@ namespace bsf
 		std::string Source;
 	};
 
+	#pragma endregion
+
+	#pragma region PBR
+
+	struct Vertex
+	{
+		glm::vec3 Position0;
+		glm::vec3 Normal0;
+		glm::vec3 Tangent0;
+		glm::vec3 Binormal0;
+		glm::vec2 UV;
+	};
+
+	using Model = std::vector<Ref<VertexArray>>;
+
+	#pragma endregion
 
 	#pragma region Events
 
@@ -82,19 +117,7 @@ namespace bsf
 
 	#pragma endregion
 
-	#pragma region Ref
 
-	template<typename T>
-	using Ref = std::shared_ptr<T>;
-
-
-	template<typename T, typename... Args>
-	Ref<T> MakeRef(Args&&... args)
-	{
-		return std::make_shared<T>(std::forward<Args>(args)...);
-	}
-
-	#pragma endregion
 
 	#pragma region Utilities
 

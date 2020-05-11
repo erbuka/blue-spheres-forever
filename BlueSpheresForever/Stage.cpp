@@ -21,10 +21,10 @@ namespace bsf
 
 		InputStream<ByteOrder::LittleEndian> is(stdIs);
 
-		is.Read<uint32_t>(Version);
+		is.Read(Version);
 
-		auto width = is.Read<uint32_t>(); // Width
-		auto height = is.Read<uint32_t>(); // Height
+		is.Read(m_Width); // Width
+		is.Read(m_Height); // Height
 
 		is.Read(FloorRenderingMode); // uint8;
 		is.Read(BumpMappingEnabled); // uint8;
@@ -55,15 +55,13 @@ namespace bsf
 
 		is.Read(MaxRings); // uint32
 
+		m_Data.resize(m_Width * m_Height);
+		m_AvoidSearch.resize(m_Width * m_Height);
+
 		is.ReadSome(m_Data.size(), m_Data.data()); // 1024 bytes
 		is.ReadSome(m_AvoidSearch.size(), m_Data.data()); // 1024 bytes;
 
 		stdIs.close();
-
-	}
-
-	Stage::Stage()
-	{
 
 	}
 
@@ -74,28 +72,35 @@ namespace bsf
 
 	EStageObject Stage::GetValueAt(int32_t x, int32_t y) const
 	{
-		WrapCoordinate(x);
-		WrapCoordinate(y);
+		WrapX(x);
+		WrapY(y);
 
 
-		return m_Data[y][x];
+		return m_Data[y * m_Width + x];
 
 	}
 	void Stage::SetValueAt(int32_t x, int32_t y, EStageObject obj)
 	{
-		WrapCoordinate(x);
-		WrapCoordinate(y);
-		m_Data[y][x] = obj;
+		WrapX(x);
+		WrapY(y);
+		m_Data[y * m_Width + x] = obj;
 	}
 	void Stage::SetValueAt(const glm::ivec2& position, EStageObject obj)
 	{
 		SetValueAt(position.x, position.y, obj);
 	}
-	void Stage::WrapCoordinate(int32_t& coord) const
+	void Stage::WrapX(int32_t& x) const
 	{
-		while (coord < 0)
-			coord += (int32_t)s_StageSize;
+		while (x < 0)
+			x += m_Width;
 
-		coord = coord % s_StageSize;
+		x %= m_Width;
+	}
+	void Stage::WrapY(int32_t& y) const
+	{
+		while (y < 0)
+			y += m_Height;
+
+		y %= m_Width;
 	}
 }

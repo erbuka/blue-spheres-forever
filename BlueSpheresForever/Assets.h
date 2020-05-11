@@ -25,10 +25,15 @@ namespace bsf
 		TexGroundMetallic,
 		TexGroundRoughness,
 
+		TexRingMetallic,
+		TexRingRoughness,
+
 		TexStar,
 		TexBRDFLut,
 
 		FontMain,
+
+		ModRing
 
 	};
 
@@ -46,6 +51,7 @@ namespace bsf
 			
 		const Ref<Texture>& GetTexture(AssetName n);
 		const Ref<Font>& GetFont(AssetName n);
+		const Ref<Model>& GetModel(AssetName n);
 
 		~Assets();
 	private:
@@ -54,6 +60,7 @@ namespace bsf
 
 		std::unordered_map<AssetName, Ref<Texture>> m_Textures;
 		std::unordered_map<AssetName, Ref<Font>> m_Fonts;
+		std::unordered_map<AssetName, Ref<Model>> m_Models;
 	};
 }
 

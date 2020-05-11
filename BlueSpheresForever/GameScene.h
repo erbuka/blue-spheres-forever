@@ -59,8 +59,8 @@ namespace bsf
 		Ref<Renderer2D> m_Renderer2D;
 		Ref<Framebuffer> m_fbDeferred;
 
-		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaStars, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;
-		Ref<ShaderProgram> m_pPBR, m_pStars, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance;
+		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;
+		Ref<ShaderProgram> m_pPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance;
 		
 		Ref<TextureCube> m_txBaseSkyBox, m_txBaseIrradiance;
 		Ref<CubeCamera> m_ccSkyBox, m_ccIrradiance;

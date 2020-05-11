@@ -459,7 +459,7 @@ namespace bsf
 							m_Stage.SetValueAt(roundedPosition, EStageObject::None);
 
 					} 
-					else if(object == EStageObject::StarSphere)
+					else if(object == EStageObject::Bumper)
 					{
 						m_LastBounceDistance = 0.0f;
 						m_IsGoingBackward = !m_IsGoingBackward;

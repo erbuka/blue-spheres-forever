@@ -4,8 +4,6 @@
 #include "Stage.h"
 #include "GameScene.h"
 #include "Common.h"
-#include "Log.h"
-#include "Texture.h"
 
 using namespace bsf;
 using namespace glm;
