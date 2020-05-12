@@ -865,9 +865,9 @@ namespace bsf
 		auto& assets = Assets::Get();
 
 		glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-		glm::vec4 blue(0.1f, 0.2f, 0.8f, 1.0f);
-		glm::vec4 red(0.9f, 0.2f, 0.3f, 1.0f);
-		glm::vec4 yellow(0.8f, 0.8f, 0.1f, 1.0f);
+		glm::vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
+		glm::vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+		glm::vec4 yellow(1.0f, 1.0f, 0.0f, 1.0f);
 		glm::vec4 gold(0.8f, 0.8f, 0.0f, 1.0f);
 
 		if (!paused)
@@ -1191,6 +1191,8 @@ namespace bsf
 			"assets/textures/sky_top3.png"
 		));
 		
+		
+
 		/*
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			256,
@@ -1202,6 +1204,7 @@ namespace bsf
 			"assets/textures/top.png"
 		));
 		*/
+		
 		
 
 		for (auto face : faces)
