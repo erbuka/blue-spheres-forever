@@ -205,7 +205,7 @@ static const std::string s_Fragment = R"Fragment(
 
 		vec3 N = normalize(normal);
 		vec3 V = normalize(uCameraPos - worldPos);
-		vec3 L = N;
+		vec3 L = normalize(uLightPos);
 		vec3 H = normalize(V + L);
 		vec3 R = normalize(reflect(-V, N));
 
@@ -220,24 +220,31 @@ static const std::string s_Fragment = R"Fragment(
 
 		vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
+		vec3 fragment = vec3(0.0);
+
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
-        vec3 F    = fresnelSchlick(max(dot(N, H), 0.0), F0, roughness);       
+        vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);       
 
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
         kD *= 1.0 - metallic;	  
-            
-        // add to outgoing radiance Lo
-		vec3 irradiance = texture(uIrradiance, N).rgb;
-        vec3 color = (kD * irradiance * albedo) * ao;
 
-		// sky reflections
+
+		// Main light
+		vec3 radiance = vec3(5.0, 5.0, 5.0);
+		vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
+		fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
+
+            
+        // Irradiance
+		vec3 irradiance = texture(uIrradiance, N).rgb;
+        fragment += (kD * irradiance * albedo) * ao;
+
+		// Sky reflections
 		vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
 		vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
-		vec3 ambient = indirectSpecular * ao;
-
-		vec3 fragment = color + ambient;
+		fragment += indirectSpecular * ao;
 
 		fragment = fragment / (fragment + vec3(1.0));
 
@@ -312,14 +319,18 @@ static const std::string s_SkyGradientVertex = R"Vertex(
 
 	uniform mat4 uProjection;
 	uniform mat4 uView;
+	uniform mat4 uModel;
 	
 	layout(location = 0) in vec3 aPosition;
+	layout(location = 1) in vec3 aUv;
 
 	out vec3 fPosition;
+	out vec3 fUv;
 
 	void main() {
 		fPosition = aPosition;
-		gl_Position = uProjection * uView * vec4(aPosition, 1.0);
+		fUv = aUv;
+		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
 	}
 )Vertex";
 
@@ -331,12 +342,12 @@ static const std::string s_SkyGradientFragment = R"Vertex(
 	uniform vec2 uOffset;
 
 	in vec3 fPosition;
+	in vec3 fUv;
 	
 	out vec4 oColor;
 
 	void main() {
-		
-		oColor = vec4(mix(uColor1, uColor0, fPosition.y * 0.5 + 0.5), 1.0);
+		oColor = vec4(mix(uColor1, uColor0, fUv.y * 0.5 + 0.5), 1.0);
 	}
 
 )Vertex";
@@ -1179,7 +1190,6 @@ namespace bsf
 			TextureCubeFace::Front,
 			TextureCubeFace::Back
 		};
-
 		
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			1024,
@@ -1204,6 +1214,7 @@ namespace bsf
 			"assets/textures/top.png"
 		));
 		*/
+		
 		
 		
 
