@@ -44,7 +44,7 @@ namespace bsf
 		m_Textures[AssetName::TexSphereRoughness] = CreateGray(0.1f);
 
 		m_Textures[AssetName::TexGroundNormal] = m_Textures[AssetName::TexNormalPosZ];
-		m_Textures[AssetName::TexGroundMetallic] = CreateGray(0.1f);
+		m_Textures[AssetName::TexGroundMetallic] = CreateGray(0.5f);
 		m_Textures[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
 		m_Textures[AssetName::TexRingMetallic] = CreateGray(0.1f);

@@ -20,7 +20,7 @@ namespace bsf
 	}
 	void MatrixStack::Pop()
 	{
-		assert(m_Stack.size() > 0);
+		assert(m_Stack.size() >= 1);
 		m_Stack.pop();
 	}
 	void MatrixStack::Reset()

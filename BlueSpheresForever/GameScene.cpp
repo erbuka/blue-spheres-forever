@@ -116,7 +116,39 @@ static const std::string s_StarsFragment = R"Fragment(
 
 )Fragment";
 
-static const std::string s_Vertex = R"Vertex(
+static const std::string s_ShadowVertex = R"Vertex(
+	#version 330 core
+	
+	uniform mat4 uProjection;
+	uniform mat4 uView;
+	uniform mat4 uModel;
+	
+	layout(location = 0) in vec3 aPosition;
+	
+	out vec3 fPosition;
+	
+	void main() {
+		vec3 position = (uView * uModel * vec4(aPosition, 1.0)).xyz;
+		fPosition = position;
+		gl_Position = uProjection * vec4(position, 1.0);
+	}	
+	
+)Vertex";
+
+static const std::string s_ShadowFragment = R"Fragment(
+	#version 330 core
+
+	in vec3 fPosition;
+
+	layout(location = 0) out float oDepth;
+
+	void main() {
+		oDepth = fPosition.z;
+	}
+
+)Fragment";
+
+static const std::string s_PBRVertex = R"Vertex(
 	#version 330 core
 	
 	uniform mat4 uProjection;
@@ -154,13 +186,16 @@ static const std::string s_Vertex = R"Vertex(
 )Vertex";
 
 
-static const std::string s_Fragment = R"Fragment(
+static const std::string s_PBRFragment = R"Fragment(
 	#version 330 core
 	
 	uniform mat4 uProjection;
 	uniform mat4 uView;
 	uniform mat4 uModel;
-	
+
+	uniform mat4 uShadowView;
+	uniform mat4 uShadowProjection;
+
 	uniform vec3 uCameraPos;
 	uniform vec3 uLightPos;
 
@@ -175,6 +210,7 @@ static const std::string s_Fragment = R"Fragment(
 	uniform sampler2D uBRDFLut;
 	uniform samplerCube uEnvironment;
 	uniform samplerCube uIrradiance;
+	uniform sampler2D uShadowMap;
 	
 	in vec3 fPosition;
 	in vec2 fUv;
@@ -202,6 +238,8 @@ static const std::string s_Fragment = R"Fragment(
 		vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
 		vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
 		vec3 viewPos = (uView * vec4(worldPos, 1.0)).xyz;
+		vec3 shadowViewPos = (uShadowView * vec4(worldPos, 1.0)).xyz;
+		vec2 shadowUv = (uShadowProjection * uShadowView * vec4(worldPos, 1.0)).xy * 0.5 + 0.5;		
 
 		vec3 N = normalize(normal);
 		vec3 V = normalize(uCameraPos - worldPos);
@@ -232,10 +270,12 @@ static const std::string s_Fragment = R"Fragment(
 
 
 		// Main light
-		vec3 radiance = vec3(5.0, 5.0, 5.0);
-		vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
-		fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
-
+		if(texture(uShadowMap, shadowUv).r < shadowViewPos.z + 0.05) {
+			vec3 radiance = vec3(5.0, 5.0, 5.0);
+			vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
+			fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
+		}
+		
             
         // Irradiance
 		vec3 irradiance = texture(uIrradiance, N).rgb;
@@ -703,6 +743,7 @@ namespace bsf
 	{
 
 		std::array<glm::vec3, 8> v = {
+
 			// Front
 			glm::vec3(-1.0f, -1.0f, +1.0f),
 			glm::vec3(+1.0f, -1.0f, +1.0f),
@@ -792,6 +833,9 @@ namespace bsf
 		m_fbDeferred->AddColorAttachment("normal", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 		m_fbDeferred->AddColorAttachment("position", GL_RGB32F, GL_RGB, GL_FLOAT);
 
+		m_fbShadow = MakeRef<Framebuffer>(2048, 2048, true);
+		m_fbShadow->AddColorAttachment("depth", GL_R16F, GL_RED, GL_FLOAT);
+
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
 		m_vaSphere = CreateIcosphere(0.15, 3);
@@ -802,11 +846,12 @@ namespace bsf
 		m_vDynSkyBoxVertices = CreateSkyBoxData();
 
 		// Programs
-		m_pPBR = MakeRef<ShaderProgram>(s_Vertex, s_Fragment);
+		m_pPBR = MakeRef<ShaderProgram>(s_PBRVertex, s_PBRFragment);
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
 		m_pDeferred = MakeRef<ShaderProgram>(s_ScreenVertex, s_DeferredFragment);
 		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
 		m_pIrradiance = MakeRef<ShaderProgram>(s_IrradianceVertex, s_IrradianceFragment);
+		m_pShadow = MakeRef<ShaderProgram>(s_ShadowVertex, s_ShadowFragment);
 		
 		// Textures
 
@@ -879,7 +924,7 @@ namespace bsf
 		glm::vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
 		glm::vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
 		glm::vec4 yellow(1.0f, 1.0f, 0.0f, 1.0f);
-		glm::vec4 gold(0.8f, 0.8f, 0.0f, 1.0f);
+		glm::vec4 gold(0.83f, 0.69f, 0.22f, 1.0f);
 
 		if (!paused)
 		{
@@ -894,11 +939,6 @@ namespace bsf
 		glm::vec2 deltaPos = m_GameLogic->GetDeltaPosition();
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
-
-		auto drawStageObject = [&](EStageObject val) {
-
-			
-		};
 
 		auto setupView = [&]() {
 			// Setup the player view
@@ -924,6 +964,9 @@ namespace bsf
 			GenerateDynamicCubeMap(m_ccSkyBox, m_txBaseSkyBox);
 			GenerateDynamicCubeMap(m_ccIrradiance, m_txBaseIrradiance);
 		}
+
+		// Render shadow map
+		RenderShadowMap(time);
 
 		// Begin scene
 		glViewport(0, 0, windowSize.x, windowSize.y);
@@ -984,6 +1027,9 @@ namespace bsf
 				m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
 				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
 
+				m_pPBR->UniformMatrix4f("uShadowProjection", m_ShadowProjection.GetMatrix());
+				m_pPBR->UniformMatrix4f("uShadowView", m_ShadowView.GetMatrix());
+
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
 
@@ -996,6 +1042,7 @@ namespace bsf
 				m_pPBR->UniformTexture("uBRDFLut", assets.GetTexture(AssetName::TexBRDFLut), 5);
 				m_pPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 6);
 				m_pPBR->UniformTexture("uIrradiance", m_ccIrradiance->GetTexture(), 7);
+				m_pPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 8);
 				
 
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
@@ -1130,6 +1177,74 @@ namespace bsf
 		m_fbDeferred->Resize(evt.Width, evt.Height);
 	}
 
+	void GameScene::RenderShadowMap(const Time& time)
+	{
+		GLEnableScope scope({ GL_DEPTH_TEST });
+		auto& assets = Assets::Get();
+
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, m_fbShadow->GetWidth(), m_fbShadow->GetHeight());
+
+		m_ShadowProjection.Reset();
+		m_ShadowProjection.Orthographic(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 100.0f);
+		
+		m_ShadowView.Reset();
+		m_ShadowView.LookAt({ 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f });
+
+		m_ShadowModel.Reset();
+		m_ShadowModel.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
+	
+		m_fbShadow->Bind();
+
+		glClearColor(-100.0f, 0.0f, 0.0, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		m_pShadow->Use();
+
+		m_pShadow->UniformMatrix4f("uProjection", m_ShadowProjection);
+		m_pShadow->UniformMatrix4f("uView", m_ShadowView);
+
+		glm::vec2 pos = m_GameLogic->GetPosition();
+		int32_t ix = pos.x, iy = pos.y;
+		float fx = pos.x - ix, fy = pos.y - iy;
+
+		for (int32_t x = -12; x <= 12; x++)
+		{
+			for (int32_t y = -12; y <= 12; y++)
+			{
+				auto value = m_Stage->GetValueAt(x + ix, y + iy);
+
+				if (value == EStageObject::None)
+					continue;
+
+				m_ShadowModel.Push();
+				m_ShadowModel.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
+
+				if (value == EStageObject::Ring)
+					m_ShadowModel.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
+
+				m_pShadow->UniformMatrix4f("uModel", m_ShadowModel);
+
+				switch (value)
+				{
+				case EStageObject::Ring:
+					assets.GetModel(AssetName::ModRing)->at(0)->Draw(GL_TRIANGLES);
+					break;
+				case EStageObject::RedSphere:
+				case EStageObject::BlueSphere:
+				case EStageObject::YellowSphere:
+				case EStageObject::Bumper:
+					m_vaSphere->Draw(GL_TRIANGLES);
+					break;
+				}
+
+				m_ShadowModel.Pop();
+			}
+		}
+
+
+	}
+
 	void GameScene::RenderGameUI(const Time& time)
 	{
 		auto windowSize = GetApplication().GetWindowSize();
@@ -1191,6 +1306,7 @@ namespace bsf
 			TextureCubeFace::Back
 		};
 		
+		/*
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			1024,
 			"assets/textures/sky_front5.png",
@@ -1200,10 +1316,8 @@ namespace bsf
 			"assets/textures/sky_bottom4.png",
 			"assets/textures/sky_top3.png"
 		));
+		*/
 		
-		
-
-		/*
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			256,
 			"assets/textures/front.png",
@@ -1213,7 +1327,6 @@ namespace bsf
 			"assets/textures/bottom.png",
 			"assets/textures/top.png"
 		));
-		*/
 		
 		
 		

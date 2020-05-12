@@ -55,12 +55,13 @@ namespace bsf
 
 		std::vector<Unsubscribe> m_Subscriptions;
 		MatrixStack m_Model, m_View, m_Projection;
+		MatrixStack m_ShadowView, m_ShadowProjection, m_ShadowModel;
 
 		Ref<Renderer2D> m_Renderer2D;
-		Ref<Framebuffer> m_fbDeferred;
+		Ref<Framebuffer> m_fbDeferred, m_fbShadow;
 
 		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;
-		Ref<ShaderProgram> m_pPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance;
+		Ref<ShaderProgram> m_pPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance, m_pShadow;
 		
 		Ref<TextureCube> m_txBaseSkyBox, m_txBaseIrradiance;
 		Ref<CubeCamera> m_ccSkyBox, m_ccIrradiance;
@@ -72,6 +73,9 @@ namespace bsf
 		std::vector<BoxVertex> m_vDynSkyBoxVertices;
 
 		std::list<GameMessage> m_GameMessages;
+
+
+		void RenderShadowMap(const Time& time);
 
 		void RenderGameUI(const Time& time);
 		void OnGameStateChanged(const GameStateChangedEvent& evt);

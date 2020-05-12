@@ -26,6 +26,9 @@ namespace bsf
 
 		void Resize(uint32_t width, uint32_t height);
 
+		uint32_t GetWidth() const { return m_Width; }
+		uint32_t GetHeight() const { return m_Height; }
+
 		void Bind();
 		void Unbind();
 

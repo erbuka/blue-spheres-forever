@@ -122,6 +122,7 @@ namespace bsf
         auto prevTime = std::chrono::high_resolution_clock::now();
         auto currTime = std::chrono::high_resolution_clock::now();
 
+        glfwSwapInterval(0);
 
         m_CurrentScene = std::make_shared<Scene>();
         m_CurrentScene->m_App = this;
@@ -149,6 +150,12 @@ namespace bsf
             std::chrono::duration<float> delta = now - prevTime;
             std::chrono::duration<float> elapsed = now - startTime;
             prevTime = now;
+
+            /* FPS counter */
+            char buffer[40];
+            sprintf_s(buffer, "FPS: %f", 1.0 / delta.count());
+            glfwSetWindowTitle(m_Window, buffer);
+            /* FPS counter */
 
             m_CurrentScene->OnRender({ delta.count(), elapsed.count() });
 

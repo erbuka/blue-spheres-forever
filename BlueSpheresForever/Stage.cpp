@@ -59,7 +59,7 @@ namespace bsf
 		m_AvoidSearch.resize(m_Width * m_Height);
 
 		is.ReadSome(m_Data.size(), m_Data.data()); // 1024 bytes
-		is.ReadSome(m_AvoidSearch.size(), m_Data.data()); // 1024 bytes;
+		is.ReadSome(m_AvoidSearch.size(), m_AvoidSearch.data()); // 1024 bytes;
 
 		stdIs.close();
 
@@ -88,6 +88,17 @@ namespace bsf
 	void Stage::SetValueAt(const glm::ivec2& position, EStageObject obj)
 	{
 		SetValueAt(position.x, position.y, obj);
+	}
+	void Stage::Dump()
+	{
+		for (int32_t y = 0; y < m_Height; y++)
+		{
+			for (int32_t x = 0; x < m_Width; x++)
+			{
+				std::cout << (int)m_Data[y * m_Width + x];
+			}
+			std::cout << std::endl;
+		}
 	}
 	void Stage::WrapX(int32_t& x) const
 	{
