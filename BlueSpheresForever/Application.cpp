@@ -78,7 +78,7 @@ namespace bsf
     {
         m_CurrentScene = nullptr;
         m_NextScene = nullptr;
-        Assets::Get().Dispose();
+        Assets::GetInstance().Dispose();
         glfwTerminate();
     }
 
@@ -128,7 +128,7 @@ namespace bsf
         m_CurrentScene->m_App = this;
 
         // Load Assets 
-        Assets::Get().Load();
+        Assets::GetInstance().Load();
 
         while (!glfwWindowShouldClose(m_Window))
         {

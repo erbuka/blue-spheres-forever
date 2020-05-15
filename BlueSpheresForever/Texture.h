@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Asset.h"
 
 #include <string>
 #include <vector>
@@ -26,7 +27,7 @@ namespace bsf
 		Back = 5
 	};
 
-	class Texture
+	class Texture : public Asset
 	{
 	public:
 		Texture();

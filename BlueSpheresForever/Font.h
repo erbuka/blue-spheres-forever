@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Asset.h"
 
 #include <glm/glm.hpp>
 
@@ -14,7 +15,7 @@ namespace bsf
 		float Advance;
 	};
 
-	class Font
+	class Font : public Asset
 	{
 	public:
 		Font(const std::string& fileName);

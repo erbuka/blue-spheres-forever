@@ -32,7 +32,7 @@ namespace bsf
 
 			va->SetData(data.data(), data.size(), usage);
 
-			result->push_back(va);
+			result->Meshes.push_back(va);
 		}
 
 		return result;

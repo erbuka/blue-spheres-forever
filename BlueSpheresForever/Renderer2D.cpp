@@ -95,7 +95,7 @@ namespace bsf
 		m_TriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
 
 		// Init white texture;
-		m_WhiteTexture = Assets::Get().GetTexture(AssetName::TexWhite);
+		m_WhiteTexture = Assets::GetInstance().Get<Texture2D>(AssetName::TexWhite);
 
 		m_Textures.resize(s_MaxTextureUnits);
 		std::memset(m_Textures.data(), 0, m_Textures.size() * sizeof(uint32_t));

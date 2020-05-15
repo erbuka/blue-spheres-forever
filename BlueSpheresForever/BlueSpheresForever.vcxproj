@@ -101,6 +101,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="Asset.h" />
     <ClInclude Include="Assets.h" />
     <ClInclude Include="BsfPch.h" />
     <ClInclude Include="Common.h" />

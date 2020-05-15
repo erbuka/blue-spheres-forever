@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Common.h"
-
 #include <unordered_map>
 
 namespace bsf
 {
 
+	class Asset;
 	class Texture;
 	class Font;
 
@@ -40,7 +40,7 @@ namespace bsf
 	class Assets
 	{
 	public:
-		static Assets& Get();
+		static Assets& GetInstance();
 
 		Assets(Assets&) = delete;
 		Assets(Assets&&) = delete;
@@ -49,18 +49,37 @@ namespace bsf
 		void Load();
 		void Dispose();
 
-		const Ref<Texture>& GetTexture(AssetName n);
-		const Ref<Font>& GetFont(AssetName n);
-		const Ref<Model>& GetModel(AssetName n);
+
+		template<typename T>
+		Ref<typename std::enable_if_t<std::is_base_of_v<Asset, T>, T>> Get(AssetName name)
+		{
+
+			auto r = m_Assets.find(name);
+			if (r == m_Assets.end())
+			{
+				BSF_ERROR("Asset not found: {0}", name);
+				return nullptr;
+			}
+
+			auto ptr = std::dynamic_pointer_cast<T>(r->second);
+
+			if (ptr == nullptr)
+			{
+
+				BSF_ERROR("Invalid type for asset {0}", name);
+				return nullptr;
+			}
+
+			return ptr;
+		}
 
 		~Assets();
 	private:
 
 		Assets() {}
 
-		std::unordered_map<AssetName, Ref<Texture>> m_Textures;
-		std::unordered_map<AssetName, Ref<Font>> m_Fonts;
-		std::unordered_map<AssetName, Ref<Model>> m_Models;
+		std::unordered_map<AssetName, Ref<Asset>> m_Assets;
+
 	};
 }
 

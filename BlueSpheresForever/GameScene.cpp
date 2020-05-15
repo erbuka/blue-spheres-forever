@@ -928,7 +928,7 @@ namespace bsf
 	{
 		auto windowSize = GetApplication().GetWindowSize();
 		float aspect = windowSize.x / windowSize.y;
-		auto& assets = Assets::Get();
+		auto& assets = Assets::GetInstance();
 
 		glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
 		glm::vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
@@ -1045,11 +1045,11 @@ namespace bsf
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
 
 				m_pPBR->UniformTexture("uMap", m_txGroundMap, 0);
-				m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexGroundMetallic), 1);
-				m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexGroundRoughness), 2);
-				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 3);
+				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexGroundMetallic), 1);
+				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexGroundRoughness), 2);
+				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
 
-				m_pPBR->UniformTexture("uBRDFLut", assets.GetTexture(AssetName::TexBRDFLut), 4);
+				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut), 4);
 				m_pPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 5);
 				m_pPBR->UniformTexture("uIrradiance", m_ccIrradiance->GetTexture(), 6);
 				m_pPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
@@ -1066,7 +1066,7 @@ namespace bsf
 				m_Model.Push();
 				m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
 				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
-				m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
+				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 				m_pPBR->Uniform2f("uUvOffset", { 0, 0 });
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 				m_vaSphere->Draw(GL_TRIANGLES);
@@ -1076,7 +1076,7 @@ namespace bsf
 
 
 				// Draw spheres and rings
-				m_pPBR->UniformTexture("uAo", assets.GetTexture(AssetName::TexWhite), 3);
+				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
 
 				for (int32_t x = -12; x <= 12; x++)
 				{
@@ -1099,37 +1099,37 @@ namespace bsf
 						{
 						case EStageObject::Ring:
 
-							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexRingMetallic), 1); // Sphere metallic
-							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexRingRoughness), 2); // Sphere roughness
+							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexRingMetallic), 1); // Sphere metallic
+							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexRingRoughness), 2); // Sphere roughness
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(gold));
-							assets.GetModel(AssetName::ModRing)->at(0)->Draw(GL_TRIANGLES);
+							assets.Get<Model>(AssetName::ModRing)->Meshes.at(0)->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::RedSphere:
-							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 1); 
-							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 2);
+							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
+							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(red));
 							m_vaSphere->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::BlueSphere:
-							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 1); 
-							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 2);
+							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
+							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(blue));
 							m_vaSphere->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::YellowSphere:
-							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexWhite), 0);
-							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 1); // Sphere metallic
-							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 2); // Sphere roughness
+							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1); // Sphere metallic
+							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2); // Sphere roughness
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
 							m_vaSphere->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::Bumper:
-							m_pPBR->UniformTexture("uMap", assets.GetTexture(AssetName::TexBumper), 0);
-							m_pPBR->UniformTexture("uMetallic", assets.GetTexture(AssetName::TexSphereMetallic), 1); // Sphere metallic
-							m_pPBR->UniformTexture("uRoughness", assets.GetTexture(AssetName::TexSphereRoughness), 2); // Sphere roughness
+							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexBumper), 0);
+							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1); // Sphere metallic
+							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2); // Sphere roughness
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 							m_vaSphere->Draw(GL_TRIANGLES);
 							break;
@@ -1189,7 +1189,7 @@ namespace bsf
 	void GameScene::RenderShadowMap(const Time& time)
 	{
 		GLEnableScope scope({ GL_DEPTH_TEST });
-		auto& assets = Assets::Get();
+		auto& assets = Assets::GetInstance();
 
 		glEnable(GL_DEPTH_TEST);
 		glViewport(0, 0, m_fbShadow->GetWidth(), m_fbShadow->GetHeight());
@@ -1237,7 +1237,7 @@ namespace bsf
 				switch (value)
 				{
 				case EStageObject::Ring:
-					assets.GetModel(AssetName::ModRing)->at(0)->Draw(GL_TRIANGLES);
+					assets.Get<Model>(AssetName::ModRing)->Meshes.at(0)->Draw(GL_TRIANGLES);
 					break;
 				case EStageObject::RedSphere:
 				case EStageObject::BlueSphere:
@@ -1257,7 +1257,7 @@ namespace bsf
 	void GameScene::RenderGameUI(const Time& time)
 	{
 		auto windowSize = GetApplication().GetWindowSize();
-		auto& assets = Assets::Get();
+		auto& assets = Assets::GetInstance();
 
 		float sw = 5.0f * windowSize.x / windowSize.y;
 		float sh = 5.0f;
@@ -1280,11 +1280,11 @@ namespace bsf
 			m_Renderer2D->Translate({ x, sh / 4.0f });
 			{
 				m_Renderer2D->Color({ 0.0f, 0.0f, 0.0f, 1.0f });
-				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), it->Message);
+				m_Renderer2D->DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 
 				m_Renderer2D->Translate({ -0.02, -0.02 });
 				m_Renderer2D->Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-				m_Renderer2D->DrawString(assets.GetFont(AssetName::FontMain), it->Message);
+				m_Renderer2D->DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 			}
 			m_Renderer2D->End();
 		}
@@ -1418,7 +1418,7 @@ namespace bsf
 
 	void GameScene::GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source)
 	{
-		auto& assets = Assets::Get();
+		auto& assets = Assets::GetInstance();
 
 		static std::array<TextureCubeFace, 6> faces = {
 			TextureCubeFace::Right,

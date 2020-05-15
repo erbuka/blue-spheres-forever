@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <string>
 #include <fstream>
 #include <memory>
@@ -10,6 +11,7 @@
 #include <glad/glad.h>
 
 #include "Log.h"
+#include "Asset.h"
 
 namespace bsf
 {
@@ -56,7 +58,13 @@ namespace bsf
 		glm::vec2 Uv;
 	};
 
-	using Model = std::vector<Ref<VertexArray>>;
+
+	class Model : public Asset
+	{
+	public:
+		std::vector<Ref<VertexArray>> Meshes;
+	};
+
 
 	#pragma endregion
 
