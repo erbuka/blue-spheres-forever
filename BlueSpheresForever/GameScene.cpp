@@ -195,6 +195,7 @@ static const std::string s_PBRFragment = R"Fragment(
 
 	uniform mat4 uShadowView;
 	uniform mat4 uShadowProjection;
+	uniform vec2 uShadowMapTexelSize;
 
 	uniform vec3 uCameraPos;
 	uniform vec3 uLightPos;
@@ -221,12 +222,36 @@ static const std::string s_PBRFragment = R"Fragment(
 	layout(location = 1) out vec3 oNormal;
 	layout(location = 2) out vec3 oPosition;
 
+	const int cShadowQuality = 1;
+
 	const float PI = 3.14159265359;
 
 	float DistributionGGX(vec3 N, vec3 H, float roughness);
 	float GeometrySchlickGGX(float NdotV, float roughness);
 	float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 	vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
+
+	float CalculateShadow(in vec3 worldPos) {
+		
+		vec3 shadowViewPos = (uShadowView * vec4(worldPos, 1.0)).xyz;
+		vec2 shadowUv = (uShadowProjection * vec4(shadowViewPos, 1.0)).xy * 0.5 + 0.5;
+
+		if(shadowUv.x < 0.0 || shadowUv.x > 1.0 || shadowUv.y < 0.0 || shadowUv.y > 1.0)
+			return 1.0;
+
+		float shadow = 0.0;
+
+		for(int x = -cShadowQuality; x <= cShadowQuality; ++x) {
+			for(int y = -cShadowQuality; y <= cShadowQuality; y++) {
+				vec2 uv = shadowUv + vec2(x,y) * uShadowMapTexelSize;
+				float shadowDepth = texture(uShadowMap, uv).r;
+				shadow += shadowDepth < shadowViewPos.z + 0.05 ? 1.0 : 0.0;
+			}
+		}
+
+		return shadow / 9.0;
+
+	}
 
 	void main() {
 
@@ -238,8 +263,6 @@ static const std::string s_PBRFragment = R"Fragment(
 		vec3 normal = fTBN * (texture(uNormalMap, fUv).xyz * 2.0 - 1.0);
 		vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
 		vec3 viewPos = (uView * vec4(worldPos, 1.0)).xyz;
-		vec3 shadowViewPos = (uShadowView * vec4(worldPos, 1.0)).xyz;
-		vec2 shadowUv = (uShadowProjection * uShadowView * vec4(worldPos, 1.0)).xy * 0.5 + 0.5;		
 
 		vec3 N = normalize(normal);
 		vec3 V = normalize(uCameraPos - worldPos);
@@ -270,11 +293,10 @@ static const std::string s_PBRFragment = R"Fragment(
 
 
 		// Main light
-		if(texture(uShadowMap, shadowUv).r < shadowViewPos.z + 0.05) {
-			vec3 radiance = vec3(5.0, 5.0, 5.0);
-			vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
-			fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
-		}
+		float shadow = CalculateShadow(worldPos);
+		vec3 radiance = vec3(5.0, 5.0, 5.0);
+		vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
+		fragment += (kD * albedo / PI + specular) * radiance * NdotL * shadow; 
 		
             
         // Irradiance
@@ -835,6 +857,7 @@ namespace bsf
 
 		m_fbShadow = MakeRef<Framebuffer>(2048, 2048, true);
 		m_fbShadow->AddColorAttachment("depth", GL_R16F, GL_RED, GL_FLOAT);
+		m_fbShadow->GetColorAttachment("depth")->Bind(0);
 
 		// Vertex arrays
 		m_vaWorld = CreateWorld(-10, 10, -10, 10, 10);
@@ -1029,6 +1052,7 @@ namespace bsf
 
 				m_pPBR->UniformMatrix4f("uShadowProjection", m_ShadowProjection.GetMatrix());
 				m_pPBR->UniformMatrix4f("uShadowView", m_ShadowView.GetMatrix());
+				m_pPBR->Uniform2f("uShadowMapTexelSize", { 1.0f / m_fbShadow->GetWidth(), 1.0f / m_fbShadow->GetHeight() });
 
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
@@ -1186,7 +1210,7 @@ namespace bsf
 		glViewport(0, 0, m_fbShadow->GetWidth(), m_fbShadow->GetHeight());
 
 		m_ShadowProjection.Reset();
-		m_ShadowProjection.Orthographic(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 100.0f);
+		m_ShadowProjection.Orthographic(-6.0f, 6.0f, -6.0f, 6.0f, 0.0f, 100.0f);
 		
 		m_ShadowView.Reset();
 		m_ShadowView.LookAt({ 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f });
@@ -1208,9 +1232,9 @@ namespace bsf
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
 
-		for (int32_t x = -12; x <= 12; x++)
+		for (int32_t x = -6; x <= 6; x++)
 		{
-			for (int32_t y = -12; y <= 12; y++)
+			for (int32_t y = -6; y <= 6; y++)
 			{
 				auto value = m_Stage->GetValueAt(x + ix, y + iy);
 
@@ -1328,9 +1352,6 @@ namespace bsf
 			"assets/textures/top.png"
 		));
 		
-		
-		
-
 		for (auto face : faces)
 		{
 			camera->BindForRender(face);
