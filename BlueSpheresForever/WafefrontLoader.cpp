@@ -15,23 +15,18 @@ namespace bsf
 
 		for (const auto& mesh : Meshes)
 		{
-			std::vector<Vertex> data(mesh.Positions.size());
+			std::vector<PBRVertex> data(mesh.Positions.size());
 
 			for (uint32_t i = 0; i < mesh.Positions.size(); i++)
 			{
-				data[i].Position0 = mesh.Positions[i];
-				data[i].Normal0 = mesh.Normals[i];
-				data[i].UV = mesh.Uvs[i];
-
-				data[i].Tangent0 = { 0.0f, 0.0f, 0.0f };
-				data[i].Binormal0 = { 0.0f, 0.0f, 0.0f };
+				data[i].Position = mesh.Positions[i];
+				data[i].Normal = mesh.Normals[i];
+				data[i].Uv = mesh.Uvs[i];
 			}
 
 			auto va = Ref<VertexArray>(new VertexArray({
 				{ "aPosition", AttributeType::Float3 },
 				{ "aNormal", AttributeType::Float3 },
-				{ "aTangent", AttributeType::Float3 },
-				{ "aBinormal", AttributeType::Float3 },
 				{ "aUv", AttributeType::Float2 }
 				}));
 

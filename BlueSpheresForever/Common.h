@@ -49,13 +49,11 @@ namespace bsf
 
 	#pragma region PBR
 
-	struct Vertex
+	struct PBRVertex
 	{
-		glm::vec3 Position0;
-		glm::vec3 Normal0;
-		glm::vec3 Tangent0;
-		glm::vec3 Binormal0;
-		glm::vec2 UV;
+		glm::vec3 Position;
+		glm::vec3 Normal;
+		glm::vec2 Uv;
 	};
 
 	using Model = std::vector<Ref<VertexArray>>;

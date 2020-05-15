@@ -37,18 +37,18 @@ namespace bsf
 
 	};
 
-
 	class Assets
 	{
 	public:
 		static Assets& Get();
 
-		Assets(const Assets&) = delete;
-		Assets& operator=(const Assets&) = delete;
+		Assets(Assets&) = delete;
+		Assets(Assets&&) = delete;
+		Assets& operator=(Assets&) = delete;
 
 		void Load();
 		void Dispose();
-			
+
 		const Ref<Texture>& GetTexture(AssetName n);
 		const Ref<Font>& GetFont(AssetName n);
 		const Ref<Model>& GetModel(AssetName n);
