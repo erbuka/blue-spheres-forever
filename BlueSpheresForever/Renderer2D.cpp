@@ -82,13 +82,16 @@ namespace bsf
 		// Init Vertex Arrays
 		m_TriangleVertices = new Vertex2D[s_MaxTriangleVertices];
 
-		m_Triangles = Ref<VertexArray>(new VertexArray({
+	
+
+		auto trianglesVb = Ref<VertexBuffer>(new VertexBuffer({
 			{ "aPosition", AttributeType::Float2  },
 			{ "aUv", AttributeType::Float2  },
 			{ "aColor", AttributeType::Float4  },
 			{ "aTexture", AttributeType::UInt  },
-		}));
-		m_Triangles->SetData(nullptr, s_MaxTriangleVertices, GL_DYNAMIC_DRAW);
+		}, nullptr, s_MaxTriangleVertices, GL_DYNAMIC_DRAW));
+
+		m_Triangles = Ref<VertexArray>(new VertexArray(s_MaxTriangleVertices, { trianglesVb }));
 
 		// Init Shaders
 
@@ -337,7 +340,7 @@ namespace bsf
 			
 			m_TriangleProgram->Uniform1iv("uTextures", m_Textures.size(), m_TextureUnits.data());
 			
-			m_Triangles->SetSubData(m_TriangleVertices, 0, m_CurTriangleIndex);
+			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurTriangleIndex);
 
 			m_Triangles->Draw(GL_TRIANGLES, m_CurTriangleIndex);
 

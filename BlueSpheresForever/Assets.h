@@ -31,7 +31,8 @@ namespace bsf
 
 		FontMain,
 
-		ModRing
+		ModRing,
+		ModSonic
 
 	};
 

@@ -574,9 +574,6 @@ namespace bsf
 
 	static Ref<VertexArray> CreateClipSpaceQuad()
 	{
-		auto result = Ref<VertexArray>(new VertexArray({
-			{ "aPosition", AttributeType::Float2 }
-		}));
 
 		std::array<glm::vec2, 6> vertices = {
 			glm::vec2(-1.0f, -1.0f),
@@ -588,9 +585,13 @@ namespace bsf
 			glm::vec2(-1.0f, 1.0f)
 		};
 
-		result->SetData(vertices.data(), 6, GL_STATIC_DRAW);
 
-		return result;
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
+			{ "aPosition", AttributeType::Float2 }
+		}, vertices.data(), vertices.size()));
+
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
+
 	}
 
 
@@ -665,7 +666,7 @@ namespace bsf
 		while (recursion-- > 0)
 			triangles = subdivide(triangles);
 
-		std::vector<PBRVertex> vertices;
+		std::vector<Vertex3D> vertices;
 		vertices.reserve(triangles.size());
 
 		for (const auto& t : triangles)
@@ -675,21 +676,20 @@ namespace bsf
 			vertices.push_back({ t * radius, glm::normalize(t), glm::vec2(u, v) });
 		}
 
-		Ref<VertexArray> result = Ref<VertexArray>(new VertexArray({
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
 			{ "aPosition", AttributeType::Float3 },
 			{ "aNormal", AttributeType::Float3 },
 			{ "aUv", AttributeType::Float2 }
-		}));
+		}, vertices.data(), vertices.size()));
 
-		result->SetData(vertices.data(), vertices.size(), GL_STATIC_DRAW);
 
-		return result;
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
 	}
 
 	static Ref<VertexArray> CreateWorld(int32_t left, int32_t right, int32_t bottom, int32_t top, int32_t divisions)
 	{
 
-		std::vector<PBRVertex> vertices;
+		std::vector<Vertex3D> vertices;
 
 		float step = 1.0f / divisions;
 
@@ -720,7 +720,7 @@ namespace bsf
 							glm::vec2(u0, v1)
 						};
 
-						std::array<PBRVertex, 4> v = { };
+						std::array<Vertex3D, 4> v = { };
 
 						for (uint32_t i = 0; i < 4; i++)
 						{
@@ -736,15 +736,13 @@ namespace bsf
 			}
 		}
 
-		Ref<VertexArray> result = Ref<VertexArray>(new VertexArray({
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
 			{ "aPosition", AttributeType::Float3 },
 			{ "aNormal", AttributeType::Float3 },
 			{ "aUv", AttributeType::Float2 }
-		}));
+		}, vertices.data(), vertices.size()));
 
-		result->SetData(vertices.data(), vertices.size(), GL_STATIC_DRAW);
-
-		return result;
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
 
 	}
 
@@ -804,15 +802,13 @@ namespace bsf
 	{
 		auto vertices = CreateSkyBoxData();
 
-		auto result = Ref<VertexArray>(new VertexArray({
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
 			{ "aPosition", AttributeType::Float3 },
 			{ "aUv", AttributeType::Float3 },
-		}));
+		}, vertices.data(), vertices.size()));
 
 
-		result->SetData(vertices.data(), vertices.size(), GL_DYNAMIC_DRAW);
-
-		return result;
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
 
 	}
 
@@ -1065,12 +1061,20 @@ namespace bsf
 
 				// Draw player
 				m_Model.Push();
-				m_Model.Translate({ 0.0f, 0.0f, 0.15f + m_GameLogic->GetHeight() });
+				m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 2.0f);
+				m_Model.Translate({ 0.0f, m_GameLogic->GetHeight(), 0.0f });
+				m_Model.Rotate({ 0.0f, 1.0f, 0.0f }, m_GameLogic->GetRotationAngle());
+				m_Model.Scale({ 0.06f, 0.06f, 0.06f });
+
 				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
 				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexWhite), 2);
 				m_pPBR->Uniform2f("uUvOffset", { 0, 0 });
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
-				m_vaSphere->Draw(GL_TRIANGLES);
+
+				for (auto va : assets.Get<AnimatedModel>(AssetName::ModSonic)->GetFrame(12)->GetMeshes())
+					va->Draw(GL_TRIANGLES);
+
 				m_Model.Pop();
 
 
@@ -1413,7 +1417,7 @@ namespace bsf
 		for (auto& v : m_vDynSkyBoxVertices)
 			v.Position = rotate * glm::vec4(v.Position, 1.0);
 
-		m_vaDynSkyBox->SetSubData(m_vDynSkyBoxVertices.data(), 0, m_vDynSkyBoxVertices.size());
+		m_vaDynSkyBox->GetVertexBuffer(0)->SetSubData(m_vDynSkyBoxVertices.data(), 0, m_vDynSkyBoxVertices.size());
 	}
 
 

@@ -59,6 +59,38 @@ namespace bsf
 			m_Assets[AssetName::ModRing] = CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), GL_STATIC_DRAW);
 		}
 
+		
+		{ // Load sonic models
+			std::array<std::string, 14> files = {
+				"assets/models/sonic0.obj",
+				"assets/models/sonic1.obj",
+				"assets/models/sonic2.obj",
+				"assets/models/sonic3.obj",
+				"assets/models/sonic4.obj",
+				"assets/models/sonic5.obj",
+				"assets/models/sonic6.obj",
+				"assets/models/sonic7.obj",
+				"assets/models/sonic8.obj",
+				"assets/models/sonic9.obj",
+				"assets/models/sonic10.obj",
+				"assets/models/sonic11.obj",
+				"assets/models/sonicStand.obj",
+				"assets/models/sonicJump.obj",
+			};
+
+			auto sonicModel = MakeRef<AnimatedModel>();
+			std::array<Ref<Model>, files.size()> models;
+
+			for (uint32_t i = 0; i < files.size(); i++) {
+				auto model = CreateModel(WavefrontLoader().Load(files[i]));
+				sonicModel->AddFrame(model);
+			}
+
+			m_Assets[AssetName::ModSonic] = sonicModel;
+
+		}
+		
+
 	}
 
 	void Assets::Dispose()

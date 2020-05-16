@@ -29,81 +29,140 @@ namespace bsf
 	};
 
 
-	VertexArray::VertexArray(const std::initializer_list<VertexArrayAttribute>& layout) :
+	VertexArray::VertexArray(uint32_t vertexCount, const std::initializer_list<Ref<VertexBuffer>>& buffers) :
 		m_Id(0),
-		m_Vb(0),
-		m_Count(0),
-		m_VertexSize(0)
+		m_VertexCount(vertexCount)
 	{
-		for (const auto& attr : layout)
-		{
-			if (s_GLAttrDescr.find(attr.Type) == s_GLAttrDescr.end())
-				BSF_ERROR("Vertex array attribute type is not mapped: {0}", attr.Type);
-
-			const auto& descr = s_GLAttrDescr[attr.Type];
-			m_VertexSize += descr.ElementSize * descr.ElementCount;
-		}
-
-
 		BSF_GLCALL(glGenVertexArrays(1, &m_Id));
+
+		if (buffers.size() > 0)
+		{
+			Bind();
+			for (auto& buffer : buffers)
+				AddVertexBuffer(buffer);
+		}
+	}
+
+	VertexArray::VertexArray(uint32_t vertexCount, uint32_t vbsCount) : VertexArray(vertexCount)
+	{
+		for (uint32_t i = 0; i < vbsCount; i++)
+			AddVertexBuffer(nullptr);
+	}
+
+	VertexArray::~VertexArray()
+	{
+		glDeleteVertexArrays(1, &m_Id);
+	}
+	
+	void VertexArray::Bind()
+	{
 		BSF_GLCALL(glBindVertexArray(m_Id));
 
-		BSF_GLCALL(glGenBuffers(1, &m_Vb));
-		BSF_GLCALL(glBindBuffer(GL_ARRAY_BUFFER, m_Vb));
+		uint32_t index = 0;
+
+		for (auto& vb : m_Vbs)
+		{
+
+			assert(vb != nullptr);
+
+			vb->Bind();
+
+			for (auto& attrib : vb->GetLayout())
+			{
+
+				uint32_t vertexSize = vb->GetVertexSize();
+
+				glEnableVertexAttribArray(index);
+
+				if (attrib.Type == GL_INT || attrib.Type == GL_UNSIGNED_INT)
+				{
+					BSF_GLCALL(glVertexAttribIPointer(index, attrib.Count, attrib.Type, vertexSize, (const void*)attrib.Pointer));
+				}
+				else
+				{
+					BSF_GLCALL(glVertexAttribPointer(index, attrib.Count, attrib.Type, GL_FALSE, vertexSize, (const void*)attrib.Pointer));
+				}
+
+				index++;
+			}
+
+		}
+
+	}
+
+	void VertexArray::Draw(GLenum mode)
+	{
+		Draw(mode, m_VertexCount);
+	}
+
+	void VertexArray::Draw(GLenum mode, uint32_t count)
+	{
+		Bind();
+		glDrawArrays(mode, 0, count);
+	}
+
+	void VertexArray::AddVertexBuffer(const Ref<VertexBuffer>& buffer)
+	{
+		assert(buffer->GetVertexCount() == m_VertexCount);
+		m_Vbs.push_back(buffer);
+	}
+
+	void VertexArray::SetVertexBuffer(uint32_t index, const Ref<VertexBuffer>& buffer)
+	{
+		assert(buffer->GetVertexCount() == m_VertexCount && index < m_Vbs.size());
+		m_Vbs[index] = buffer;
+	}
+	
+	VertexBuffer::VertexBuffer(const std::initializer_list<VertexAttribute>& layout, const void* data, uint32_t count, GLenum usage) : 
+		m_Id(0),
+		m_Count(count),
+		m_VertexSize(0)
+	{
 
 		uint32_t index = 0;
 		uint32_t pointer = 0;
 
 		for (const auto& attr : layout)
 		{
+			if (s_GLAttrDescr.find(attr.Type) == s_GLAttrDescr.end())
+			{
+				BSF_ERROR("Vertex array attribute type is not mapped: {0}", attr.Type);
+				return;
+			}
+
 			const auto& descr = s_GLAttrDescr[attr.Type];
 
-			BSF_GLCALL(glEnableVertexAttribArray(index));
+			m_VertexSize += descr.ElementSize * descr.ElementCount;
 
-			if (descr.Type == GL_INT || descr.Type == GL_UNSIGNED_INT)
-			{
-				BSF_GLCALL(glVertexAttribIPointer(index, descr.ElementCount, descr.Type, m_VertexSize, (const void*)pointer));
-			}
-			else
-			{
-				BSF_GLCALL(glVertexAttribPointer(index, descr.ElementCount, descr.Type, GL_FALSE, m_VertexSize, (const void*)pointer));
-			}
+			m_Layout.push_back({ pointer, descr.ElementCount, descr.Type });
 
 			pointer += descr.ElementCount * descr.ElementSize;
-
 			index++;
 		}
 
+		BSF_GLCALL(glGenBuffers(1, &m_Id));
+		Bind();
+		glBufferData(GL_ARRAY_BUFFER, m_VertexSize * count, data, usage);
 
 	}
-
-	VertexArray::~VertexArray()
+	VertexBuffer::~VertexBuffer()
 	{
-		glDeleteBuffers(1, &m_Vb);
-		glDeleteVertexArrays(1, &m_Id);
+		if (m_Id == 0)
+		{
+			BSF_GLCALL(glDeleteBuffers(1, &m_Id));
+			m_Id = 0;
+		}
 	}
 
-	void VertexArray::SetData(const void* data, uint32_t vertexCount, GLenum usage)
+
+	void VertexBuffer::Bind()
 	{
-		m_Count = vertexCount;
-		glBindBuffer(GL_ARRAY_BUFFER, m_Vb);
-		glBufferData(GL_ARRAY_BUFFER, vertexCount * m_VertexSize, data, usage);
+		BSF_GLCALL(glBindBuffer(GL_ARRAY_BUFFER, m_Id));
 	}
 
-	void VertexArray::SetSubData(const void* data, uint32_t offset, uint32_t vertexCount)
+	void VertexBuffer::SetSubData(const void* data, uint32_t offset, uint32_t count)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_Vb);
-		glBufferSubData(GL_ARRAY_BUFFER, offset, vertexCount * m_VertexSize, data);
-	}
-	
-	void VertexArray::Draw(GLenum mode)
-	{
-		Draw(mode, m_Count);
-	}
-
-	void VertexArray::Draw(GLenum mode, uint32_t count)
-	{
-		glBindVertexArray(m_Id);
-		glDrawArrays(mode, 0, count);
+		Bind();
+		glBufferSubData(GL_ARRAY_BUFFER, offset * m_VertexSize, count * m_VertexSize, data);
 	}
 }

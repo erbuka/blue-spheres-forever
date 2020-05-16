@@ -50,14 +50,19 @@ namespace bsf
 
 	#pragma region PBR
 
-	struct PBRVertex
+	struct Vertex3D
 	{
 		glm::vec3 Position;
 		glm::vec3 Normal;
 		glm::vec2 Uv;
 	};
 
-
+	struct MorphVertex3D
+	{
+		glm::vec3 Position0, Position1;
+		glm::vec3 Normal0, Normal1;
+		glm::vec2 Uv0, Uv1;
+	};
 
 
 	#pragma endregion

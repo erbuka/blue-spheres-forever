@@ -47,6 +47,7 @@ namespace bsf
 	};
 
 	Ref<Model> CreateModel(Ref<ModelDef>& modelDef, GLenum usage = GL_STATIC_DRAW);
+	Ref<Model> CreateMorphModel(Ref<ModelDef>& m0, Ref<ModelDef>& m1, GLenum usage = GL_STATIC_DRAW);
 
 }
 
