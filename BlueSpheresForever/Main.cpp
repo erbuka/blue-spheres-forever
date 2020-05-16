@@ -4,6 +4,7 @@
 #include "Stage.h"
 #include "GameScene.h"
 #include "Common.h"
+#include "RTXTestScene.h"
 
 using namespace bsf;
 using namespace glm;

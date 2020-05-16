@@ -115,6 +115,7 @@
     <ClInclude Include="MatrixStack.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Renderer2D.h" />
+    <ClInclude Include="RTXTestScene.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="Stage.h" />
@@ -140,6 +141,7 @@
     <ClCompile Include="MatrixStack.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Renderer2D.cpp" />
+    <ClCompile Include="RTXTestScene.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="Stage.cpp" />
