@@ -1,7 +1,7 @@
 #include "BsfPch.h"
 
+#include "Model.h"
 #include "WafefrontLoader.h"
-#include "VertexArray.h"
 
 #include <sstream>
 
@@ -9,37 +9,7 @@
 namespace bsf
 {
 
-	const Ref<Model> WavefrontModel::CreateModel(GLenum usage)
-	{
-		auto result = MakeRef<Model>();
-
-		for (const auto& mesh : Meshes)
-		{
-			std::vector<PBRVertex> data(mesh.Positions.size());
-
-			for (uint32_t i = 0; i < mesh.Positions.size(); i++)
-			{
-				data[i].Position = mesh.Positions[i];
-				data[i].Normal = mesh.Normals[i];
-				data[i].Uv = mesh.Uvs[i];
-			}
-
-			auto va = Ref<VertexArray>(new VertexArray({
-				{ "aPosition", AttributeType::Float3 },
-				{ "aNormal", AttributeType::Float3 },
-				{ "aUv", AttributeType::Float2 }
-				}));
-
-			va->SetData(data.data(), data.size(), usage);
-
-			result->Meshes.push_back(va);
-		}
-
-		return result;
-
-	}
-
-	Ref<WavefrontModel> WavefrontLoader::Load(const std::string& fileName)
+	Ref<ModelDef> WavefrontLoader::Load(const std::string& fileName)
 	{
 		std::ifstream stdIs;
 
@@ -172,11 +142,11 @@ namespace bsf
 
 		// Create the actual model object
 
-		auto model = MakeRef<WavefrontModel>();
+		auto model = MakeRef<ModelDef>();
 
 		for (const auto& group : groups)
 		{
-			WavefrontMesh mesh;
+			MeshDef mesh;
 
 			mesh.Name = group.first;
 
@@ -187,7 +157,7 @@ namespace bsf
 				mesh.Normals.push_back(indices[2] == -1 ? glm::vec3{ 0.0f, 0.0f, 0.0f } : normals[indices[2]]);
 			}
 
-			model->Meshes.push_back(mesh);
+			model->Meshes.push_back(std::move(mesh));
 		}
 
 

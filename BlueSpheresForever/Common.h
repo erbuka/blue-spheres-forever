@@ -11,7 +11,6 @@
 #include <glad/glad.h>
 
 #include "Log.h"
-#include "Asset.h"
 
 namespace bsf
 {
@@ -59,11 +58,6 @@ namespace bsf
 	};
 
 
-	class Model : public Asset
-	{
-	public:
-		std::vector<Ref<VertexArray>> Meshes;
-	};
 
 
 	#pragma endregion

@@ -1,6 +1,7 @@
 #include "BsfPch.h"
 
 #include "Assets.h"
+#include "Model.h"
 #include "Texture.h"
 #include "Log.h"
 #include "Common.h"
@@ -55,7 +56,7 @@ namespace bsf
 		}
 
 		{
-			m_Assets[AssetName::ModRing] = WavefrontLoader().Load("assets/models/ring.obj")->CreateModel();
+			m_Assets[AssetName::ModRing] = CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), GL_STATIC_DRAW);
 		}
 
 	}

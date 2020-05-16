@@ -13,6 +13,7 @@
 #include "CubeCamera.h"
 #include "Stage.h"
 #include "Font.h"
+#include "Model.h"
 
 #pragma region Shaders
 
@@ -1103,7 +1104,7 @@ namespace bsf
 							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexRingMetallic), 1); // Sphere metallic
 							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexRingRoughness), 2); // Sphere roughness
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(gold));
-							assets.Get<Model>(AssetName::ModRing)->Meshes.at(0)->Draw(GL_TRIANGLES);
+							assets.Get<Model>(AssetName::ModRing)->GetMesh(0)->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::RedSphere:
 							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
@@ -1237,7 +1238,7 @@ namespace bsf
 				switch (value)
 				{
 				case EStageObject::Ring:
-					assets.Get<Model>(AssetName::ModRing)->Meshes.at(0)->Draw(GL_TRIANGLES);
+					assets.Get<Model>(AssetName::ModRing)->GetMesh(0)->Draw(GL_TRIANGLES);
 					break;
 				case EStageObject::RedSphere:
 				case EStageObject::BlueSphere:

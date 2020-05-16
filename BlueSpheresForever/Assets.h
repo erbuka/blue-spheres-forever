@@ -7,8 +7,6 @@ namespace bsf
 {
 
 	class Asset;
-	class Texture;
-	class Font;
 
 	enum class AssetName
 	{
