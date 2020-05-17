@@ -20,6 +20,7 @@ namespace bsf
 	class CubeCamera;
 
 	struct GameStateChangedEvent;
+	struct GameActionEvent;
 
 	struct BoxVertex {
 		glm::vec3 Position, Uv;
@@ -61,7 +62,7 @@ namespace bsf
 		Ref<Framebuffer> m_fbDeferred, m_fbShadow;
 
 		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;
-		Ref<ShaderProgram> m_pPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance, m_pShadow;
+		Ref<ShaderProgram> m_pPBR, m_pMorphPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance, m_pShadow;
 		
 		Ref<TextureCube> m_txBaseSkyBox, m_txBaseIrradiance;
 		Ref<CubeCamera> m_ccSkyBox, m_ccIrradiance;
@@ -78,7 +79,9 @@ namespace bsf
 		void RenderShadowMap(const Time& time);
 
 		void RenderGameUI(const Time& time);
+		
 		void OnGameStateChanged(const GameStateChangedEvent& evt);
+		void OnGameAction(const GameActionEvent& action);
 
 		Ref<TextureCube> CreateBaseSkyBox();
 		Ref<TextureCube> CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size);

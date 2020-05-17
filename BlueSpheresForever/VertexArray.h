@@ -75,9 +75,9 @@ namespace bsf
 		void SetVertexBuffer(uint32_t index, const Ref<VertexBuffer>& buffer);
 		Ref<VertexBuffer>& GetVertexBuffer(uint32_t index) { assert(index < m_Vbs.size()); return m_Vbs[index]; }
 
-	private:
+		uint32_t GetVertexCount() const { return m_VertexCount; }
 
-		void AddVertexBuffer(const Ref<VertexBuffer>& buffer);
+	private:
 		
 		uint32_t m_Id;
 		uint32_t m_VertexCount;

@@ -9,6 +9,7 @@ namespace bsf
 {
 	class Model;
 	class VertexArray;
+	class VertexBuffer;
 
 
 	struct MeshDef
@@ -35,19 +36,8 @@ namespace bsf
 		std::vector<Ref<VertexArray>> m_Meshes;
 	};
 
-	class AnimatedModel : public Asset
-	{
-	public:
-		uint32_t GetFrameCount() const { return m_Frames.size(); }
-		const std::vector<Ref<Model>>& GetFrames() { return m_Frames; }
-		const Ref<Model>& GetFrame(uint32_t index) { assert(index < m_Frames.size()); return m_Frames.at(index); }
-		void AddFrame(const Ref<Model>& frame) { m_Frames.push_back(frame); }
-	private:
-		std::vector<Ref<Model>> m_Frames;
-	};
-
-	Ref<Model> CreateModel(Ref<ModelDef>& modelDef, GLenum usage = GL_STATIC_DRAW);
-	Ref<Model> CreateMorphModel(Ref<ModelDef>& m0, Ref<ModelDef>& m1, GLenum usage = GL_STATIC_DRAW);
+	std::vector<Ref<VertexBuffer>> CreateVertexBuffers(const Ref<ModelDef>& modelDef, const glm::vec3 scale, GLenum usage);
+	Ref<Model> CreateModel(const Ref<ModelDef>& modelDef, const glm::vec3 scale = { 1.0f, 1.0f, 1.0f }, GLenum usage = GL_STATIC_DRAW);
 
 }
 

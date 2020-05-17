@@ -20,10 +20,24 @@ namespace bsf
 		Finished
 	};
 
+	enum class EGameAction
+	{
+		JumpStart,
+		JumpEnd,
+		GoBackward,
+		GoForward
+	};
+
+	struct GameActionEvent
+	{
+		EGameAction Action;
+	};
+
 	struct GameStateChangedEvent
 	{
 		EGameState Old, Current;
 	};
+
 
 	class GameLogic
 	{
@@ -36,6 +50,7 @@ namespace bsf
 			Right = -1
 		};
 
+		EventEmitter<GameActionEvent> GameAction;
 		EventEmitter<GameStateChangedEvent> GameStateChanged;
 
 		GameLogic(Stage& stage);
@@ -48,6 +63,10 @@ namespace bsf
 		float GetVelocity() const { return m_Velocity; }
 		void Advance(const Time& time);
 		bool IsRotating() const { return m_IsRotating; }
+		bool IsJumping() const { return m_IsJumping; }
+		bool IsGoindBackward() const { return m_IsGoingBackward; }
+		float GetTotalJumpDistance() const { return m_TotalJumpDistance; }
+		float GetRemainingJumpDistance() const { return m_RemainingJumpDistance; }
 
 		glm::vec2 WrapPosition(const glm::vec2& pos) const;
 
@@ -57,7 +76,7 @@ namespace bsf
 
 	private:
 
-		void ChangeState(EGameState newState);
+		void ChangeGameState(EGameState newState);
 
 		float m_Velocity, m_VelocityScale;
 

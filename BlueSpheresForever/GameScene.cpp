@@ -14,6 +14,7 @@
 #include "Stage.h"
 #include "Font.h"
 #include "Model.h"
+#include "CharacterAnimator.h"
 
 #pragma region Shaders
 
@@ -148,6 +149,43 @@ static const std::string s_ShadowFragment = R"Fragment(
 	}
 
 )Fragment";
+
+static const std::string s_PBRMorphVertex = R"Vertex(
+	#version 330 core
+	
+	uniform mat4 uProjection;
+	uniform mat4 uView;
+	uniform mat4 uModel;
+	
+	uniform vec2 uUvOffset;
+
+	uniform float uMorphDelta;
+
+	layout(location = 0) in vec3 aPosition0;
+	layout(location = 1) in vec3 aNormal0;
+	layout(location = 2) in vec2 aUv0;
+
+	layout(location = 3) in vec3 aPosition1;
+	layout(location = 4) in vec3 aNormal1;
+	layout(location = 5) in vec2 aUv1;
+	
+	out vec3 fPosition;
+	out vec3 fNormal;
+	out vec2 fUv;
+	
+	void main() {
+
+		vec3 position = mix(aPosition0, aPosition1, uMorphDelta);
+		vec3 normal = normalize(mix(aNormal0, aNormal1, uMorphDelta));
+		vec2 uv = mix(aUv0, aUv1, uMorphDelta);
+
+		gl_Position = uProjection * uView * uModel * vec4(position, 1.0);
+
+		fNormal = normal;
+		fPosition = position;
+		fUv = uv + uUvOffset;
+	}	
+)Vertex";
 
 static const std::string s_PBRVertex = R"Vertex(
 	#version 330 core
@@ -854,6 +892,7 @@ namespace bsf
 
 		// Programs
 		m_pPBR = MakeRef<ShaderProgram>(s_PBRVertex, s_PBRFragment);
+		m_pMorphPBR = MakeRef<ShaderProgram>(s_PBRMorphVertex, s_PBRFragment);
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
 		m_pDeferred = MakeRef<ShaderProgram>(s_ScreenVertex, s_DeferredFragment);
 		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
@@ -889,6 +928,7 @@ namespace bsf
 
 		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
 		m_Subscriptions.push_back(m_GameLogic->GameStateChanged.Subscribe(this, &GameScene::OnGameStateChanged));
+		m_Subscriptions.push_back(m_GameLogic->GameAction.Subscribe(this, &GameScene::OnGameAction));
 
 		app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
 			if (evt.KeyCode == GLFW_KEY_LEFT)
@@ -1026,6 +1066,57 @@ namespace bsf
 				glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 				glm::vec3 lightVector = { 0.0f, 2.0f, 0.0f };
 
+				// Draw player
+
+				auto sonicAnimator = assets.Get<CharacterAnimator>(AssetName::ModSonic);
+				sonicAnimator->Update(time);
+
+				m_Model.Push();
+				m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 2.0f);
+				m_Model.Translate({ 0.0f, m_GameLogic->GetHeight() + (m_GameLogic->IsJumping() ? 0.3f : 0.0f), 0.0f });
+				m_Model.Rotate({ 0.0f, 1.0f, 0.0f }, m_GameLogic->GetRotationAngle());
+				if (m_GameLogic->IsJumping())
+				{
+					// 1 revolution per unit
+					float angle = (m_GameLogic->GetTotalJumpDistance() - m_GameLogic->GetRemainingJumpDistance()) * glm::pi<float>() * 2.0f;
+
+					// if we're going backward, we rotate in the opposite direction
+					m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, angle * (m_GameLogic->IsGoindBackward() ? 1.0f : -1.0f));
+				}
+
+				m_pMorphPBR->Use();
+
+				m_pMorphPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
+				m_pMorphPBR->UniformMatrix4f("uView", m_View.GetMatrix());
+				m_pMorphPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
+
+				m_pMorphPBR->UniformMatrix4f("uShadowProjection", m_ShadowProjection.GetMatrix());
+				m_pMorphPBR->UniformMatrix4f("uShadowView", m_ShadowView.GetMatrix());
+				m_pMorphPBR->Uniform2f("uShadowMapTexelSize", { 1.0f / m_fbShadow->GetWidth(), 1.0f / m_fbShadow->GetHeight() });
+
+				m_pMorphPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
+				m_pMorphPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
+
+				m_pMorphPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+				m_pMorphPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexBlack), 1);
+				m_pMorphPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexWhite), 2);
+				m_pMorphPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
+
+				m_pMorphPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut), 4);
+				m_pMorphPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 5);
+				m_pMorphPBR->UniformTexture("uIrradiance", m_ccIrradiance->GetTexture(), 6);
+				m_pMorphPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
+
+				m_pMorphPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+				m_pMorphPBR->Uniform2f("uUvOffset", { 0, 0 });
+				m_pMorphPBR->Uniform1f("uMorphDelta", { sonicAnimator->GetDelta() });
+
+				
+				for (auto va : sonicAnimator->GetModel()->GetMeshes())
+					va->Draw(GL_TRIANGLES);
+
+				m_Model.Pop();
+
 				// Draw ground
 				
 				m_pPBR->Use();
@@ -1059,29 +1150,12 @@ namespace bsf
 				m_vaWorld->Draw(GL_TRIANGLES);
 
 
-				// Draw player
-				m_Model.Push();
-				m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, glm::pi<float>() / 2.0f);
-				m_Model.Translate({ 0.0f, m_GameLogic->GetHeight(), 0.0f });
-				m_Model.Rotate({ 0.0f, 1.0f, 0.0f }, m_GameLogic->GetRotationAngle());
-				m_Model.Scale({ 0.06f, 0.06f, 0.06f });
-
-				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
-				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
-				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexWhite), 2);
-				m_pPBR->Uniform2f("uUvOffset", { 0, 0 });
-				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
-
-				for (auto va : assets.Get<AnimatedModel>(AssetName::ModSonic)->GetFrame(12)->GetMeshes())
-					va->Draw(GL_TRIANGLES);
-
-				m_Model.Pop();
-
-
+		
 
 
 				// Draw spheres and rings
 				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
+				m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
 
 				for (int32_t x = -12; x <= 12; x++)
 				{
@@ -1302,7 +1376,37 @@ namespace bsf
 	{
 		if (evt.Current == EGameState::Starting)
 		{
+			Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic)->Play("stand", 1.0f);
 			m_GameMessages.emplace_back("Get Blue Spheres!");
+		}
+		else if (evt.Current == EGameState::Playing)
+		{
+			Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic)->Play("run", 0.5f);
+		}
+	}
+
+	void GameScene::OnGameAction(const GameActionEvent& evt)
+	{
+		auto animator = Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic);
+
+		if (evt.Action == EGameAction::JumpStart)
+		{
+			animator->Play("jump", 0.5f);
+		}
+
+		if (evt.Action == EGameAction::JumpEnd)
+		{
+			animator->Play("run", 0.5f);
+		}
+		
+		if (evt.Action == EGameAction::GoForward)
+		{
+			animator->SetReverse(false);
+		}
+
+		if (evt.Action == EGameAction::GoBackward)
+		{
+			animator->SetReverse(true);
 		}
 	}
 
@@ -1332,6 +1436,7 @@ namespace bsf
 		));
 		*/
 		
+		
 		auto skyBox = Ref<TextureCube>(new TextureCube(
 			256,
 			"assets/textures/front.png",
@@ -1342,6 +1447,7 @@ namespace bsf
 			"assets/textures/top.png"
 		));
 		
+
 		for (auto face : faces)
 		{
 			camera->BindForRender(face);

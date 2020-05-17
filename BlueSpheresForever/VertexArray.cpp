@@ -30,23 +30,28 @@ namespace bsf
 
 
 	VertexArray::VertexArray(uint32_t vertexCount, const std::initializer_list<Ref<VertexBuffer>>& buffers) :
-		m_Id(0),
+		VertexArray(vertexCount, buffers.size())
+	{
+
+		uint32_t index = 0;
+
+		for (auto& buffer : buffers)
+		{
+			SetVertexBuffer(index, buffer);
+			index++;
+		}
+
+	}
+
+	VertexArray::VertexArray(uint32_t vertexCount, uint32_t vbsCount) :
 		m_VertexCount(vertexCount)
 	{
 		BSF_GLCALL(glGenVertexArrays(1, &m_Id));
 
-		if (buffers.size() > 0)
-		{
-			Bind();
-			for (auto& buffer : buffers)
-				AddVertexBuffer(buffer);
-		}
-	}
+		m_Vbs.resize(vbsCount);
 
-	VertexArray::VertexArray(uint32_t vertexCount, uint32_t vbsCount) : VertexArray(vertexCount)
-	{
-		for (uint32_t i = 0; i < vbsCount; i++)
-			AddVertexBuffer(nullptr);
+		std::fill(m_Vbs.begin(), m_Vbs.end(), nullptr);
+
 	}
 
 	VertexArray::~VertexArray()
@@ -101,15 +106,9 @@ namespace bsf
 		glDrawArrays(mode, 0, count);
 	}
 
-	void VertexArray::AddVertexBuffer(const Ref<VertexBuffer>& buffer)
-	{
-		assert(buffer->GetVertexCount() == m_VertexCount);
-		m_Vbs.push_back(buffer);
-	}
-
 	void VertexArray::SetVertexBuffer(uint32_t index, const Ref<VertexBuffer>& buffer)
 	{
-		assert(buffer->GetVertexCount() == m_VertexCount && index < m_Vbs.size());
+		assert(buffer != nullptr && buffer->GetVertexCount() == m_VertexCount && index < m_Vbs.size());
 		m_Vbs[index] = buffer;
 	}
 	

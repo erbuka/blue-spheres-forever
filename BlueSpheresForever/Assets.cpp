@@ -7,6 +7,7 @@
 #include "Common.h"
 #include "Font.h";
 #include "WafefrontLoader.h"
+#include "CharacterAnimator.h"
 
 namespace bsf
 {
@@ -56,7 +57,7 @@ namespace bsf
 		}
 
 		{
-			m_Assets[AssetName::ModRing] = CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), GL_STATIC_DRAW);
+			m_Assets[AssetName::ModRing] = CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 		}
 
 		
@@ -78,15 +79,19 @@ namespace bsf
 				"assets/models/sonicJump.obj",
 			};
 
-			auto sonicModel = MakeRef<AnimatedModel>();
+			auto sonicAnimator = MakeRef<CharacterAnimator>();
 			std::array<Ref<Model>, files.size()> models;
 
 			for (uint32_t i = 0; i < files.size(); i++) {
-				auto model = CreateModel(WavefrontLoader().Load(files[i]));
-				sonicModel->AddFrame(model);
+				auto model = CreateModel(WavefrontLoader().Load(files[i]), { 0.05f, 0.05f, 0.05f }, GL_STATIC_DRAW);
+				sonicAnimator->AddFrame(model);
 			}
 
-			m_Assets[AssetName::ModSonic] = sonicModel;
+			sonicAnimator->RegisterAnimation("run", { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0 });
+			sonicAnimator->RegisterAnimation("stand", { 12, 12 });
+			sonicAnimator->RegisterAnimation("jump", { 13, 13 });
+
+			m_Assets[AssetName::ModSonic] = sonicAnimator;
 
 		}
 		

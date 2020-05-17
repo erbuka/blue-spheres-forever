@@ -104,6 +104,7 @@
     <ClInclude Include="Asset.h" />
     <ClInclude Include="Assets.h" />
     <ClInclude Include="BsfPch.h" />
+    <ClInclude Include="CharacterAnimator.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="CubeCamera.h" />
     <ClInclude Include="EventEmitter.h" />
@@ -131,6 +132,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="CharacterAnimator.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="CubeCamera.cpp" />
     <ClCompile Include="Font.cpp" />

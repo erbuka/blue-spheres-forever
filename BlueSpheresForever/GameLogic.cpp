@@ -10,7 +10,7 @@ namespace bsf
 	// Game velocity defaults
 	static constexpr float s_BaseVelocity = 3.5f;
 	static constexpr float s_MaxVelocoty = 5.5f;
-	static constexpr float s_AngularVelocity = glm::pi<float>();
+	static constexpr float s_AngularVelocity = glm::pi<float>()  * 1.5f;
 
 	// Jump
 	static constexpr float s_JumpDistance = 2.0f;
@@ -406,7 +406,7 @@ namespace bsf
 		
 		if (m_State == EGameState::None)
 		{
-			ChangeState(EGameState::Starting);
+			ChangeGameState(EGameState::Starting);
 		}
 
 		if (m_State == EGameState::Starting)
@@ -415,7 +415,7 @@ namespace bsf
 			DoRotation(time);
 
 			if (time.Elapsed >= 3.0f)
-				ChangeState(EGameState::Playing);
+				ChangeGameState(EGameState::Playing);
 		
 		}
 		else if (m_State == EGameState::Playing)
@@ -465,6 +465,9 @@ namespace bsf
 						m_IsGoingBackward = !m_IsGoingBackward;
 						m_Direction *= -1;
 						m_Position = roundedPosition; // Snap to star sphere
+
+						GameAction.Emit({ m_IsGoingBackward ? EGameAction::GoBackward : EGameAction::GoForward });
+
 					}
 					else if (object == EStageObject::YellowSphere)
 					{
@@ -473,6 +476,11 @@ namespace bsf
 						m_JumpHeight = s_YellowSphereHeight;
 						m_VelocityScale = 2.0f;
 						m_IsJumping = true;
+						GameAction.Emit({ EGameAction::JumpStart });
+					}
+					else if (object == EStageObject::RedSphere)
+					{
+						ChangeGameState(EGameState::GameOver);
 					}
 					else if (object == EStageObject::Ring)
 					{
@@ -489,6 +497,7 @@ namespace bsf
 					m_JumpHeight = s_JumpHeight;
 					m_IsJumping = true;
 					m_JumpCommand = false;
+					GameAction.Emit({ EGameAction::JumpStart });
 				}
 
 				if (m_IsJumping)
@@ -503,6 +512,7 @@ namespace bsf
 					{
 						m_IsJumping = false;
 						m_VelocityScale = 1.0f;
+						GameAction.Emit({ EGameAction::JumpEnd });
 					}
 
 				}
@@ -513,6 +523,7 @@ namespace bsf
 					m_RunForwardCommand = false;
 					m_IsGoingBackward = false;
 					m_Direction *= -1;
+					GameAction.Emit({ EGameAction::GoForward });
 				}
 
 				// If we crossed and edge and there's a rotation request,
@@ -525,6 +536,10 @@ namespace bsf
 				}
 
 			}
+		}
+		else if(m_State == EGameState::GameOver)
+		{ 
+			m_RotationAngle += time.Delta * glm::pi<float>() * 2.0f;
 		}
 
 		// Wrap position inside boundary
@@ -552,7 +567,7 @@ namespace bsf
 		}
 	}
 
-	void GameLogic::ChangeState(EGameState newState)
+	void GameLogic::ChangeGameState(EGameState newState)
 	{
 		GameStateChanged.Emit({ m_State, newState });
 		m_State = newState;
@@ -646,7 +661,7 @@ namespace bsf
 			m_LastCrossedPosition = glm::round(currentPos);
 		}
 
-		return horizontal || vertical;
+		return crossed;
 	}
 
 
