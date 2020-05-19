@@ -868,9 +868,6 @@ namespace bsf
 
 		m_GameLogic = MakeRef<GameLogic>(*m_Stage);
 
-		// Renderer2D
-		m_Renderer2D = MakeRef<Renderer2D>();
-
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbDeferred->AddColorAttachment("color");
@@ -930,7 +927,7 @@ namespace bsf
 		m_Subscriptions.push_back(m_GameLogic->GameStateChanged.Subscribe(this, &GameScene::OnGameStateChanged));
 		m_Subscriptions.push_back(m_GameLogic->GameAction.Subscribe(this, &GameScene::OnGameAction));
 
-		app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
+		m_Subscriptions.push_back(app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
 			if (evt.KeyCode == GLFW_KEY_LEFT)
 			{
 				m_GameLogic->Rotate(GameLogic::ERotate::Left);
@@ -956,8 +953,10 @@ namespace bsf
 				m_GameMessages.emplace_back("Message Test");
 			}
 
-		});
+		}));
 
+		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 1.0f, nullptr);
+		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
 
 	}
 	
@@ -1253,10 +1252,8 @@ namespace bsf
 	
 	void GameScene::OnDetach()
 	{
-		for (auto& unsub : m_Subscriptions)
-			unsub();
-
-		m_Subscriptions.clear();
+		for (auto& unsubscribe : m_Subscriptions)
+			unsubscribe();
 	}
 
 	void GameScene::OnResize(const WindowResizedEvent& evt)
@@ -1336,6 +1333,8 @@ namespace bsf
 	void GameScene::RenderGameUI(const Time& time)
 	{
 		auto windowSize = GetApplication().GetWindowSize();
+		auto& renderer2d = GetApplication().GetRenderer2D();
+
 		auto& assets = Assets::GetInstance();
 
 		float sw = 5.0f * windowSize.x / windowSize.y;
@@ -1354,18 +1353,18 @@ namespace bsf
 			else
 				x = sw / 2.0f - sw * (it->Time - GameMessage::s_MessageTime) / GameMessage::s_SlideDuration;
 
-			m_Renderer2D->Begin(glm::ortho(0.0f, sw, sh, 0.0f, -1.0f, 1.0f));
-			m_Renderer2D->Pivot({ 0.5f, 0.5f });
-			m_Renderer2D->Translate({ x, sh / 4.0f });
+			renderer2d.Begin(glm::ortho(0.0f, sw, sh, 0.0f, -1.0f, 1.0f));
+			renderer2d.Pivot({ 0.5f, 0.5f });
+			renderer2d.Translate({ x, sh / 4.0f });
 			{
-				m_Renderer2D->Color({ 0.0f, 0.0f, 0.0f, 1.0f });
-				m_Renderer2D->DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
+				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 
-				m_Renderer2D->Translate({ -0.02, -0.02 });
-				m_Renderer2D->Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-				m_Renderer2D->DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
+				renderer2d.Translate({ -0.02, -0.02 });
+				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
+				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 			}
-			m_Renderer2D->End();
+			renderer2d.End();
 		}
 
 		m_GameMessages.remove_if([](auto& x) { return x.Time >= GameMessage::s_SlideOutTime; });
@@ -1382,6 +1381,18 @@ namespace bsf
 		else if (evt.Current == EGameState::Playing)
 		{
 			Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic)->Play("run", 0.5f);
+		}
+		else if (evt.Current == EGameState::GameOver)
+		{
+			auto task = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f, [&]() {
+				// For now let's restard the game
+
+				auto stage = MakeRef<Stage>();
+				stage->FromFile("assets/data/s3stage4.bss");
+				auto scene = Ref<Scene>(new GameScene(stage));
+				GetApplication().GotoScene(scene);
+			});
+			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, task);
 		}
 	}
 

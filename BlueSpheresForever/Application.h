@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Scene.h"
 #include "EventEmitter.h"
 
 #include <glm/glm.hpp>
@@ -10,6 +11,7 @@ struct GLFWwindow;
 namespace bsf {
 
 
+	class Renderer2D;
 	class Scene;
 
 	class Application
@@ -32,13 +34,18 @@ namespace bsf {
 		Application(Application&&) = delete;
 
 		glm::vec2 GetWindowSize() const;
+		Renderer2D& GetRenderer2D();
 
 		void Start();
-
 		void GotoScene(const std::shared_ptr<Scene> scene);
 
+
 	private:
-		std::shared_ptr<Scene> m_NextScene, m_CurrentScene;
+
+		void RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt);
+
+		Ref<Scene> m_NextScene, m_CurrentScene;
+		Ref<Renderer2D> m_Renderer2D;
 		GLFWwindow* m_Window;
 	};
 

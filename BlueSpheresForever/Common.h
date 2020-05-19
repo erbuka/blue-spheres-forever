@@ -165,7 +165,7 @@ namespace bsf
 		template<typename T>
 		void Read(T& target) { 
 			m_Source.read((char*)&target, sizeof(T)); 
-			BSF_INFO("Read {0} bytes", sizeof(T));
+			BSF_DEBUG("Read {0} bytes", sizeof(T));
 		}
 
 		// This gets enabled if the system byte order is different than the InputStream byte order
@@ -175,7 +175,7 @@ namespace bsf
 		{
 			m_Source.read((char*)&target, sizeof(T)); 
 			SwapBytes(target);
-			BSF_INFO("Read {0} bytes with byte order inversion", sizeof(T));
+			BSF_DEBUG("Read {0} bytes with byte order inversion", sizeof(T));
 		}
 
 		// Special case for glm vectors

@@ -111,7 +111,7 @@ namespace bsf
 
 			if (line[0] == '#') // Comment
 			{
-				BSF_INFO("{0}", line);
+				BSF_DEBUG("{0}", line);
 				continue;
 			}
 
@@ -133,7 +133,7 @@ namespace bsf
 				parseFace(groups[currentGroup], line.substr(1));
 				break;
 			default:
-				BSF_WARN("Unknown token: {0}", line[0]);
+				BSF_WARN("Can't parse line: {0}", line);
 			}
 
 		}

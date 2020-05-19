@@ -98,6 +98,7 @@ namespace bsf
 		bool m_JumpCommand;
 
 		float m_RotationAngle, m_TargetRotationAngle;
+		float m_GameOverRotationSpeed;
 
 		EGameState m_State;
 		Stage& m_Stage;

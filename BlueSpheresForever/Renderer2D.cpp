@@ -120,30 +120,6 @@ namespace bsf
 		m_Projection = projection;
 	}
 
-	void Renderer2D::DrawQuadInternal(const glm::vec2& position, const glm::vec2& size, const glm::vec2& pivot)
-	{
-
-		std::array<glm::vec2, 4> positions = {
-			position - pivot * size,
-			position - pivot * size + glm::vec2(size.x, 0.0f),
-			position - pivot * size + glm::vec2(size.x, size.y),
-			position - pivot * size + glm::vec2(0.0f, size.y),
-		};
-
-
-		std::array<glm::vec2, 4> uvs = {
-			glm::vec2{ 0.0f, 0.0f },
-			glm::vec2{ 1.0f, 0.0f },
-			glm::vec2{ 1.0f, 1.0f },
-			glm::vec2{ 0.0f, 1.0f }
-		};
-
-		DrawTriangleInternal({ positions[0], positions[1], positions[2] }, { uvs[0], uvs[1], uvs[2] });
-		DrawTriangleInternal({ positions[0], positions[2], positions[3] }, { uvs[0], uvs[2], uvs[3] });
-
-	}
-
-
 	void Renderer2D::DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs)
 	{
 
@@ -198,9 +174,27 @@ namespace bsf
 
 	}
 
-	void Renderer2D::DrawQuad(const glm::vec2& position)
+	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size)
 	{
-		DrawQuadInternal(position, { 1.0f, 1.0f }, m_State.top().Pivot);
+		const auto& pivot = m_State.top().Pivot;
+		std::array<glm::vec2, 4> positions = {
+			position - pivot * size,
+			position - pivot * size + glm::vec2(size.x, 0.0f),
+			position - pivot * size + glm::vec2(size.x, size.y),
+			position - pivot * size + glm::vec2(0.0f, size.y),
+		};
+
+
+		std::array<glm::vec2, 4> uvs = {
+			glm::vec2{ 0.0f, 0.0f },
+			glm::vec2{ 1.0f, 0.0f },
+			glm::vec2{ 1.0f, 1.0f },
+			glm::vec2{ 0.0f, 1.0f }
+		};
+
+		DrawTriangleInternal({ positions[0], positions[1], positions[2] }, { uvs[0], uvs[1], uvs[2] });
+		DrawTriangleInternal({ positions[0], positions[2], positions[3] }, { uvs[0], uvs[2], uvs[3] });
+
 	}
 
 	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text)

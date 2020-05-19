@@ -24,7 +24,10 @@ namespace bsf
 	static constexpr float s_YellowSphereDistance = 6.0f;
 	static constexpr float s_YellowSphereHeight = .8f;
 
+	// Game Over
+	static constexpr float s_GameOverRotationAcceleration = 2.0f * glm::pi<float>();
 
+	// Directions
 	static constexpr glm::ivec2 s_dLeft = { -1, 0 };
 	static constexpr glm::ivec2 s_dRight = { 1, 0 };
 	static constexpr glm::ivec2 s_dTop = { 0, 1 };
@@ -381,6 +384,7 @@ namespace bsf
 		m_IsJumping = false;
 		m_IsGoingBackward = false;
 		m_RotationAngle = m_TargetRotationAngle = std::atan2f(m_Direction.y, m_Direction.x);
+		m_GameOverRotationSpeed = s_AngularVelocity;
 		m_Height = 0.0f;
 		m_LastBounceDistance = 1.0f;
 	}
@@ -539,7 +543,8 @@ namespace bsf
 		}
 		else if(m_State == EGameState::GameOver)
 		{ 
-			m_RotationAngle += time.Delta * glm::pi<float>() * 2.0f;
+			m_RotationAngle += time.Delta * m_GameOverRotationSpeed;
+			m_GameOverRotationSpeed += s_GameOverRotationAcceleration * time.Delta;
 		}
 
 		// Wrap position inside boundary

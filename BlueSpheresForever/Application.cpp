@@ -2,8 +2,8 @@
 
 #include "Application.h"
 #include "Log.h"
-#include "Scene.h"
 #include "Assets.h"
+#include "Renderer2D.h"
 
 
 namespace bsf
@@ -70,7 +70,8 @@ namespace bsf
     Application::Application() :
         m_Window(nullptr),
         m_CurrentScene(nullptr),
-        m_NextScene(nullptr)
+        m_NextScene(nullptr),
+        m_Renderer2D(nullptr)
     {
     }
 
@@ -78,6 +79,9 @@ namespace bsf
     {
         m_CurrentScene = nullptr;
         m_NextScene = nullptr;
+
+        m_Renderer2D = nullptr;
+        
         Assets::GetInstance().Dispose();
         glfwTerminate();
     }
@@ -130,6 +134,9 @@ namespace bsf
         // Load Assets 
         Assets::GetInstance().Load();
 
+        // Init Renderer 2D
+        m_Renderer2D = MakeRef<Renderer2D>();
+
         while (!glfwWindowShouldClose(m_Window))
         {
 
@@ -150,14 +157,18 @@ namespace bsf
             std::chrono::duration<float> delta = now - prevTime;
             std::chrono::duration<float> elapsed = now - startTime;
             prevTime = now;
+            const Time time = { delta.count(), elapsed.count() };
+
 
             /* FPS counter */
             char buffer[40];
-            sprintf_s(buffer, "FPS: %f", 1.0 / delta.count());
+            sprintf_s(buffer, "Period: %f", delta.count());
             glfwSetWindowTitle(m_Window, buffer);
             /* FPS counter */
-
-            m_CurrentScene->OnRender({ delta.count(), elapsed.count() });
+            
+            RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PreRender);
+            m_CurrentScene->OnRender(time);
+            RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PostRender);
 
             glfwSwapBuffers(m_Window);
 
@@ -173,6 +184,33 @@ namespace bsf
     void Application::GotoScene(const std::shared_ptr<Scene> scene)
     {
         m_NextScene = scene;
+    }
+
+    Renderer2D& bsf::Application::GetRenderer2D()
+    {
+        return *(m_Renderer2D.get());
+    }
+
+    void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)
+    {
+        auto& tasks = scene->m_ScheduledTasks[evt];
+        auto taskIt = tasks.begin();
+
+        for (auto taskIt = tasks.begin(); taskIt != tasks.end();)
+        {
+            auto& task = (*taskIt);
+            task->m_Application = this;
+            task->Update(time);
+            if (task->IsDone()) 
+            {
+                if (task->m_DoneCallback != nullptr)
+                    task->m_DoneCallback();
+                taskIt = tasks.erase(taskIt);
+            }
+            else
+                ++taskIt;
+        }
+
     }
 
 }

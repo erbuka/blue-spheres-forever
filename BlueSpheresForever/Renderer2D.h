@@ -52,7 +52,7 @@ namespace bsf
 
 		void Begin(const glm::mat4& projection);
 
-		void DrawQuad(const glm::vec2& position);
+		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f });
 		void DrawString(const Ref<Font>& font, const std::string& text);
 		
 		void LoadIdentity();

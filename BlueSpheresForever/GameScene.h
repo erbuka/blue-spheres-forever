@@ -54,11 +54,12 @@ namespace bsf
 
 	private:
 
-		std::vector<Unsubscribe> m_Subscriptions;
+
+		std::list<Unsubscribe> m_Subscriptions;
+
 		MatrixStack m_Model, m_View, m_Projection;
 		MatrixStack m_ShadowView, m_ShadowProjection, m_ShadowModel;
 
-		Ref<Renderer2D> m_Renderer2D;
 		Ref<Framebuffer> m_fbDeferred, m_fbShadow;
 
 		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;

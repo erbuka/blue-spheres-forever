@@ -2,8 +2,6 @@
 
 #include <functional>
 
-#include "Subscription.h"
-
 
 namespace bsf
 {
@@ -41,7 +39,6 @@ namespace bsf
 			auto handlerIt = m_Handlers.insert(m_Handlers.end(), handler);
 			return [&, handlerIt] { m_Handlers.erase(handlerIt); };
 		}
-
 
 		void Emit(const Event& evt)
 		{
