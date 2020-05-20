@@ -60,6 +60,9 @@ namespace bsf
 			m_Assets[AssetName::ModRing] = CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 		}
 
+		{
+			m_Assets[AssetName::ModChaosEmerald] = CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.job"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
+		}
 		
 		{ // Load sonic models
 			std::array<std::string, 14> files = {

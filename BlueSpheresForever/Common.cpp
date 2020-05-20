@@ -156,13 +156,5 @@ namespace bsf
 			bit.second ? glEnable(bit.first) : glDisable(bit.first);
 	}
 
-	Time& Time::operator+=(const Time& other)
-	{
-		Delta = other.Delta;
-		Elapsed += other.Delta;
-		return *this;
-	}
-
-
 }
 

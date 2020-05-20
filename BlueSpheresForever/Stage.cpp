@@ -53,7 +53,7 @@ namespace bsf
 		is.ReadSome(2, SkyColors.data()); // 2 * vec3
 		is.ReadSome(2, StarColors.data()); // 2 * vec3
 
-		is.Read(MaxRings); // uint32
+		is.Read(Rings); // uint32
 
 		m_Data.resize(m_Width * m_Height);
 		m_AvoidSearch.resize(m_Width * m_Height);
@@ -63,6 +63,16 @@ namespace bsf
 
 		stdIs.close();
 
+	}
+
+	void Stage::CollectRing(const glm::ivec2& position)
+	{
+		if (GetValueAt(position) != EStageObject::Ring) {
+			BSF_ERROR("Not a ring!");
+			return;
+		}
+		SetValueAt(position, EStageObject::None);
+		Rings--;
 	}
 
 	EStageObject Stage::GetValueAt(const glm::ivec2& position) const
@@ -88,6 +98,10 @@ namespace bsf
 	void Stage::SetValueAt(const glm::ivec2& position, EStageObject obj)
 	{
 		SetValueAt(position.x, position.y, obj);
+	}
+	uint32_t Stage::Count(EStageObject object) const
+	{
+		return std::count(std::execution::par_unseq, m_Data.begin(), m_Data.end(), object);
 	}
 	void Stage::Dump()
 	{

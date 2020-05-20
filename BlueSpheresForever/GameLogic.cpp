@@ -7,10 +7,18 @@
 namespace bsf
 {
 
+	// Game Pace
+	static constexpr int32_t s_MinPace = 0;
+	static constexpr int32_t s_MaxPace = 3;
+	static constexpr float s_SpeedUpPeriod = 5.0f;
+
 	// Game velocity defaults
 	static constexpr float s_BaseVelocity = 3.5f;
-	static constexpr float s_MaxVelocoty = 5.5f;
-	static constexpr float s_AngularVelocity = glm::pi<float>()  * 1.5f;
+	static constexpr float s_VelocityIncrease = 0.5f;
+	static constexpr float s_MaxVelocity = s_BaseVelocity + s_MaxPace * s_VelocityIncrease;
+	static constexpr float s_BaseAngularVelocity = glm::pi<float>() * 2.0f;
+	static constexpr float s_AngularVelocityIncrease = glm::pi<float>() * 2.0f / 8.0f;
+	static constexpr float s_EmeraldVelocityScale = 0.5f;
 
 	// Jump
 	static constexpr float s_JumpDistance = 2.0f;
@@ -378,15 +386,20 @@ namespace bsf
 		m_Position = stage.StartPoint;
 		m_DeltaPosition = { 0, 0 };
 		m_Direction = stage.StartDirection;
+
 		m_Velocity = s_BaseVelocity;
 		m_VelocityScale = 1.0f;
+		m_AngularVelocity = s_BaseAngularVelocity;
+		
+		m_GameOverRotationSpeed = s_BaseAngularVelocity;
+
 		m_IsRotating = false;
 		m_IsJumping = false;
 		m_IsGoingBackward = false;
 		m_RotationAngle = m_TargetRotationAngle = std::atan2f(m_Direction.y, m_Direction.x);
-		m_GameOverRotationSpeed = s_AngularVelocity;
 		m_Height = 0.0f;
 		m_LastBounceDistance = 1.0f;
+		m_CurrentPace = s_MinPace;
 	}
 
 
@@ -396,6 +409,10 @@ namespace bsf
 		m_DeltaPosition = { 0, 0 };
 		return result;
 	}
+
+	float GameLogic::GetNormalizedVelocity() const { return m_Velocity * m_VelocityScale / s_BaseVelocity; }
+
+	float GameLogic::GetMaxVelocity() const { return s_MaxVelocity; }
 
 	glm::vec2 GameLogic::GetPosition() const
 	{
@@ -426,12 +443,29 @@ namespace bsf
 		{
 			// Update the current rotation, if any
 			DoRotation(time);
-			
+
+			// Update the game pace
+			m_SpeedUpTimer += time;
+
+			while (m_SpeedUpTimer.Elapsed >= s_SpeedUpPeriod && m_CurrentPace < s_MaxPace)
+			{
+				m_SpeedUpTimer -= s_SpeedUpPeriod;
+				m_CurrentPace += 1;
+				GameAction.Emit({ EGameAction::GameSpeedUp });
+			}
+
+			// Update the current velocity(ies) based on the game pace
+
+			m_Velocity = s_BaseVelocity + m_CurrentPace * s_VelocityIncrease;
+			m_AngularVelocity = s_BaseAngularVelocity + m_CurrentPace * s_AngularVelocityIncrease;
+
+
 			// If not rotating, we move forward
 			if (!m_IsRotating) 
 			{
 
 				bool crossed, crossedHorizontal, crossedVertical;
+
 				
 				// Getting the next position position;
 				glm::vec2 prevPos = m_Position;
@@ -459,8 +493,19 @@ namespace bsf
 						// Run the ring conversion algorithm
 						TransformRingAlgorithm(m_Stage, roundedPosition).Calculate();
 
-						if (m_Stage.GetValueAt(roundedPosition) == EStageObject::Ring)
-							m_Stage.SetValueAt(roundedPosition, EStageObject::None);
+						if (m_Stage.GetValueAt(roundedPosition) == EStageObject::Ring) 
+						{
+							m_Stage.CollectRing(roundedPosition);
+							GameAction.Emit({ EGameAction::RingCollected });
+							if(m_Stage.IsPerfect())
+								GameAction.Emit({ EGameAction::Perfect });
+						}
+
+						// If there are no more blue spheres the game is over
+						if (m_Stage.Count(EStageObject::BlueSphere) == 0)
+						{
+							ChangeGameState(EGameState::Emerald);
+						}
 
 					} 
 					else if(object == EStageObject::Bumper)
@@ -488,7 +533,10 @@ namespace bsf
 					}
 					else if (object == EStageObject::Ring)
 					{
-						m_Stage.SetValueAt(roundedPosition, EStageObject::None);
+						m_Stage.CollectRing(roundedPosition);
+						GameAction.Emit({ EGameAction::RingCollected });
+						if (m_Stage.IsPerfect())
+							GameAction.Emit({ EGameAction::Perfect });
 					}
 
 				}
@@ -546,6 +594,20 @@ namespace bsf
 			m_RotationAngle += time.Delta * m_GameOverRotationSpeed;
 			m_GameOverRotationSpeed += s_GameOverRotationAcceleration * time.Delta;
 		}
+		else if (m_State == EGameState::Emerald)
+		{
+
+			if (m_IsGoingBackward)
+			{
+				m_Direction *= -1.0f;
+				m_IsGoingBackward = false;
+			}
+
+			m_Velocity = s_BaseVelocity;
+			m_VelocityScale = 0.5f;
+			m_AngularVelocity = s_BaseAngularVelocity;
+			m_Position += m_Velocity * m_VelocityScale * glm::vec2(m_Direction) * time.Delta;
+		}
 
 		// Wrap position inside boundary
 		m_Position = WrapPosition(m_Position);
@@ -577,6 +639,10 @@ namespace bsf
 		GameStateChanged.Emit({ m_State, newState });
 		m_State = newState;
 	}
+
+	uint32_t GameLogic::GetCurrentPace() const { return m_CurrentPace; }
+	uint32_t GameLogic::GetMinPace() const { return s_MinPace; }
+	uint32_t GameLogic::GetMaxPace() const { return s_MaxPace; }
 
 	glm::vec2 GameLogic::WrapPosition(const glm::vec2& p) const
 	{
@@ -627,7 +693,7 @@ namespace bsf
 		if (m_IsRotating)
 		{
 			float dist = m_TargetRotationAngle - m_RotationAngle;
-			float step = Sign(dist) * s_AngularVelocity * time.Delta;
+			float step = Sign(dist) * m_AngularVelocity * time.Delta;
 
 			if (std::abs(dist) < std::abs(step))
 			{

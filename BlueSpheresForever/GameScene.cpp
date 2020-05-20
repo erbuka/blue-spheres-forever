@@ -1051,9 +1051,6 @@ namespace bsf
 			
 
 			// Draw scene
-			
-			
-			
 			{
 				GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE });
 
@@ -1068,6 +1065,7 @@ namespace bsf
 				// Draw player
 
 				auto sonicAnimator = assets.Get<CharacterAnimator>(AssetName::ModSonic);
+				sonicAnimator->SetTimeMultiplier(m_GameLogic->GetNormalizedVelocity());
 				sonicAnimator->Update(time);
 
 				m_Model.Push();
@@ -1400,25 +1398,29 @@ namespace bsf
 	{
 		auto animator = Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic);
 
-		if (evt.Action == EGameAction::JumpStart)
+		switch (evt.Action)
 		{
+		case EGameAction::JumpStart:
 			animator->Play("jump", 0.5f);
-		}
-
-		if (evt.Action == EGameAction::JumpEnd)
-		{
+			break;
+		case EGameAction::JumpEnd:
 			animator->Play("run", 0.5f);
-		}
-		
-		if (evt.Action == EGameAction::GoForward)
-		{
+			break;
+		case EGameAction::GoForward:
 			animator->SetReverse(false);
+			break;
+		case EGameAction::GoBackward:
+			animator->SetReverse(true);
+			break;
+		case EGameAction::RingCollected:
+			break;
+		case EGameAction::Perfect:
+			m_GameMessages.emplace_back("Perfect");
+			break;
+		default:
+			break;
 		}
 
-		if (evt.Action == EGameAction::GoBackward)
-		{
-			animator->SetReverse(true);
-		}
 	}
 
 	Ref<TextureCube> GameScene::CreateBaseSkyBox()

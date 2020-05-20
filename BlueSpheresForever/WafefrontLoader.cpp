@@ -4,10 +4,12 @@
 #include "WafefrontLoader.h"
 
 #include <sstream>
+#include <string_view>
 
 
 namespace bsf
 {
+
 
 	Ref<ModelDef> WavefrontLoader::Load(const std::string& fileName)
 	{
@@ -108,12 +110,15 @@ namespace bsf
 			// Skip empty lines
 			if (line.empty())
 				continue;
+				
+		
 
 			if (line[0] == '#') // Comment
 			{
 				BSF_DEBUG("{0}", line);
 				continue;
 			}
+
 
 			switch (line[0])
 			{
@@ -131,6 +136,13 @@ namespace bsf
 				break;
 			case 'f': // faces
 				parseFace(groups[currentGroup], line.substr(1));
+				break;
+			case 'u':
+				// could be usemtl
+				if (line.substr(0, 6) == "usemtl")
+					std::stringstream(line.substr(0, 6)) >> currentGroup;
+				else
+					BSF_WARN("Can't parse line: {0}", line);
 				break;
 			default:
 				BSF_WARN("Can't parse line: {0}", line);

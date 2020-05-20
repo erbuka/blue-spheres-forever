@@ -32,7 +32,8 @@ namespace bsf
 		FontMain,
 
 		ModRing,
-		ModSonic
+		ModSonic,
+		ModChaosEmerald
 
 	};
 

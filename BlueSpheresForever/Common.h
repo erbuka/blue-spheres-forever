@@ -115,7 +115,11 @@ namespace bsf
 	{
 		float Delta = 0.0f, Elapsed = 0.0f;
 
-		Time& operator+=(const Time & other);
+		inline Time& operator+=(const Time& other) { return operator+=(other.Delta); }
+		inline Time& operator+=(float t) { Elapsed += t; return *this; }
+
+		Time& operator-=(const Time& other) { return operator-=(other.Delta); }
+		Time& operator-=(float t) { Elapsed -= t; return *this; }
 
 	};
 

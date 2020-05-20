@@ -2,7 +2,7 @@
 
 #include <array>
 #include <glm/glm.hpp>
-
+#include <execution>
 
 namespace bsf
 {
@@ -38,7 +38,7 @@ namespace bsf
 		
 		glm::ivec2 StartPoint, StartDirection;
 
-		uint32_t MaxRings;
+		uint32_t Rings;
 
 		std::string Texture, NormalMap;
 
@@ -50,7 +50,9 @@ namespace bsf
 		bool FromFile(const std::string& filename);
 
 		Stage() = default;
-		
+
+		void CollectRing(const glm::ivec2& position);
+
 		EStageObject GetValueAt(const glm::ivec2& position) const;
 		EStageObject GetValueAt(int32_t x, int32_t y) const;
 		void SetValueAt(int32_t x, int32_t y, EStageObject obj);
@@ -58,6 +60,10 @@ namespace bsf
 
 		int32_t GetWidth() const { return m_Width; }
 		int32_t GetHeight() const { return m_Height; }
+
+		uint32_t Count(EStageObject object) const;
+
+		bool IsPerfect() const { return Rings == 0; }
 
 		void Dump();
 
