@@ -61,7 +61,7 @@ namespace bsf
 		}
 
 		{
-			m_Assets[AssetName::ModChaosEmerald] = CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.job"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
+			m_Assets[AssetName::ModChaosEmerald] = CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 		}
 		
 		{ // Load sonic models

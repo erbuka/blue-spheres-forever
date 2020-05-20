@@ -95,9 +95,9 @@ namespace bsf
 
 		using StateFn = std::function<void(const Time&)>;
 
+
 		Time m_SpeedUpTimer;
 
-		void ChangeGameState(EGameState newState);
 
 		float m_Velocity, m_VelocityScale;
 		float m_AngularVelocity;
@@ -126,10 +126,21 @@ namespace bsf
 		EGameState m_State;
 		Stage& m_Stage;
 
+		std::unordered_map<EGameState, StateFn> m_StateMap;
+
 		bool PullRotateCommand();
 		void DoRotation(const Time& time);
 
 		bool CrossedEdge(const glm::vec2 pos0, const glm::vec2 pos1, bool& horizontal, bool& vertical);
+
+		void ChangeGameState(EGameState newState);
+
+		void StateFnNone(const Time& time);
+		void StateFnStarting(const Time& time);
+		void StateFnPlaying(const Time& time);
+		void StateFnGameOver(const Time& time);
+		void StateFnEmerald(const Time& time);
+
 
 	};
 }

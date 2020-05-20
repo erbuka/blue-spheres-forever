@@ -400,6 +400,15 @@ namespace bsf
 		m_Height = 0.0f;
 		m_LastBounceDistance = 1.0f;
 		m_CurrentPace = s_MinPace;
+
+		m_StateMap = {
+			{ EGameState::None, std::bind(&GameLogic::StateFnNone, this, std::placeholders::_1)},
+			{ EGameState::Starting, std::bind(&GameLogic::StateFnStarting, this, std::placeholders::_1)},
+			{ EGameState::Playing, std::bind(&GameLogic::StateFnPlaying, this, std::placeholders::_1)},
+			{ EGameState::GameOver, std::bind(&GameLogic::StateFnGameOver, this, std::placeholders::_1)},
+			{ EGameState::Emerald, std::bind(&GameLogic::StateFnEmerald, this, std::placeholders::_1)}
+		};
+
 	}
 
 
@@ -421,193 +430,7 @@ namespace bsf
 
 	void GameLogic::Advance(const Time& time)
 	{
-
-		// In the starting state, we can rotate in place
-		// until the game starts
-		
-		if (m_State == EGameState::None)
-		{
-			ChangeGameState(EGameState::Starting);
-		}
-
-		if (m_State == EGameState::Starting)
-		{
-			PullRotateCommand();
-			DoRotation(time);
-
-			if (time.Elapsed >= 3.0f)
-				ChangeGameState(EGameState::Playing);
-		
-		}
-		else if (m_State == EGameState::Playing)
-		{
-			// Update the current rotation, if any
-			DoRotation(time);
-
-			// Update the game pace
-			m_SpeedUpTimer += time;
-
-			while (m_SpeedUpTimer.Elapsed >= s_SpeedUpPeriod && m_CurrentPace < s_MaxPace)
-			{
-				m_SpeedUpTimer -= s_SpeedUpPeriod;
-				m_CurrentPace += 1;
-				GameAction.Emit({ EGameAction::GameSpeedUp });
-			}
-
-			// Update the current velocity(ies) based on the game pace
-
-			m_Velocity = s_BaseVelocity + m_CurrentPace * s_VelocityIncrease;
-			m_AngularVelocity = s_BaseAngularVelocity + m_CurrentPace * s_AngularVelocityIncrease;
-
-
-			// If not rotating, we move forward
-			if (!m_IsRotating) 
-			{
-
-				bool crossed, crossedHorizontal, crossedVertical;
-
-				
-				// Getting the next position position;
-				glm::vec2 prevPos = m_Position;
-				float step = m_Velocity * m_VelocityScale * time.Delta;
-				m_Position += glm::vec2(m_Direction) * step;
-				m_DeltaPosition += glm::vec2(m_Direction) * step;
-				glm::ivec2 roundedPosition = glm::round(m_Position);
-
-				// Update last bounce distance
-				m_LastBounceDistance = std::min(1.0f, m_LastBounceDistance + step);
-
-
-				// Check if we crossed an edge
-				crossed = CrossedEdge(prevPos, m_Position, crossedHorizontal, crossedVertical);
-
-
-				if (m_Height <= s_MaxCollisionHeight && crossed)
-				{
-					auto object = m_Stage.GetValueAt(roundedPosition);
-
-					if (object == EStageObject::BlueSphere)
-					{
-						m_Stage.SetValueAt(roundedPosition, EStageObject::RedSphere);
-
-						// Run the ring conversion algorithm
-						TransformRingAlgorithm(m_Stage, roundedPosition).Calculate();
-
-						if (m_Stage.GetValueAt(roundedPosition) == EStageObject::Ring) 
-						{
-							m_Stage.CollectRing(roundedPosition);
-							GameAction.Emit({ EGameAction::RingCollected });
-							if(m_Stage.IsPerfect())
-								GameAction.Emit({ EGameAction::Perfect });
-						}
-
-						// If there are no more blue spheres the game is over
-						if (m_Stage.Count(EStageObject::BlueSphere) == 0)
-						{
-							ChangeGameState(EGameState::Emerald);
-						}
-
-					} 
-					else if(object == EStageObject::Bumper)
-					{
-						m_LastBounceDistance = 0.0f;
-						m_IsGoingBackward = !m_IsGoingBackward;
-						m_Direction *= -1;
-						m_Position = roundedPosition; // Snap to star sphere
-
-						GameAction.Emit({ m_IsGoingBackward ? EGameAction::GoBackward : EGameAction::GoForward });
-
-					}
-					else if (object == EStageObject::YellowSphere)
-					{
-						m_TotalJumpDistance = s_YellowSphereDistance;
-						m_RemainingJumpDistance = s_YellowSphereDistance;
-						m_JumpHeight = s_YellowSphereHeight;
-						m_VelocityScale = 2.0f;
-						m_IsJumping = true;
-						GameAction.Emit({ EGameAction::JumpStart });
-					}
-					else if (object == EStageObject::RedSphere)
-					{
-						ChangeGameState(EGameState::GameOver);
-					}
-					else if (object == EStageObject::Ring)
-					{
-						m_Stage.CollectRing(roundedPosition);
-						GameAction.Emit({ EGameAction::RingCollected });
-						if (m_Stage.IsPerfect())
-							GameAction.Emit({ EGameAction::Perfect });
-					}
-
-				}
-
-				// Check jump requests
-				if (!m_IsJumping && m_JumpCommand)
-				{
-					m_TotalJumpDistance = s_JumpDistance;
-					m_RemainingJumpDistance = s_JumpDistance;
-					m_JumpHeight = s_JumpHeight;
-					m_IsJumping = true;
-					m_JumpCommand = false;
-					GameAction.Emit({ EGameAction::JumpStart });
-				}
-
-				if (m_IsJumping)
-				{
-
-					m_RemainingJumpDistance -= step;
-					float deltaJump = (m_TotalJumpDistance - m_RemainingJumpDistance) / m_TotalJumpDistance;
-					m_Height = std::max(0.0f, (1.0f - std::pow(deltaJump * 2.0f - 1.0f, 2.0f)) * this->m_JumpHeight);
-
-
-					if (m_RemainingJumpDistance <= 0.0f)
-					{
-						m_IsJumping = false;
-						m_VelocityScale = 1.0f;
-						GameAction.Emit({ EGameAction::JumpEnd });
-					}
-
-				}
-
-				// Check run forward requests
-				if (m_IsGoingBackward && m_RunForwardCommand && m_LastBounceDistance == 1.0f)
-				{
-					m_RunForwardCommand = false;
-					m_IsGoingBackward = false;
-					m_Direction *= -1;
-					GameAction.Emit({ EGameAction::GoForward });
-				}
-
-				// If we crossed and edge and there's a rotation request,
-				// we want snap to the edge and rotate in place.
-				// Must be on the ground to rotate, and can't rotate in the
-				// same spot more than once
-				if (crossed && m_LastBounceDistance == 1.0f && !m_IsJumping && PullRotateCommand())
-				{
-					m_Position = glm::round(m_Position);
-				}
-
-			}
-		}
-		else if(m_State == EGameState::GameOver)
-		{ 
-			m_RotationAngle += time.Delta * m_GameOverRotationSpeed;
-			m_GameOverRotationSpeed += s_GameOverRotationAcceleration * time.Delta;
-		}
-		else if (m_State == EGameState::Emerald)
-		{
-
-			if (m_IsGoingBackward)
-			{
-				m_Direction *= -1.0f;
-				m_IsGoingBackward = false;
-			}
-
-			m_Velocity = s_BaseVelocity;
-			m_VelocityScale = 0.5f;
-			m_AngularVelocity = s_BaseAngularVelocity;
-			m_Position += m_Velocity * m_VelocityScale * glm::vec2(m_Direction) * time.Delta;
-		}
+		m_StateMap[m_State](time);
 
 		// Wrap position inside boundary
 		m_Position = WrapPosition(m_Position);
@@ -638,6 +461,194 @@ namespace bsf
 	{
 		GameStateChanged.Emit({ m_State, newState });
 		m_State = newState;
+	}
+
+	void GameLogic::StateFnNone(const Time& time)
+	{
+		ChangeGameState(EGameState::Starting);
+	}
+
+	void GameLogic::StateFnStarting(const Time& time)
+	{
+		// In the starting state, we can rotate in place
+		// until the game starts
+		PullRotateCommand();
+		DoRotation(time);
+
+		if (time.Elapsed >= 3.0f)
+			ChangeGameState(EGameState::Playing);
+
+	}
+
+	void GameLogic::StateFnPlaying(const Time& time)
+	{
+		// Update the current rotation, if any
+		DoRotation(time);
+
+		// Update the game pace
+		m_SpeedUpTimer += time;
+
+		while (m_SpeedUpTimer.Elapsed >= s_SpeedUpPeriod && m_CurrentPace < s_MaxPace)
+		{
+			m_SpeedUpTimer -= s_SpeedUpPeriod;
+			m_CurrentPace += 1;
+			GameAction.Emit({ EGameAction::GameSpeedUp });
+		}
+
+		// Update the current velocity(ies) based on the game pace
+
+		m_Velocity = s_BaseVelocity + m_CurrentPace * s_VelocityIncrease;
+		m_AngularVelocity = s_BaseAngularVelocity + m_CurrentPace * s_AngularVelocityIncrease;
+
+
+		// If not rotating, we move forward
+		if (!m_IsRotating)
+		{
+
+			bool crossed, crossedHorizontal, crossedVertical;
+
+
+			// Getting the next position position;
+			glm::vec2 prevPos = m_Position;
+			float step = m_Velocity * m_VelocityScale * time.Delta;
+			m_Position += glm::vec2(m_Direction) * step;
+			m_DeltaPosition += glm::vec2(m_Direction) * step;
+			glm::ivec2 roundedPosition = glm::round(m_Position);
+
+			// Update last bounce distance
+			m_LastBounceDistance = std::min(1.0f, m_LastBounceDistance + step);
+
+
+			// Check if we crossed an edge
+			crossed = CrossedEdge(prevPos, m_Position, crossedHorizontal, crossedVertical);
+
+
+			if (m_Height <= s_MaxCollisionHeight && crossed)
+			{
+				auto object = m_Stage.GetValueAt(roundedPosition);
+
+				if (object == EStageObject::BlueSphere)
+				{
+					m_Stage.SetValueAt(roundedPosition, EStageObject::RedSphere);
+
+					// Run the ring conversion algorithm
+					TransformRingAlgorithm(m_Stage, roundedPosition).Calculate();
+
+					if (m_Stage.GetValueAt(roundedPosition) == EStageObject::Ring)
+					{
+						m_Stage.CollectRing(roundedPosition);
+						GameAction.Emit({ EGameAction::RingCollected });
+						if (m_Stage.IsPerfect())
+							GameAction.Emit({ EGameAction::Perfect });
+					}
+
+					// If there are no more blue spheres the game is over
+					if (m_Stage.Count(EStageObject::BlueSphere) == 0)
+					{
+						ChangeGameState(EGameState::Emerald);
+					}
+
+				}
+				else if (object == EStageObject::Bumper)
+				{
+					m_LastBounceDistance = 0.0f;
+					m_IsGoingBackward = !m_IsGoingBackward;
+					m_Direction *= -1;
+					m_Position = roundedPosition; // Snap to star sphere
+
+					GameAction.Emit({ m_IsGoingBackward ? EGameAction::GoBackward : EGameAction::GoForward });
+
+				}
+				else if (object == EStageObject::YellowSphere)
+				{
+					m_TotalJumpDistance = s_YellowSphereDistance;
+					m_RemainingJumpDistance = s_YellowSphereDistance;
+					m_JumpHeight = s_YellowSphereHeight;
+					m_VelocityScale = 2.0f;
+					m_IsJumping = true;
+					GameAction.Emit({ EGameAction::JumpStart });
+				}
+				else if (object == EStageObject::RedSphere)
+				{
+					ChangeGameState(EGameState::GameOver);
+				}
+				else if (object == EStageObject::Ring)
+				{
+					m_Stage.CollectRing(roundedPosition);
+					GameAction.Emit({ EGameAction::RingCollected });
+					if (m_Stage.IsPerfect())
+						GameAction.Emit({ EGameAction::Perfect });
+				}
+
+			}
+
+			// Check jump requests
+			if (!m_IsJumping && m_JumpCommand)
+			{
+				m_TotalJumpDistance = s_JumpDistance;
+				m_RemainingJumpDistance = s_JumpDistance;
+				m_JumpHeight = s_JumpHeight;
+				m_IsJumping = true;
+				m_JumpCommand = false;
+				GameAction.Emit({ EGameAction::JumpStart });
+			}
+
+			if (m_IsJumping)
+			{
+
+				m_RemainingJumpDistance -= step;
+				float deltaJump = (m_TotalJumpDistance - m_RemainingJumpDistance) / m_TotalJumpDistance;
+				m_Height = std::max(0.0f, (1.0f - std::pow(deltaJump * 2.0f - 1.0f, 2.0f)) * this->m_JumpHeight);
+
+
+				if (m_RemainingJumpDistance <= 0.0f)
+				{
+					m_IsJumping = false;
+					m_VelocityScale = 1.0f;
+					GameAction.Emit({ EGameAction::JumpEnd });
+				}
+
+			}
+
+			// Check run forward requests
+			if (m_IsGoingBackward && m_RunForwardCommand && m_LastBounceDistance == 1.0f)
+			{
+				m_RunForwardCommand = false;
+				m_IsGoingBackward = false;
+				m_Direction *= -1;
+				GameAction.Emit({ EGameAction::GoForward });
+			}
+
+			// If we crossed and edge and there's a rotation request,
+			// we want snap to the edge and rotate in place.
+			// Must be on the ground to rotate, and can't rotate in the
+			// same spot more than once
+			if (crossed && m_LastBounceDistance == 1.0f && !m_IsJumping && PullRotateCommand())
+			{
+				m_Position = glm::round(m_Position);
+			}
+
+		}
+	}
+
+	void GameLogic::StateFnGameOver(const Time& time)
+	{
+		m_RotationAngle += time.Delta * m_GameOverRotationSpeed;
+		m_GameOverRotationSpeed += s_GameOverRotationAcceleration * time.Delta;
+	}
+
+	void GameLogic::StateFnEmerald(const Time& time)
+	{
+		if (m_IsGoingBackward)
+		{
+			m_Direction *= -1.0f;
+			m_IsGoingBackward = false;
+		}
+
+		m_Velocity = s_BaseVelocity;
+		m_VelocityScale = 0.5f;
+		m_AngularVelocity = s_BaseAngularVelocity;
+		m_Position += m_Velocity * m_VelocityScale * glm::vec2(m_Direction) * time.Delta;
 	}
 
 	uint32_t GameLogic::GetCurrentPace() const { return m_CurrentPace; }
