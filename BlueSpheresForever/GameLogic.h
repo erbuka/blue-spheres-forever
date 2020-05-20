@@ -102,7 +102,7 @@ namespace bsf
 		Time m_SpeedUpTimer;
 
 
-		float m_Velocity, m_VelocityScale;
+		float m_Velocity, m_VelocityScale, m_JumpVelocityScale;
 		float m_AngularVelocity;
 
 		glm::ivec2 m_Direction;
@@ -148,7 +148,9 @@ namespace bsf
 		void StateFnGameOver(const Time& time);
 		void StateFnEmerald(const Time& time);
 
+		void HandleJump(float step);
 
+		float CalculateStep(const Time& time) const;
 	};
 }
 

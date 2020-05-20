@@ -1387,18 +1387,26 @@ namespace bsf
 
 	void GameScene::OnGameStateChanged(const GameStateChangedEvent& evt)
 	{
+		auto& animator = Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic);
+
+
 		if (evt.Current == EGameState::Starting)
 		{
-			Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic)->Play("stand", 1.0f);
+			animator->SetRunning(true);
+			animator->Play("stand", 1.0f);
 			m_GameMessages.emplace_back("Get Blue Spheres!");
 		}
-		else if (evt.Current == EGameState::Playing)
+		
+		if (evt.Current == EGameState::Playing)
 		{
-			Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic)->Play("run", 0.5f);
+			animator->Play("run", 0.5f);
 		}
-		else if (evt.Current == EGameState::GameOver)
+		
+		if (evt.Current == EGameState::GameOver)
 		{
 			auto task = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
+
+			animator->SetRunning(false);
 
 			task->SetDoneFunction([&](SceneTask& self) {
 				// For now let's restart the game
@@ -1410,8 +1418,10 @@ namespace bsf
 
 			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, task);
 		}
-		else if (evt.Current == EGameState::Emerald)
+		
+		if (evt.Current == EGameState::Emerald)
 		{
+
 			auto liftObjectsTask = MakeRef<SceneTask>();
 
 			liftObjectsTask->SetUpdateFunction([this](SceneTask& self, const Time& time) {

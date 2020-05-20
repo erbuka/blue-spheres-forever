@@ -26,6 +26,7 @@ namespace bsf
 		float GetExcessTime() const { return std::max(CurrentTime - Duration, 0.0f); }
 		void Reset();
 
+
 	};
 	
 		
@@ -47,12 +48,15 @@ namespace bsf
 
 		void SetReverse(bool reverse);
 
+		void SetRunning(bool running) { m_Running = running; }
+
 	private:
 
 		void Reverse();
 		void UpdateModel();
 		void InitializeModel();
 
+		bool m_Running;
 		bool m_Reverse;
 		float m_TimeMultiplier;
 		Ref<Model> m_Model;

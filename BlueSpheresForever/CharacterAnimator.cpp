@@ -9,7 +9,8 @@ namespace bsf
 	CharacterAnimator::CharacterAnimator() :
 		m_MeshesCount(0),
 		m_Model(nullptr),
-		m_TimeMultiplier(1.0f)
+		m_TimeMultiplier(1.0f),
+		m_Running(true)
 	{
 	}
 	void CharacterAnimator::AddFrame(const Ref<Model>& frame)
@@ -83,6 +84,8 @@ namespace bsf
 
 	void CharacterAnimator::Update(const Time& time)
 	{
+		if (!m_Running)
+			return;
 
 		float dt = time.Delta * m_TimeMultiplier;
 

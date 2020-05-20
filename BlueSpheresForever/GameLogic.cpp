@@ -392,6 +392,7 @@ namespace bsf
 
 		m_Velocity = s_BaseVelocity;
 		m_VelocityScale = 1.0f;
+		m_JumpVelocityScale = 1.0f;
 		m_AngularVelocity = s_BaseAngularVelocity;
 		
 		m_GameOverRotationSpeed = s_BaseAngularVelocity;
@@ -516,7 +517,8 @@ namespace bsf
 
 			// Getting the next position position;
 			glm::vec2 prevPos = m_Position;
-			float step = m_Velocity * m_VelocityScale * time.Delta;
+			float step = CalculateStep(time);
+
 			m_Position += glm::vec2(m_Direction) * step;
 			m_DeltaPosition += glm::vec2(m_Direction) * step;
 			glm::ivec2 roundedPosition = glm::round(m_Position);
@@ -590,7 +592,7 @@ namespace bsf
 					m_TotalJumpDistance = s_YellowSphereDistance;
 					m_RemainingJumpDistance = s_YellowSphereDistance;
 					m_JumpHeight = s_YellowSphereHeight;
-					m_VelocityScale = 2.0f;
+					m_JumpVelocityScale = 2.0f;
 					m_IsJumping = true;
 					GameAction.Emit({ EGameAction::JumpStart });
 				}
@@ -616,25 +618,11 @@ namespace bsf
 				m_JumpHeight = s_JumpHeight;
 				m_IsJumping = true;
 				m_JumpCommand = false;
+				m_JumpVelocityScale = 1.0f;
 				GameAction.Emit({ EGameAction::JumpStart });
 			}
 
-			if (m_IsJumping)
-			{
-
-				m_RemainingJumpDistance -= step;
-				float deltaJump = (m_TotalJumpDistance - m_RemainingJumpDistance) / m_TotalJumpDistance;
-				m_Height = std::max(0.0f, (1.0f - std::pow(deltaJump * 2.0f - 1.0f, 2.0f)) * this->m_JumpHeight);
-
-
-				if (m_RemainingJumpDistance <= 0.0f)
-				{
-					m_IsJumping = false;
-					m_VelocityScale = 1.0f;
-					GameAction.Emit({ EGameAction::JumpEnd });
-				}
-
-			}
+			HandleJump(step);
 
 			// Check run forward requests
 			if (m_IsGoingBackward && m_RunForwardCommand && m_LastBounceDistance == 1.0f)
@@ -672,12 +660,41 @@ namespace bsf
 
 	void GameLogic::StateFnEmerald(const Time& time)
 	{
-		m_Position += m_Velocity * m_VelocityScale * glm::vec2(m_Direction) * time.Delta;
-		m_EmeraldDistance = std::max(0.0f, m_EmeraldDistance - 2.0f * m_Velocity * m_VelocityScale * time.Delta);
+		float step = CalculateStep(time);
+
+		HandleJump(step);
+
+		m_Position += glm::vec2(m_Direction) * step;
+		m_EmeraldDistance = std::max(0.0f, m_EmeraldDistance - 2.0f * step);
 
 		if (m_EmeraldDistance == 0.0f)
 			ChangeGameState({ EGameState::GameOver });
 
+	}
+
+	void GameLogic::HandleJump(float step)
+	{
+		if (m_IsJumping)
+		{
+
+			m_RemainingJumpDistance -= step;
+			float deltaJump = (m_TotalJumpDistance - m_RemainingJumpDistance) / m_TotalJumpDistance;
+			m_Height = std::max(0.0f, (1.0f - std::pow(deltaJump * 2.0f - 1.0f, 2.0f)) * this->m_JumpHeight);
+
+
+			if (m_RemainingJumpDistance <= 0.0f)
+			{
+				m_IsJumping = false;
+				m_JumpVelocityScale = 1.0f;
+				GameAction.Emit({ EGameAction::JumpEnd });
+			}
+
+		}
+	}
+
+	float GameLogic::CalculateStep(const Time& time) const
+	{
+		return m_Velocity * m_VelocityScale * m_JumpVelocityScale * time.Delta;
 	}
 
 	uint32_t GameLogic::GetCurrentPace() const { return m_CurrentPace; }
