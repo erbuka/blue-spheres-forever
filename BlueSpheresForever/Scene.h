@@ -10,7 +10,6 @@ namespace bsf
 {
 	class Application;
 
-	using SceneTaskDoneCallback = std::function<void()>;
 
 	enum class ESceneTaskEvent
 	{
@@ -21,25 +20,35 @@ namespace bsf
 	class SceneTask
 	{
 	public:
-		SceneTask(SceneTaskDoneCallback done) : m_DoneCallback(done), m_IsDone(false), m_Application(nullptr) {}
+		using DoneFn = std::function<void(SceneTask&)>;
+		using UpdateFn = std::function<void(SceneTask&, const Time&)>;
+
+		SceneTask() : m_DoneFn(nullptr), m_UpdateFn(nullptr), m_IsDone(false), m_Application(nullptr) {}
 		virtual ~SceneTask() {}
-		virtual void Update(const Time& time) = 0;
-		void Done() { m_IsDone = true; }
+
+		void SetUpdateFunction(UpdateFn fn) { m_UpdateFn = fn; }
+		void SetDoneFunction(DoneFn fn) { m_DoneFn = fn; }
+
+		void SetDone() { m_IsDone = true; }
 		bool IsDone() const { return m_IsDone; }
 		Application& GetApplication();
 
 	private:
+
+		void CallUpdateFn(const Time& time);
+		void CallDoneFn();
+
 		friend class Application;
 		Application* m_Application = nullptr;
-		SceneTaskDoneCallback m_DoneCallback;
+		DoneFn m_DoneFn;
+		UpdateFn m_UpdateFn;
 		bool m_IsDone;
 	};
 
 	class FadeTask : public SceneTask
 	{
 	public:
-		FadeTask(glm::vec4 fromColor, glm::vec4 toColor, float duration, SceneTaskDoneCallback done);
-		void Update(const Time& time) override;
+		FadeTask(glm::vec4 fromColor, glm::vec4 toColor, float duration);
 	private:
 		float m_Time, m_Duration;
 		glm::vec4 m_FromColor, m_ToColor;

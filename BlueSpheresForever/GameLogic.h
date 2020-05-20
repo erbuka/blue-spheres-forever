@@ -71,6 +71,9 @@ namespace bsf
 		float GetNormalizedVelocity() const;
 		float GetMaxVelocity() const;
 		float GetVelocity() const { return m_Velocity; }
+
+		float GetEmeraldDistance() const { return m_EmeraldDistance; }
+		bool IsEmeraldVisible() const { return m_IsEmeraldVisible; }
 		
 		bool IsRotating() const { return m_IsRotating; }
 		
@@ -120,8 +123,12 @@ namespace bsf
 		bool m_RunForwardCommand;
 		bool m_JumpCommand;
 
+
 		float m_RotationAngle, m_TargetRotationAngle;
 		float m_GameOverRotationSpeed;
+
+		float m_EmeraldDistance;
+		bool m_IsEmeraldVisible;
 
 		EGameState m_State;
 		Stage& m_Stage;

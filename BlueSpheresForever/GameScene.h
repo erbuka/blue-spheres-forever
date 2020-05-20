@@ -55,6 +55,8 @@ namespace bsf
 	private:
 
 
+		float m_GameOverObjectsHeight = 0.0f;
+
 		std::list<Unsubscribe> m_Subscriptions;
 
 		MatrixStack m_Model, m_View, m_Projection;
@@ -90,6 +92,7 @@ namespace bsf
 		void RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
 		void GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source);
 
+		void RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model);
 
 	};
 }

@@ -200,11 +200,10 @@ namespace bsf
         {
             auto& task = (*taskIt);
             task->m_Application = this;
-            task->Update(time);
+            task->CallUpdateFn(time);
             if (task->IsDone()) 
             {
-                if (task->m_DoneCallback != nullptr)
-                    task->m_DoneCallback();
+                task->CallDoneFn();
                 taskIt = tasks.erase(taskIt);
             }
             else

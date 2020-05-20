@@ -9,11 +9,11 @@
 using namespace bsf;
 using namespace glm;
 
+
 int main() {
 
-
 	auto stage = MakeRef<Stage>();
-	stage->FromFile("assets/data/s3stage1.bss");
+	stage->FromFile("assets/data/playground.bss");
 	auto scene = Ref<Scene>(new GameScene(stage));
 	
 	Application app;

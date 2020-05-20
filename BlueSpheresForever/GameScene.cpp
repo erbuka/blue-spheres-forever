@@ -955,7 +955,7 @@ namespace bsf
 
 		}));
 
-		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 1.0f, nullptr);
+		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 1.0f);
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
 
 	}
@@ -1164,7 +1164,7 @@ namespace bsf
 							continue;
 
 						m_Model.Push();
-						m_Model.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
+						m_Model.Translate(Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight })[0]);
 					
 						if (value == EStageObject::Ring)
 							m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
@@ -1216,10 +1216,20 @@ namespace bsf
 					}
 				}
 
-			
+				// Draw Emerald if visible
+				if(m_GameLogic->IsEmeraldVisible()){
+
+					m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+					m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexWhite), 1);
+					m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexBlack), 2);
+					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(m_Stage->EmeraldColor));
+					RenderEmerald(m_pPBR, time, m_Model);
+
+				}
 
 			}
 			
+
 		}
 		m_fbDeferred->Unbind();
 
@@ -1301,7 +1311,7 @@ namespace bsf
 					continue;
 
 				m_ShadowModel.Push();
-				m_ShadowModel.Translate(Project({ x - fx, y - fy, 0.15f })[0]);
+				m_ShadowModel.Translate(Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight })[0]);
 
 				if (value == EStageObject::Ring)
 					m_ShadowModel.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
@@ -1323,6 +1333,12 @@ namespace bsf
 
 				m_ShadowModel.Pop();
 			}
+		}
+
+		// Draw emerald
+		if (m_GameLogic->IsEmeraldVisible())
+		{
+			RenderEmerald(m_pShadow, time, m_ShadowModel);
 		}
 
 
@@ -1382,15 +1398,28 @@ namespace bsf
 		}
 		else if (evt.Current == EGameState::GameOver)
 		{
-			auto task = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f, [&]() {
-				// For now let's restard the game
+			auto task = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
 
+			task->SetDoneFunction([&](SceneTask& self) {
+				// For now let's restart the game
 				auto stage = MakeRef<Stage>();
-				stage->FromFile("assets/data/s3stage4.bss");
+				stage->FromFile("assets/data/playground.bss");
 				auto scene = Ref<Scene>(new GameScene(stage));
 				GetApplication().GotoScene(scene);
 			});
+
 			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, task);
+		}
+		else if (evt.Current == EGameState::Emerald)
+		{
+			auto liftObjectsTask = MakeRef<SceneTask>();
+
+			liftObjectsTask->SetUpdateFunction([this](SceneTask& self, const Time& time) {
+				m_GameOverObjectsHeight += time.Delta * 10.0f;				
+			});
+
+			ScheduleTask<SceneTask>(ESceneTaskEvent::PreRender, liftObjectsTask);
+
 		}
 	}
 
@@ -1570,5 +1599,19 @@ namespace bsf
 		}
 
 
+	}
+	void GameScene::RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model)
+	{
+		auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
+		auto projectedEmeraldPos = Project({ emeraldPos.x, emeraldPos.y, 0.8f })[0];
+
+		model.Push();
+		{
+			model.Translate(projectedEmeraldPos);
+			model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
+			currentProgram->UniformMatrix4f("uModel", model);
+			Assets::GetInstance().Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
+		}
+		model.Pop();
 	}
 }

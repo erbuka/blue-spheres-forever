@@ -34,6 +34,9 @@ namespace bsf
 
 	// Game Over
 	static constexpr float s_GameOverRotationAcceleration = 2.0f * glm::pi<float>();
+	
+	// Emerald
+	static constexpr int32_t s_EmeraldDistanceHalf = 8;
 
 	// Directions
 	static constexpr glm::ivec2 s_dLeft = { -1, 0 };
@@ -393,6 +396,9 @@ namespace bsf
 		
 		m_GameOverRotationSpeed = s_BaseAngularVelocity;
 
+		m_IsEmeraldVisible = false;
+		m_EmeraldDistance = 0.0f;
+
 		m_IsRotating = false;
 		m_IsJumping = false;
 		m_IsGoingBackward = false;
@@ -545,6 +551,26 @@ namespace bsf
 					// If there are no more blue spheres the game is over
 					if (m_Stage.Count(EStageObject::BlueSphere) == 0)
 					{
+						// Reset the direction if going backward
+						if (m_IsGoingBackward)
+						{
+							m_Direction *= -1.0f;
+							m_IsGoingBackward = false;
+						}
+
+						// Set a low velocity like in the original game
+						m_Velocity = s_BaseVelocity;
+						m_VelocityScale = 0.5f;
+						m_AngularVelocity = s_BaseAngularVelocity;
+
+						// Spawn emerald
+						m_IsEmeraldVisible = true;
+						m_EmeraldDistance = s_EmeraldDistanceHalf * 2.0f;
+
+						// Snap to current position for correct animations
+						m_Position = roundedPosition;
+
+						// Change game state
 						ChangeGameState(EGameState::Emerald);
 					}
 
@@ -621,11 +647,18 @@ namespace bsf
 
 			// If we crossed and edge and there's a rotation request,
 			// we want snap to the edge and rotate in place.
+			
 			// Must be on the ground to rotate, and can't rotate in the
 			// same spot more than once
-			if (crossed && m_LastBounceDistance == 1.0f && !m_IsJumping && PullRotateCommand())
+			
+			// We also have to make sure that the state is still "Playing"
+			// We don't want to pull rotate commands if it's "GameOver" or "Emerald"
+			if (m_State == EGameState::Playing)
 			{
-				m_Position = glm::round(m_Position);
+				if (crossed && m_LastBounceDistance == 1.0f && !m_IsJumping && PullRotateCommand())
+				{
+					m_Position = glm::round(m_Position);
+				}
 			}
 
 		}
@@ -639,16 +672,12 @@ namespace bsf
 
 	void GameLogic::StateFnEmerald(const Time& time)
 	{
-		if (m_IsGoingBackward)
-		{
-			m_Direction *= -1.0f;
-			m_IsGoingBackward = false;
-		}
-
-		m_Velocity = s_BaseVelocity;
-		m_VelocityScale = 0.5f;
-		m_AngularVelocity = s_BaseAngularVelocity;
 		m_Position += m_Velocity * m_VelocityScale * glm::vec2(m_Direction) * time.Delta;
+		m_EmeraldDistance = std::max(0.0f, m_EmeraldDistance - 2.0f * m_Velocity * m_VelocityScale * time.Delta);
+
+		if (m_EmeraldDistance == 0.0f)
+			ChangeGameState({ EGameState::GameOver });
+
 	}
 
 	uint32_t GameLogic::GetCurrentPace() const { return m_CurrentPace; }
