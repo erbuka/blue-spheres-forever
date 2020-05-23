@@ -81,4 +81,16 @@ namespace bsf
 		return *m_Application;
 	}
 
+	WaitForTask::WaitForTask(float seconds) :
+		m_Duration(seconds),
+		m_Time(0.0f)
+	{
+		SetUpdateFunction([&](SceneTask& self, const Time& time) {
+			if (m_Time >= m_Duration)
+				SetDone();
+
+			m_Time += time.Delta;
+		});
+	}
+
 }

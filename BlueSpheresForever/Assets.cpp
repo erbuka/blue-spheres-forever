@@ -66,6 +66,7 @@ namespace bsf
 		m_Assets[AssetName::SfxRing] = MakeRef<Audio>("assets/sound/ring.wav");
 		m_Assets[AssetName::SfxPerfect] = MakeRef<Audio>("assets/sound/perfect.mp3");
 		m_Assets[AssetName::SfxJump] = MakeRef<Audio>("assets/sound/jump.wav");
+		m_Assets[AssetName::SfxSplash] = MakeRef<Audio>("assets/sound/splash.wav");
 
 
 		// Models

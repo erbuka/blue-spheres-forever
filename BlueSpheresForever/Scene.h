@@ -29,6 +29,7 @@ namespace bsf
 		void SetUpdateFunction(UpdateFn fn) { m_UpdateFn = fn; }
 		void SetDoneFunction(DoneFn fn) { m_DoneFn = fn; }
 
+
 		void SetDone() { m_IsDone = true; }
 		bool IsDone() const { return m_IsDone; }
 		Application& GetApplication();
@@ -52,6 +53,14 @@ namespace bsf
 	private:
 		float m_Time, m_Duration;
 		glm::vec4 m_FromColor, m_ToColor;
+	};
+
+	class WaitForTask : public SceneTask
+	{
+	public:
+		WaitForTask(float seconds);
+	private:
+		float m_Duration, m_Time;
 	};
 
 	class Scene

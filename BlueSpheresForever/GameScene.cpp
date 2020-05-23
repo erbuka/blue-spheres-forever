@@ -1424,16 +1424,29 @@ namespace bsf
 		
 		if (evt.Current == EGameState::Emerald)
 		{
-			assets.Get<Audio>(AssetName::SfxEmerald)->Play();
-			auto liftObjectsTask = MakeRef<SceneTask>();
-			auto playEmeraldSound = MakeRef<SceneTask>();
 
+			auto liftObjectsTask = MakeRef<SceneTask>();
 			liftObjectsTask->SetUpdateFunction([this](SceneTask& self, const Time& time) {
 				m_GameOverObjectsHeight += time.Delta * 10.0f;				
 			});
 
 			ScheduleTask<SceneTask>(ESceneTaskEvent::PreRender, liftObjectsTask);
 
+			auto playEmeraldSound = MakeRef<SceneTask>();
+			playEmeraldSound->SetUpdateFunction([&, emeraldTime = MakeRef<float>()](SceneTask& self, const Time& time) {
+				
+				if ((*emeraldTime) > 2.0f)
+				{
+					assets.Get<Audio>(AssetName::SfxEmerald)->Play();
+					self.SetDone();
+				}
+
+				(*emeraldTime) += time.Delta;
+
+			});
+
+			assets.Get<Audio>(AssetName::SfxSplash)->Play();
+			ScheduleTask<SceneTask>(ESceneTaskEvent::PostRender, playEmeraldSound);
 		}
 	}
 

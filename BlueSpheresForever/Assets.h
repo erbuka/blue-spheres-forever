@@ -43,6 +43,7 @@ namespace bsf
 		SfxRing,
 		SfxPerfect,
 		SfxJump,
+		SfxSplash
 	};
 
 	class Assets
