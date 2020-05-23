@@ -82,10 +82,8 @@ namespace bsf
 			uint32_t TextureID;
 		};
 
-		void DrawQuadInternal(const glm::vec2& position, const glm::vec2& size, const glm::vec2& pivot);
 		void DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs);
 
-		Ref<::bsf::Texture> m_WhiteTexture;
 		std::vector<uint32_t> m_Textures;
 		std::vector<int32_t> m_TextureUnits;
 		std::stack<Renderer2DState> m_State;

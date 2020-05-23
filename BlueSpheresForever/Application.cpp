@@ -4,6 +4,7 @@
 #include "Log.h"
 #include "Assets.h"
 #include "Renderer2D.h"
+#include "Audio.h"
 
 
 namespace bsf
@@ -81,6 +82,8 @@ namespace bsf
         m_NextScene = nullptr;
 
         m_Renderer2D = nullptr;
+
+        m_AudioMixer = nullptr;
         
         Assets::GetInstance().Dispose();
         glfwTerminate();
@@ -131,11 +134,15 @@ namespace bsf
         m_CurrentScene = std::make_shared<Scene>();
         m_CurrentScene->m_App = this;
 
-        // Load Assets 
-        Assets::GetInstance().Load();
 
         // Init Renderer 2D
         m_Renderer2D = MakeRef<Renderer2D>();
+
+        // Init Audio Mixer
+        m_AudioMixer = MakeRef<AudioDevice>();
+        
+        // Load Assets 
+        Assets::GetInstance().Load();
 
         while (!glfwWindowShouldClose(m_Window))
         {
@@ -189,6 +196,11 @@ namespace bsf
     Renderer2D& bsf::Application::GetRenderer2D()
     {
         return *(m_Renderer2D.get());
+    }
+
+    AudioDevice& bsf::Application::GetAudioDevice()
+    {
+        return *(m_AudioMixer.get());
     }
 
     void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)

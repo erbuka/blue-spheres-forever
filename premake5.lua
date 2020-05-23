@@ -95,7 +95,8 @@ project "BlueSpheresForever"
         "vendor/glfw/include",
         "vendor/spdlog/include",
         "vendor/lodepng/include",
-        "vendor/stb/include"
+        "vendor/stb/include",
+        "vendor/bass/include"
     }
 
     pchheader "BsfPch.h"
@@ -103,10 +104,15 @@ project "BlueSpheresForever"
 
     files { "BlueSpheresForever/**.cpp", "BlueSpheresForever/**.h"  }
 
-    links { "opengl32", "Glad", "GLFW", "LodePng" }
+    links { "opengl32", "Glad", "GLFW", "LodePng", "bass" }
 
     postbuildcommands {
         "{COPY} ./assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
     }
 
+    filter "system:windows"
+        libdirs { "vendor/bass/lib/win64" }
+        postbuildcommands {
+            "{COPY} ../vendor/bass/bin/win64/bass.dll ../bin/%{cfg.buildcfg}/%{prj.name}"
+        }
         

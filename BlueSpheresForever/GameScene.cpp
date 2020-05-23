@@ -15,6 +15,7 @@
 #include "Font.h"
 #include "Model.h"
 #include "CharacterAnimator.h"
+#include "Audio.h"
 
 #pragma region Shaders
 
@@ -1387,8 +1388,8 @@ namespace bsf
 
 	void GameScene::OnGameStateChanged(const GameStateChangedEvent& evt)
 	{
-		auto& animator = Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic);
-
+		auto& assets = Assets::GetInstance();
+		auto& animator = assets.Get<CharacterAnimator>(AssetName::ModSonic);
 
 		if (evt.Current == EGameState::Starting)
 		{
@@ -1406,6 +1407,8 @@ namespace bsf
 		{
 			auto task = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
 
+			assets.Get<Audio>(AssetName::SfxGameOver)->Play();
+
 			animator->SetRunning(false);
 
 			task->SetDoneFunction([&](SceneTask& self) {
@@ -1421,8 +1424,9 @@ namespace bsf
 		
 		if (evt.Current == EGameState::Emerald)
 		{
-
+			assets.Get<Audio>(AssetName::SfxEmerald)->Play();
 			auto liftObjectsTask = MakeRef<SceneTask>();
+			auto playEmeraldSound = MakeRef<SceneTask>();
 
 			liftObjectsTask->SetUpdateFunction([this](SceneTask& self, const Time& time) {
 				m_GameOverObjectsHeight += time.Delta * 10.0f;				
@@ -1435,12 +1439,18 @@ namespace bsf
 
 	void GameScene::OnGameAction(const GameActionEvent& evt)
 	{
+		auto& assets = Assets::GetInstance();
 		auto animator = Assets::GetInstance().Get<CharacterAnimator>(AssetName::ModSonic);
 
 		switch (evt.Action)
 		{
-		case EGameAction::JumpStart:
+		case EGameAction::YellowSphereJumpStart:
 			animator->Play("jump", 0.5f);
+			assets.Get<Audio>(AssetName::SfxYellowSphere)->Play();
+			break;
+		case EGameAction::NormalJumpStart:
+			animator->Play("jump", 0.5f);
+			assets.Get<Audio>(AssetName::SfxJump)->Play();
 			break;
 		case EGameAction::JumpEnd:
 			animator->Play("run", 0.5f);
@@ -1452,9 +1462,17 @@ namespace bsf
 			animator->SetReverse(true);
 			break;
 		case EGameAction::RingCollected:
+			assets.Get<Audio>(AssetName::SfxRing)->Play();
 			break;
 		case EGameAction::Perfect:
+			assets.Get<Audio>(AssetName::SfxPerfect)->Play();
 			m_GameMessages.emplace_back("Perfect");
+			break;
+		case EGameAction::BlueSphereCollected:
+			assets.Get<Audio>(AssetName::SfxBlueSphere)->Play();
+			break;
+		case EGameAction::HitBumper:
+			assets.Get<Audio>(AssetName::SfxBumper)->Play();
 			break;
 		default:
 			break;

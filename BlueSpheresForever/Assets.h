@@ -33,8 +33,16 @@ namespace bsf
 
 		ModRing,
 		ModSonic,
-		ModChaosEmerald
+		ModChaosEmerald,
 
+		SfxBlueSphere,
+		SfxYellowSphere,
+		SfxGameOver,
+		SfxEmerald,
+		SfxBumper,
+		SfxRing,
+		SfxPerfect,
+		SfxJump,
 	};
 
 	class Assets

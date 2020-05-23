@@ -539,6 +539,9 @@ namespace bsf
 				{
 					m_Stage.SetValueAt(roundedPosition, EStageObject::RedSphere);
 
+					// Fire event
+					GameAction.Emit({ EGameAction::BlueSphereCollected });
+
 					// Run the ring conversion algorithm
 					TransformRingAlgorithm(m_Stage, roundedPosition).Calculate();
 
@@ -583,7 +586,7 @@ namespace bsf
 					m_IsGoingBackward = !m_IsGoingBackward;
 					m_Direction *= -1;
 					m_Position = roundedPosition; // Snap to star sphere
-
+					GameAction.Emit({ EGameAction::HitBumper });
 					GameAction.Emit({ m_IsGoingBackward ? EGameAction::GoBackward : EGameAction::GoForward });
 
 				}
@@ -594,7 +597,7 @@ namespace bsf
 					m_JumpHeight = s_YellowSphereHeight;
 					m_JumpVelocityScale = 2.0f;
 					m_IsJumping = true;
-					GameAction.Emit({ EGameAction::JumpStart });
+					GameAction.Emit({ EGameAction::YellowSphereJumpStart });
 				}
 				else if (object == EStageObject::RedSphere)
 				{
@@ -619,7 +622,7 @@ namespace bsf
 				m_IsJumping = true;
 				m_JumpCommand = false;
 				m_JumpVelocityScale = 1.0f;
-				GameAction.Emit({ EGameAction::JumpStart });
+				GameAction.Emit({ EGameAction::NormalJumpStart });
 			}
 
 			HandleJump(step);

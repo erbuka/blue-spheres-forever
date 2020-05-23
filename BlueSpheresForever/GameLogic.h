@@ -22,11 +22,14 @@ namespace bsf
 
 	enum class EGameAction
 	{
-		JumpStart,
+		YellowSphereJumpStart,
+		NormalJumpStart,
 		JumpEnd,
 		GoBackward,
 		GoForward,
 		RingCollected,
+		BlueSphereCollected,
+		HitBumper,
 		Perfect,
 		GameSpeedUp
 	};

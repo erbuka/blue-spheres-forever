@@ -97,12 +97,7 @@ namespace bsf
 
 		m_TriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
 
-		// Init white texture;
-		m_WhiteTexture = Assets::GetInstance().Get<Texture2D>(AssetName::TexWhite);
-
 		m_Textures.resize(s_MaxTextureUnits);
-		std::memset(m_Textures.data(), 0, m_Textures.size() * sizeof(uint32_t));
-		m_Textures[0] = m_WhiteTexture->GetId();
 
 		m_TextureUnits.resize(s_MaxTextureUnits);
 		std::iota(m_TextureUnits.begin(), m_TextureUnits.end(), 0);
@@ -112,6 +107,8 @@ namespace bsf
 
 	void Renderer2D::Begin(const glm::mat4& projection)
 	{
+		End();
+
 		// Reset state stack
 		m_State = std::stack<Renderer2DState>();
 		m_State.push({});
@@ -343,7 +340,7 @@ namespace bsf
 
 		// Reset Textures
 		std::memset(m_Textures.data(), 0, m_Textures.size() * sizeof(uint32_t));
-		m_Textures[0] = m_WhiteTexture->GetId();
+		m_Textures[0] = Assets::GetInstance().Get<Texture2D>(AssetName::TexWhite)->GetId();
 
 	}
 }

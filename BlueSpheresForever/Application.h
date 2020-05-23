@@ -11,6 +11,7 @@ struct GLFWwindow;
 namespace bsf {
 
 
+	class AudioDevice;
 	class Renderer2D;
 	class Scene;
 
@@ -34,7 +35,10 @@ namespace bsf {
 		Application(Application&&) = delete;
 
 		glm::vec2 GetWindowSize() const;
+
 		Renderer2D& GetRenderer2D();
+
+		AudioDevice& GetAudioDevice();
 
 		void Start();
 		void GotoScene(const std::shared_ptr<Scene> scene);
@@ -46,6 +50,7 @@ namespace bsf {
 
 		Ref<Scene> m_NextScene, m_CurrentScene;
 		Ref<Renderer2D> m_Renderer2D;
+		Ref<AudioDevice> m_AudioMixer;
 		GLFWwindow* m_Window;
 	};
 

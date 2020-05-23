@@ -8,6 +8,7 @@
 #include "Font.h";
 #include "WafefrontLoader.h"
 #include "CharacterAnimator.h"
+#include "Audio.h"
 
 namespace bsf
 {
@@ -56,13 +57,25 @@ namespace bsf
 			m_Assets[AssetName::TexBRDFLut] = brdf;
 		}
 
+		// Sound
+		m_Assets[AssetName::SfxBlueSphere] = MakeRef<Audio>("assets/sound/bluesphere.wav");
+		m_Assets[AssetName::SfxGameOver] = MakeRef<Audio>("assets/sound/redsphere.wav");
+		m_Assets[AssetName::SfxBumper] = MakeRef<Audio>("assets/sound/bounce.wav");
+		m_Assets[AssetName::SfxEmerald] = MakeRef<Audio>("assets/sound/emerald.wav");
+		m_Assets[AssetName::SfxYellowSphere] = MakeRef<Audio>("assets/sound/tong.wav");
+		m_Assets[AssetName::SfxRing] = MakeRef<Audio>("assets/sound/ring.wav");
+		m_Assets[AssetName::SfxPerfect] = MakeRef<Audio>("assets/sound/perfect.mp3");
+		m_Assets[AssetName::SfxJump] = MakeRef<Audio>("assets/sound/jump.wav");
+
+
+		// Models
 		m_Assets[AssetName::ModRing] = 
 			CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 
 		m_Assets[AssetName::ModChaosEmerald] = 
 			CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 		
-		{ // Load sonic models
+		{ 
 			std::array<std::string, 14> files = {
 				"assets/models/sonic0.obj",
 				"assets/models/sonic1.obj",
