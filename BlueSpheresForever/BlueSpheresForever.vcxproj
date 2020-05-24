@@ -112,6 +112,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="CharacterAnimator.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="CubeCamera.h" />
+    <ClInclude Include="DisclaimerScene.h" />
     <ClInclude Include="EventEmitter.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Framebuffer.h" />
@@ -139,6 +140,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="CharacterAnimator.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="CubeCamera.cpp" />
+    <ClCompile Include="DisclaimerScene.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="GameLogic.cpp" />
