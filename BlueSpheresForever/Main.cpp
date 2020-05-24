@@ -16,8 +16,8 @@ int main() {
 	auto stage = MakeRef<Stage>();
 	//stage->FromFile("assets/data/playground.bss");
 	stage->FromFile("assets/data/s3stage1.bss");
-	auto scene = Ref<Scene>(new GameScene(stage));
-	//auto scene = Ref<Scene>(new DisclaimerScene());
+	//auto scene = Ref<Scene>(new GameScene(stage));
+	auto scene = Ref<Scene>(new DisclaimerScene());
 	
 	Application app;
 	app.GotoScene(std::move(scene));

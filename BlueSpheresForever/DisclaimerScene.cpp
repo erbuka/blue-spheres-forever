@@ -1,7 +1,10 @@
 #include "BsfPch.h"
+
 #include "DisclaimerScene.h"
-
-
+#include "Application.h"
+#include "Renderer2D.h"
+#include "Assets.h"
+#include "Font.h"
 
 
 namespace bsf
@@ -28,7 +31,8 @@ SEGA Mega Drive and Sonic The Hedgehog are trademarks of SEGA Enterprises, LTD.
 
 	void DisclaimerScene::OnRender(const Time& time)
 	{
-		GLEnableScope({ GL_DEPTH_TEST });
+
+		GLEnableScope scope({ GL_DEPTH_TEST });
 
 		glDisable(GL_DEPTH_TEST);
 
@@ -36,7 +40,26 @@ SEGA Mega Drive and Sonic The Hedgehog are trademarks of SEGA Enterprises, LTD.
 		glClear(GL_COLOR_BUFFER_BIT);
 
 
+		auto windowSize = GetApplication().GetWindowSize();
+		auto& renderer = GetApplication().GetRenderer2D();
+		auto& assets = Assets::GetInstance();
+		constexpr float projHeight = 20.0f;
+		float projWidth = projHeight * windowSize.x / windowSize.y;
+
+		glViewport(0, 0, windowSize.x, windowSize.y);
+
 		// Render title
+		renderer.Begin(glm::ortho(0.0f, projWidth, 0.0f, projHeight, -1.0f, 1.0f));
+		{
+			renderer.Pivot(EPivot::Top);
+			renderer.Push();
+			renderer.Translate({ projWidth / 2.0f, projHeight / 4.0f * 3.0f });
+			renderer.Color({ 1.0f, 0.0f, 0.0f, 1.0f });
+			renderer.DrawString(assets.Get<Font>(AssetName::FontText), "DISCLAIMER");
+			renderer.Pop();
+		}
+		renderer.End();
+
 
 		// Render text
 	}

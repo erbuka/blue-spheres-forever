@@ -30,6 +30,7 @@ namespace bsf
 		TexBRDFLut,
 
 		FontMain,
+		FontText,
 
 		ModRing,
 		ModSonic,
