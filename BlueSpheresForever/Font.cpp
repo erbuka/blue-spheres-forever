@@ -87,8 +87,8 @@ namespace bsf
 				const auto& c = chars[i];
 				
 				m_Glyphs.push_back({
-					glm::vec2(c.xoff / s_FontSize, c.yoff / s_FontSize),  // Min
-					glm::vec2((c.xoff + c.x1 - c.x0) / s_FontSize, (c.yoff + c.y1 - c.y0) / s_FontSize),  // Max
+					glm::vec2(c.xoff / s_FontSize, -c.yoff / s_FontSize),  // Min
+					glm::vec2((c.xoff + c.x1 - c.x0) / s_FontSize, -(c.yoff + c.y1 - c.y0) / s_FontSize),  // Max
 					glm::vec2(c.x0 / float(s_BitmapSize), c.y0 / float(s_BitmapSize)), // UvMin
 					glm::vec2(c.x1 / float(s_BitmapSize), c.y1 / float(s_BitmapSize)), // UvMax
 					c.xadvance / s_FontSize

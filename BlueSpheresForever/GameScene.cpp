@@ -1368,10 +1368,11 @@ namespace bsf
 			else
 				x = sw / 2.0f - sw * (it->Time - GameMessage::s_MessageTime) / GameMessage::s_SlideDuration;
 
-			renderer2d.Begin(glm::ortho(0.0f, sw, sh, 0.0f, -1.0f, 1.0f));
+			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh, -1.0f, 1.0f));
 			renderer2d.Pivot({ 0.5f, 0.5f });
-			renderer2d.Translate({ x, sh / 4.0f });
+			renderer2d.Translate({ x, sh / 4.0f * 3.0f });
 			{
+
 				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
 				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 

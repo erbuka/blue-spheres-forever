@@ -203,7 +203,7 @@ namespace bsf
 		Texture(font->GetTexture());
 
 		float offsetX = -m_State.top().Pivot.x * strWidth;
-		float offsetY = m_State.top().Pivot.y;
+		float offsetY = -m_State.top().Pivot.y;
 
 		for (auto c : text)
 		{
