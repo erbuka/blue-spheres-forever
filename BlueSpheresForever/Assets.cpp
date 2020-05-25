@@ -23,8 +23,8 @@ namespace bsf
 	{
 
 		// Fonts
-		m_Assets[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf"));
-		m_Assets[AssetName::FontText] = Ref<Font>(new Font("assets/fonts/main.ttf"));
+		m_Assets[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf", 128.0f));
+		m_Assets[AssetName::FontText] = Ref<Font>(new Font("assets/fonts/arial.ttf", 72.0f));
 
 		// Textures
 		m_Assets[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));

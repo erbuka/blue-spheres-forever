@@ -18,7 +18,8 @@ namespace bsf
 	class Font : public Asset
 	{
 	public:
-		Font(const std::string& fileName);
+		Font(const std::string& fileName, float fontSize);
+		const float GetStringWidth(const std::string& str);
 		const GlyphInfo& GetGlyphInfo(char c) const;
 		const Ref<Texture2D>& GetTexture() const;
 		float GetStringWidth(const std::string& s) const;

@@ -15,16 +15,16 @@ namespace bsf
 	static constexpr char s_FirstChar = ' ';
 	static constexpr char s_LastChar = 'z';
 	static constexpr uint32_t s_CharCount = s_LastChar - s_FirstChar + 1;
-	static constexpr uint32_t s_FontSize = 128;
-	static constexpr uint32_t s_BitmapSize = 512;
+	static constexpr uint32_t s_BitmapSize = 1024;
 
 	struct Font::Impl {
 
+		float m_FontSize = 0.0f;
 		unsigned char* m_FontFileData = nullptr;
 		std::vector<GlyphInfo> m_Glyphs;
 		std::shared_ptr<Texture2D> m_Texture = nullptr;
 
-		Impl(const std::string& fileName)
+		Impl(const std::string& fileName, float fontSize) : m_FontSize(fontSize)
 		{
 			std::ifstream is;
 
@@ -53,7 +53,7 @@ namespace bsf
 
 			// Create glyphs
 			stbtt_bakedchar* bakedChars = new stbtt_bakedchar[s_CharCount];
-			auto res = stbtt_BakeFontBitmap(m_FontFileData, 0, s_FontSize, bitmap, s_BitmapSize, s_BitmapSize, s_FirstChar, s_CharCount, bakedChars);
+			auto res = stbtt_BakeFontBitmap(m_FontFileData, 0, m_FontSize, bitmap, s_BitmapSize, s_BitmapSize, s_FirstChar, s_CharCount, bakedChars);
 			CreateGlyphs(bakedChars);
 			delete[] bakedChars;
 
@@ -87,11 +87,11 @@ namespace bsf
 				const auto& c = chars[i];
 				
 				m_Glyphs.push_back({
-					glm::vec2(c.xoff / s_FontSize, -c.yoff / s_FontSize),  // Min
-					glm::vec2((c.xoff + c.x1 - c.x0) / s_FontSize, -(c.yoff + c.y1 - c.y0) / s_FontSize),  // Max
+					glm::vec2(c.xoff / m_FontSize, -c.yoff / m_FontSize),  // Min
+					glm::vec2((c.xoff + c.x1 - c.x0) / m_FontSize, -(c.yoff + c.y1 - c.y0) / m_FontSize),  // Max
 					glm::vec2(c.x0 / float(s_BitmapSize), c.y0 / float(s_BitmapSize)), // UvMin
 					glm::vec2(c.x1 / float(s_BitmapSize), c.y1 / float(s_BitmapSize)), // UvMax
-					c.xadvance / s_FontSize
+					c.xadvance / m_FontSize
 				});
 
 			}
@@ -100,9 +100,17 @@ namespace bsf
 
 	};
 
-	Font::Font(const std::string& fileName)
+	Font::Font(const std::string& fileName, float fontSize)
 	{
-		m_Impl = MakeRef<Impl>(fileName);
+		m_Impl = MakeRef<Impl>(fileName, fontSize);
+	}
+
+	const float Font::GetStringWidth(const std::string& str)
+	{
+		float result = 0.0f;
+		for (auto c : str)
+			result += GetGlyphInfo(c).Advance;
+		return result;
 	}
 
 	const GlyphInfo& Font::GetGlyphInfo(char c) const

@@ -230,7 +230,6 @@ namespace bsf
 	}
 
 
-
 	void Renderer2D::LoadIdentity()
 	{
 		m_State.top().Matrix = glm::identity<glm::mat4>();
