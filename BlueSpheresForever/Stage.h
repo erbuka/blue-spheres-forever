@@ -3,9 +3,16 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <execution>
+#include <optional>
+
+
+#include "Asset.h"
+#include "Common.h"
 
 namespace bsf
 {
+	class Stage;
+	class StageGenerator;
 
 	enum class EAvoidSearch : uint8_t
 	{
@@ -30,6 +37,19 @@ namespace bsf
 	};
 
 
+	class StageGenerator : public Asset
+	{
+	public:
+		StageGenerator();
+		~StageGenerator();
+		Ref<Stage> Generate(uint64_t code);
+		uint64_t GetCodeFromLevel(uint32_t level);
+		std::optional<uint32_t> GetLevelFromCode(uint64_t code);
+	private:
+		struct Impl;
+		std::unique_ptr<Impl> m_Impl;
+	};
+
 	class Stage
 	{
 	public:
@@ -38,7 +58,7 @@ namespace bsf
 		
 		glm::ivec2 StartPoint, StartDirection;
 
-		uint32_t Rings;
+		uint32_t Rings = 0;
 
 		std::string Texture, NormalMap;
 
@@ -48,15 +68,23 @@ namespace bsf
 		std::array<glm::vec3, 2> CheckerColors, SkyColors, StarColors;
 
 		bool FromFile(const std::string& filename);
+		void Initialize(uint32_t width, uint32_t height);
 
 		Stage() = default;
 
 		void CollectRing(const glm::ivec2& position);
 
-		EStageObject GetValueAt(const glm::ivec2& position) const;
 		EStageObject GetValueAt(int32_t x, int32_t y) const;
+		EStageObject GetValueAt(const glm::ivec2& pos) const { return GetValueAt(pos.x, pos.y); }
+
 		void SetValueAt(int32_t x, int32_t y, EStageObject obj);
-		void SetValueAt(const glm::ivec2& position, EStageObject obj);
+		void SetValueAt(const glm::ivec2& pos, EStageObject obj) { SetValueAt(pos.x, pos.y, obj); }
+
+		EAvoidSearch GetAvoidSearchAt(int32_t x, int32_t y) const;
+		EAvoidSearch GetAvoidSearchAt(const glm::ivec2& pos) const { return GetAvoidSearchAt(pos.x, pos.y); }
+
+		void SetAvoidSearchAt(int32_t x, int32_t y, EAvoidSearch val);
+		void SetAvoidSearchAt(const glm::ivec2& pos, EAvoidSearch val) { SetAvoidSearchAt(pos.x, pos.y, val); }
 
 		int32_t GetWidth() const { return m_Width; }
 		int32_t GetHeight() const { return m_Height; }
@@ -66,6 +94,7 @@ namespace bsf
 		bool IsPerfect() const { return Rings == 0; }
 
 		void Dump();
+
 
 	private:
 

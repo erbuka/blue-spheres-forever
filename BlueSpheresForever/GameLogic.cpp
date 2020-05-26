@@ -668,6 +668,7 @@ namespace bsf
 		HandleJump(step);
 
 		m_Position += glm::vec2(m_Direction) * step;
+		m_DeltaPosition += glm::vec2(m_Direction) * step;
 		m_EmeraldDistance = std::max(0.0f, m_EmeraldDistance - 2.0f * step);
 
 		if (m_EmeraldDistance == 0.0f)

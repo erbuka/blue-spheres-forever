@@ -44,7 +44,9 @@ namespace bsf
 		SfxRing,
 		SfxPerfect,
 		SfxJump,
-		SfxSplash
+		SfxSplash,
+
+		StageGenerator
 	};
 
 	class Assets

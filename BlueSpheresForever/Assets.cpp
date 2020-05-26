@@ -9,6 +9,7 @@
 #include "WafefrontLoader.h"
 #include "CharacterAnimator.h"
 #include "Audio.h"
+#include "Stage.h"
 
 namespace bsf
 {
@@ -21,6 +22,8 @@ namespace bsf
 
 	void Assets::Load()
 	{
+		// Stage generator
+		m_Assets[AssetName::StageGenerator] = MakeRef<StageGenerator>();
 
 		// Fonts
 		m_Assets[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf", 128.0f));

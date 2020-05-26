@@ -96,7 +96,8 @@ project "BlueSpheresForever"
         "vendor/spdlog/include",
         "vendor/lodepng/include",
         "vendor/stb/include",
-        "vendor/bass/include"
+        "vendor/bass/include",
+        "vendor/json/include"
     }
 
     pchheader "BsfPch.h"

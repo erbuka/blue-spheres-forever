@@ -1376,7 +1376,7 @@ namespace bsf
 				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
 				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 
-				renderer2d.Translate({ -0.02, -0.02 });
+				renderer2d.Translate({ -0.02, 0.02 });
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
 			}
