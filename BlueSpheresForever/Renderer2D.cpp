@@ -194,7 +194,7 @@ namespace bsf
 
 	}
 
-	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text)
+	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text, const glm::vec2& position)
 	{
 		static std::array<glm::vec2, 4> pos, uvs = {};
 
@@ -202,8 +202,8 @@ namespace bsf
 
 		Texture(font->GetTexture());
 
-		float offsetX = -m_State.top().Pivot.x * strWidth;
-		float offsetY = -m_State.top().Pivot.y;
+		float offsetX = position.x - m_State.top().Pivot.x * strWidth;
+		float offsetY = position.y - m_State.top().Pivot.y;
 
 		for (auto c : text)
 		{

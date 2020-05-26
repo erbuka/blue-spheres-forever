@@ -67,7 +67,7 @@ namespace bsf
 
 			m_Texture = MakeRef<Texture2D>();
 			m_Texture->SetPixels(pixels.data(), s_BitmapSize, s_BitmapSize, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-			m_Texture->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
+			m_Texture->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 		}
 
 		~Impl()

@@ -229,6 +229,15 @@ namespace bsf
 		return R(0);
 	}
 
+	template<typename ...Args>
+	std::string Format(const std::string& format, Args... args)
+	{
+		static constexpr uint32_t bufSize = 1024;
+		char buffer[bufSize];
+		std::snprintf(buffer, bufSize, format.c_str(), args...);
+		return std::string(buffer);
+	}
+
 
 	uint32_t LoadProgram(const std::initializer_list<ShaderSource>& shaderSources);
 

@@ -1351,27 +1351,29 @@ namespace bsf
 		auto& renderer2d = GetApplication().GetRenderer2D();
 
 		auto& assets = Assets::GetInstance();
-
-		float sw = 5.0f * windowSize.x / windowSize.y;
-		float sh = 5.0f;
-
-		for (auto it = m_GameMessages.begin(); it != m_GameMessages.end(); ++it)
+		// In-game messages
 		{
-			it->Time += time.Delta;
-
-			float x = 0.0f;
-
-			if (it->Time < GameMessage::s_SlideInTime)
-				x = sw / 2.0f + sw * (1.0f - it->Time / GameMessage::s_SlideDuration);
-			else if (it->Time < GameMessage::s_MessageTime)
-				x = sw / 2.0f;
-			else
-				x = sw / 2.0f - sw * (it->Time - GameMessage::s_MessageTime) / GameMessage::s_SlideDuration;
+			float sw = 5.0f * windowSize.x / windowSize.y;
+			float sh = 5.0f;
 
 			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh, -1.0f, 1.0f));
 			renderer2d.Pivot({ 0.5f, 0.5f });
-			renderer2d.Translate({ x, sh / 4.0f * 3.0f });
+
+			for (auto it = m_GameMessages.begin(); it != m_GameMessages.end(); ++it)
 			{
+				it->Time += time.Delta;
+
+				float x = 0.0f;
+
+				if (it->Time < GameMessage::s_SlideInTime)
+					x = sw / 2.0f + sw * (1.0f - it->Time / GameMessage::s_SlideDuration);
+				else if (it->Time < GameMessage::s_MessageTime)
+					x = sw / 2.0f;
+				else
+					x = sw / 2.0f - sw * (it->Time - GameMessage::s_MessageTime) / GameMessage::s_SlideDuration;
+
+				renderer2d.Push();
+				renderer2d.Translate({ x, sh / 4.0f * 3.0f });
 
 				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
 				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
@@ -1379,11 +1381,81 @@ namespace bsf
 				renderer2d.Translate({ -0.02, 0.02 });
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
+
+				renderer2d.Pop();
 			}
+
 			renderer2d.End();
+			
+			m_GameMessages.remove_if([](auto& x) { return x.Time >= GameMessage::s_SlideOutTime; });
+
 		}
 
-		m_GameMessages.remove_if([](auto& x) { return x.Time >= GameMessage::s_SlideOutTime; });
+
+		// Counters (spheres and rings)
+		{
+			constexpr float textOffset = 0.2f;
+			constexpr float shadowOffset = 0.03f;
+			constexpr float padding = 0.5f;
+			constexpr float sw = 25.0f;
+			float sh = sw / windowSize.x * windowSize.y;
+
+			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh, -1.0f, 1.0f));
+			
+			{
+				auto blueSpheres = Format("%d", m_Stage->Count(EStageObject::BlueSphere));
+				renderer2d.Push();
+				renderer2d.Pivot(EPivot::TopLeft);
+				renderer2d.Translate({ padding, sh - padding });
+
+				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexSphereUI));
+				
+				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });
+
+				renderer2d.Color({ 0.0f, 0.0f, 1.0f, 1.0f });
+				renderer2d.DrawQuad({ 0.0f, 0.0f });
+	
+				renderer2d.Translate({ 1.0f + padding / 2.0f, textOffset });
+
+				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), blueSpheres, { shadowOffset, -shadowOffset });
+				
+				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
+				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), blueSpheres);
+				
+				renderer2d.Pop();
+			}
+
+			{
+				auto rings = Format("%d", m_Stage->Rings);
+				renderer2d.Push();
+				renderer2d.Pivot(EPivot::TopRight);
+				renderer2d.Translate({ sw - padding, sh - padding });
+
+				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexRingUI));
+
+				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });
+
+				renderer2d.Color({ 1.0f, 1.0f, 0.0f, 1.0f });
+				renderer2d.DrawQuad({ 0.0f, 0.0f });
+
+				renderer2d.Translate({ -1.0f - padding / 2.0f, textOffset });
+
+				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), rings, { shadowOffset, -shadowOffset });
+
+				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
+				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), rings);
+
+				renderer2d.Pop();
+			}
+
+
+
+			renderer2d.End();
+		}
 
 	}
 

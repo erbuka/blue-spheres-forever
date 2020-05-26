@@ -61,6 +61,20 @@ namespace bsf
 			m_Assets[AssetName::TexBRDFLut] = brdf;
 		}
 
+		{
+			auto sphereUi = MakeRef<Texture2D>("assets/textures/sphere-ui.png");
+			sphereUi->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
+			m_Assets[AssetName::TexSphereUI] = sphereUi;
+		}
+
+
+		{
+			auto ringUi = MakeRef<Texture2D>("assets/textures/ring-ui.png");
+			ringUi->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
+			m_Assets[AssetName::TexRingUI] = ringUi;
+		}
+
+
 		// Sound
 		m_Assets[AssetName::SfxBlueSphere] = MakeRef<Audio>("assets/sound/bluesphere.wav");
 		m_Assets[AssetName::SfxGameOver] = MakeRef<Audio>("assets/sound/redsphere.wav");
