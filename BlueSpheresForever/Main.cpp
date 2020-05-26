@@ -12,12 +12,14 @@
 using namespace bsf;
 using namespace glm;
 
+static void LoadSectionsBinary();
+
+
 int main() 
 {
-	
-	//auto stage = StageGenerator().Generate(296531929023);
-	auto stage = MakeRef<Stage>();
-	stage->FromFile("assets/data/s3stage1.bss");
+	auto stage = StageGenerator().Generate(365989603263);
+	//auto stage = MakeRef<Stage>();
+	//stage->FromFile("assets/data/s3stage1.bss");
 	auto scene = Ref<Scene>(new GameScene(stage));
 
 	Application app;
@@ -57,12 +59,22 @@ static void LoadSectionsBinary()
 
 		std::vector<uint32_t> data(16 * 16);
 		is.ReadSome(data.size(), data.data());
-		section["data"] = data;
 
 		std::vector<uint8_t> avoidSearch(16 * 16);
 		is.ReadSome(avoidSearch.size(), avoidSearch.data());
-		section["avoidSearch"] = avoidSearch;
 
+
+		for (uint32_t y = 0; y < 16; y++)
+		{
+			for (uint32_t x = 0; x < 16; x++)
+			{
+				std::swap(data[y * 16 + x], data[(16 - y - 1) * 16 + x]);
+				std::swap(avoidSearch[y * 16 + x], avoidSearch[(16 - y - 1) * 16 + x]);
+			}
+		}
+
+		section["data"] = data;
+		section["avoidSearch"] = avoidSearch;
 
 		sections.push_back(section);
 

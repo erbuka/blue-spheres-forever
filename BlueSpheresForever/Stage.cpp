@@ -272,10 +272,10 @@ namespace bsf
 
 
 		std::array<StageSection, 4> sections = { 
-			m_Impl->m_Sections[tl],
-			m_Impl->m_Sections[tr].Flip(true),
-			m_Impl->m_Sections[bl].Flip(false),
-			m_Impl->m_Sections[br].Flip(false).Flip(true),
+			m_Impl->m_Sections[bl],
+			m_Impl->m_Sections[br].Flip(true),
+			m_Impl->m_Sections[tl].Flip(false),
+			m_Impl->m_Sections[tr].Flip(false).Flip(true),
 		};
 
 		auto result = MakeRef<Stage>();
@@ -301,8 +301,8 @@ namespace bsf
 						// Absolute x
 						int32_t ax = sx * s_SectionSize + x;
 						
-						// Have to flip the Y-axis because in my case the positive direction is from bottom to top
-						int32_t ay = result->GetHeight() - (sy * s_SectionSize + y + 1);
+						// Absolute y
+						int32_t ay = sy * s_SectionSize + y;
 
 						result->SetValueAt(ax, ay, s.GetValueAt({ x, y }));
 						result->SetAvoidSearchAt(ax, ay, s.GetAvoidSearchAt({ x, y }));
@@ -334,9 +334,7 @@ namespace bsf
 		result->EmeraldColor = s_EmeraldColors[tr % s_EmeraldColors.size()];
 
 		result->StartDirection = { 0, 1 };
-		// The start Y should be 16, but since we flipped it, we have
-		// to flip this too, so startY = 31 - 16 = 15
-		result->StartPoint = { 28, 15 }; 
+		result->StartPoint = { 28, 16 }; 
 
 		return result;
 
