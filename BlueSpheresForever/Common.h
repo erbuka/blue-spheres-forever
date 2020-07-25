@@ -5,6 +5,7 @@
 #include <fstream>
 #include <memory>
 #include <vector>
+#include <array>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <algorithm>
@@ -31,23 +32,6 @@ namespace bsf
 
 	#pragma endregion
 
-	#pragma region Shaders
-
-	enum class ShaderType
-	{
-		Vertex,
-		Geometry,
-		Fragment
-	};
-
-	struct ShaderSource
-	{
-		ShaderType Type;
-		std::string Source;
-	};
-
-	#pragma endregion
-
 	#pragma region PBR
 
 	struct Vertex3D
@@ -64,10 +48,21 @@ namespace bsf
 		glm::vec2 Uv0, Uv1;
 	};
 
+	std::array<glm::vec3, 4> Project(const glm::vec3& position);
+	Ref<VertexArray> CreateClipSpaceQuad();
+	Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion);
+	Ref<VertexArray> CreateGround(int32_t left, int32_t right, int32_t bottom, int32_t top, int32_t divisions);
+	Ref<VertexArray> CreateSkyBox();
+	std::vector<std::array<glm::vec3, 2>> CreateSkyBoxData();
 
 	#pragma endregion
 
 	#pragma region Events
+
+	enum class Direction
+	{
+		Left, Right, Up, Down
+	};
 
 	enum class MouseButton : int
 	{
@@ -239,13 +234,13 @@ namespace bsf
 	}
 
 
-	uint32_t LoadProgram(const std::initializer_list<ShaderSource>& shaderSources);
-
 	uint32_t ToHexColor(const glm::vec3& rgb);
 	uint32_t ToHexColor(const glm::vec4& rgb);
 
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
 	Ref<Texture2D> CreateGray(float value);
+
+	std::string ReadTextFile(const std::string& file);
 
 	#pragma endregion
 

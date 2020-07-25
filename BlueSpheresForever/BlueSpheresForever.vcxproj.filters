@@ -37,6 +37,8 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VertexArray.h" />
     <ClInclude Include="WafefrontLoader.h" />
+    <ClInclude Include="SplashScene.h" />
+    <ClInclude Include="MenuScene.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -62,5 +64,7 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VertexArray.cpp" />
     <ClCompile Include="WafefrontLoader.cpp" />
+    <ClCompile Include="SplashScene.cpp" />
+    <ClCompile Include="MenuScene.cpp" />
   </ItemGroup>
 </Project>

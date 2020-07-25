@@ -1,109 +1,16 @@
 #include "BsfPch.h"
 
+#include <sstream>
+
 #include "Common.h"
 #include "Log.h"
 #include "Texture.h";
+#include "VertexArray.h"
 
 namespace bsf
 {
 
-	static std::unordered_map<ShaderType, GLenum> s_glShaderType = {
-		{ ShaderType::Vertex, GL_VERTEX_SHADER },
-		{ ShaderType::Geometry, GL_GEOMETRY_SHADER },
-		{ ShaderType::Fragment, GL_FRAGMENT_SHADER }
-	};
 
-
-	uint32_t LoadShader(const ShaderSource& shaderSource)
-	{
-		// Create an empty vertex shader handle
-		GLuint shader = glCreateShader(s_glShaderType[shaderSource.Type]);
-
-		// Send the vertex shader source code to GL
-		// Note that std::string's .c_str is NULL character terminated.
-		const GLchar* source = (const GLchar*)shaderSource.Source.c_str();
-		glShaderSource(shader, 1, &source, 0);
-
-		// Compile the vertex shader
-		glCompileShader(shader);
-
-		GLint isCompiled = 0;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-		if (isCompiled == GL_FALSE)
-		{
-			GLint maxLength = 0;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-			// The maxLength includes the NULL character
-			std::vector<GLchar> infoLog(maxLength);
-			glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
-
-
-			// We don't need the shader anymore.
-			glDeleteShader(shader);
-
-			// Use the infoLog as you see fit.
-			BSF_ERROR("There were some errors while compiling the shader: {0}", infoLog.data());
-			BSF_ERROR("**** Code ****\n{0}**** End Code ****", shaderSource.Source);
-
-			// In this simple program, we'll just leave
-			return 0;
-		}
-
-		return shader;
-	}
-
-	uint32_t LoadProgram(const std::initializer_list<ShaderSource>& shaderSources)
-	{
-
-
-		// Vertex and fragment shaders are successfully compiled.
-		// Now time to link them together into a program.
-		// Get a program object.
-		GLuint program = glCreateProgram();
-		
-		std::vector<uint32_t> shaders(shaderSources.size());
-		
-		uint32_t i = 0;
-		for (auto src = shaderSources.begin(); src != shaderSources.end(); ++src, ++i)
-			shaders[i] = LoadShader(*src);
-		
-		for(uint32_t s: shaders)
-			glAttachShader(program, s);
-
-		// Link our program
-		glLinkProgram(program);
-
-		// Note the different functions here: glGetProgram* instead of glGetShader*.
-		GLint isLinked = 0;
-		glGetProgramiv(program, GL_LINK_STATUS, (int*)&isLinked);
-		if (isLinked == GL_FALSE)
-		{
-			GLint maxLength = 0;
-			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-			// The maxLength includes the NULL character
-			std::vector<GLchar> infoLog(maxLength);
-			glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
-
-
-			for (uint32_t s : shaders)
-				glDetachShader(program, s);
-
-			// Use the infoLog as you see fit.
-			BSF_ERROR("There were some errors while linking the program: {0}", infoLog.data());
-
-
-			// In this simple program, we'll just leave
-			return 0;
-		}
-
-		// Always detach shaders after a successful link.
-		for (uint32_t s : shaders)
-			glDetachShader(program, s);
-
-		return program;
-	}
 
 	uint32_t ToHexColor(const glm::vec3& rgb)
 	{
@@ -124,6 +31,27 @@ namespace bsf
 		return MakeRef<Texture2D>(ToHexColor({ value, value, value, 1.0 }));
 	}
 
+	std::string ReadTextFile(const std::string& file)
+	{
+		std::ifstream is;
+
+		is.open(file);
+
+		if (!is.is_open()) {
+			BSF_ERROR("Can't open file: {0}", file);
+			return "";
+		}
+
+		std::stringstream ss;
+
+		ss << is.rdbuf();
+
+		is.close();
+
+		return ss.str();
+
+	}
+
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors)
 	{
 		std::array<uint32_t, 4> data = {
@@ -136,6 +64,255 @@ namespace bsf
 		result->SetPixels(data.data(), 2, 2, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	
 		return result;
+
+	}
+
+	std::array<glm::vec3, 4> Project(const glm::vec3& position)
+	{
+		constexpr float radius = 12.5f;
+		constexpr glm::vec3 center = { 0.0f, 0.0f, -radius };
+
+		float offset = position.z;
+		glm::vec3 ground = { position.x, position.y, 0.0f };
+
+		glm::vec3 normal = glm::normalize(ground - center);
+		glm::vec3 tangent = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), normal);
+		glm::vec3 binormal = glm::cross(normal, tangent);
+		glm::vec3 pos = center + normal * (radius + offset);
+
+		return { pos, normal, tangent, binormal };
+
+	}
+
+	Ref<VertexArray> CreateClipSpaceQuad()
+	{
+
+		std::array<glm::vec2, 6> vertices = {
+			glm::vec2(-1.0f, -1.0f),
+			glm::vec2(1.0f, -1.0f),
+			glm::vec2(1.0f,  1.0f),
+
+			glm::vec2(-1.0f, -1.0f),
+			glm::vec2(1.0f, 1.0f),
+			glm::vec2(-1.0f, 1.0f)
+		};
+
+
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
+			{ "aPosition", AttributeType::Float2 }
+			}, vertices.data(), vertices.size()));
+
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
+
+	}
+
+	Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion)
+	{
+		const float t = (1.0f + glm::sqrt(5.0f)) / 2.0f;
+
+
+		auto subdivide = [](const std::vector<glm::vec3>& v)
+		{
+			std::vector<glm::vec3> result;
+			result.reserve(v.size() * 4);
+
+			for (uint32_t i = 0; i < v.size(); i += 3)
+			{
+				const auto& a = v[i + 0];
+				const auto& b = v[i + 1];
+				const auto& c = v[i + 2];
+
+				auto ab = glm::normalize((a + b) / 2.0f);
+				auto bc = glm::normalize((b + c) / 2.0f);
+				auto ac = glm::normalize((a + c) / 2.0f);
+
+				result.push_back(a); result.push_back(ab); result.push_back(ac);
+				result.push_back(ab); result.push_back(b); result.push_back(bc);
+				result.push_back(ab); result.push_back(bc); result.push_back(ac);
+				result.push_back(ac); result.push_back(bc); result.push_back(c);
+
+			}
+
+			return result;
+		};
+
+		std::array<glm::vec3, 12> v = {
+			glm::normalize(glm::vec3(-1, t, 0)),
+			glm::normalize(glm::vec3(1, t, 0)),
+			glm::normalize(glm::vec3(-1, -t, 0)),
+			glm::normalize(glm::vec3(1, -t, 0)),
+			glm::normalize(glm::vec3(0, -1, t)),
+			glm::normalize(glm::vec3(0, 1, t)),
+			glm::normalize(glm::vec3(0, -1, -t)),
+			glm::normalize(glm::vec3(0, 1, -t)),
+			glm::normalize(glm::vec3(t, 0, -1)),
+			glm::normalize(glm::vec3(t, 0, 1)),
+			glm::normalize(glm::vec3(-t, 0, -1)),
+			glm::normalize(glm::vec3(-t, 0, 1))
+		};
+
+		std::vector<glm::vec3> triangles = {
+			v[0], v[11], v[5],
+			v[0], v[5], v[1],
+			v[0], v[1], v[7],
+			v[0], v[7], v[10],
+			v[0], v[10], v[11],
+			v[1], v[5], v[9],
+			v[5], v[11], v[4],
+			v[11], v[10], v[2],
+			v[10], v[7], v[6],
+			v[7], v[1], v[8],
+			v[3], v[9], v[4],
+			v[3], v[4], v[2],
+			v[3], v[2], v[6],
+			v[3], v[6], v[8],
+			v[3], v[8], v[9],
+			v[4], v[9], v[5],
+			v[2], v[4], v[11],
+			v[6], v[2], v[10],
+			v[8], v[6], v[7],
+			v[9], v[8], v[1]
+		};
+
+		while (recursion-- > 0)
+			triangles = subdivide(triangles);
+
+		std::vector<Vertex3D> vertices;
+		vertices.reserve(triangles.size());
+
+		for (const auto& t : triangles)
+		{
+			float u = (std::atan2f(t.z, t.x) / (2.0f * glm::pi<float>()));
+			float v = (std::asinf(t.y) / glm::pi<float>()) + 0.5f;
+			vertices.push_back({ t * radius, glm::normalize(t), glm::vec2(u, v) });
+		}
+
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
+			{ "aPosition", AttributeType::Float3 },
+			{ "aNormal", AttributeType::Float3 },
+			{ "aUv", AttributeType::Float2 }
+			}, vertices.data(), vertices.size()));
+
+
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
+	}
+
+	Ref<VertexArray> CreateGround(int32_t left, int32_t right, int32_t bottom, int32_t top, int32_t divisions)
+	{
+
+		std::vector<Vertex3D> vertices;
+
+		float step = 1.0f / divisions;
+
+		for (int32_t x = left; x < right; x++)
+		{
+			for (int32_t y = bottom; y < top; y++)
+			{
+				for (int32_t dx = 0; dx < divisions; dx++)
+				{
+					for (int32_t dy = 0; dy < divisions; dy++)
+					{
+						float x0 = x + dx * step, y0 = y + dy * step;
+						float x1 = x + (dx + 1) * step, y1 = y + (dy + 1) * step;
+						float u0 = (x % 2) * 0.5f + dx * step * 0.5f, v0 = (y % 2) * 0.5f + dy * step * 0.5f;
+						float u1 = (x % 2) * 0.5f + (dx + 1) * step * 0.5f, v1 = (y % 2) * 0.5f + (dy + 1) * step * 0.5f;
+
+						std::array<glm::vec2, 4> coords = {
+							glm::vec2{ x0, y0 },
+							glm::vec2{ x1, y0 },
+							glm::vec2{ x1, y1 },
+							glm::vec2{ x0, y1 }
+						};
+
+						std::array<glm::vec2, 4> uvs = {
+							glm::vec2(u0, v0),
+							glm::vec2(u1, v0),
+							glm::vec2(u1, v1),
+							glm::vec2(u0, v1)
+						};
+
+						std::array<Vertex3D, 4> v = { };
+
+						for (uint32_t i = 0; i < 4; i++)
+						{
+							auto [pos, normal, tangent, binormal] = Project(glm::vec3(coords[i], 0.0f));
+							v[i] = { pos, normal, uvs[i] };
+						}
+
+
+						vertices.push_back(v[0]); vertices.push_back(v[1]); vertices.push_back(v[2]);
+						vertices.push_back(v[0]); vertices.push_back(v[2]); vertices.push_back(v[3]);
+					}
+				}
+			}
+		}
+
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
+			{ "aPosition", AttributeType::Float3 },
+			{ "aNormal", AttributeType::Float3 },
+			{ "aUv", AttributeType::Float2 }
+			}, vertices.data(), vertices.size()));
+
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
+
+	}
+
+	std::vector<std::array<glm::vec3, 2>> CreateSkyBoxData()
+	{
+
+		std::array<glm::vec3, 8> v = {
+
+			// Front
+			glm::vec3(-1.0f, -1.0f, +1.0f),
+			glm::vec3(+1.0f, -1.0f, +1.0f),
+			glm::vec3(+1.0f, +1.0f, +1.0f),
+			glm::vec3(-1.0f, +1.0f, +1.0f),
+
+			// Back
+			glm::vec3(-1.0f, -1.0f, -1.0f),
+			glm::vec3(+1.0f, -1.0f, -1.0f),
+			glm::vec3(+1.0f, +1.0f, -1.0f),
+			glm::vec3(-1.0f, +1.0f, -1.0f),
+
+		};
+
+		std::vector<std::array<glm::vec3, 2>> verts; // { position, uvw }
+		verts.reserve(36);
+
+		// Front
+		verts.push_back({ v[0], v[0] }); verts.push_back({ v[2], v[2] }); verts.push_back({ v[1], v[1] });
+		verts.push_back({ v[0], v[0] }); verts.push_back({ v[3], v[3] }); verts.push_back({ v[2], v[2] });
+		// Back
+		verts.push_back({ v[4], v[4] }); verts.push_back({ v[5], v[5] }); verts.push_back({ v[6], v[6] });
+		verts.push_back({ v[4], v[4] }); verts.push_back({ v[6], v[6] }); verts.push_back({ v[7], v[7] });
+		// Left
+		verts.push_back({ v[0], v[0] }); verts.push_back({ v[4], v[4] }); verts.push_back({ v[7], v[7] });
+		verts.push_back({ v[0], v[0] }); verts.push_back({ v[7], v[7] }); verts.push_back({ v[3], v[3] });
+		// Right
+		verts.push_back({ v[1], v[1] }); verts.push_back({ v[6], v[6] }); verts.push_back({ v[5], v[5] });
+		verts.push_back({ v[1], v[1] }); verts.push_back({ v[2], v[2] }); verts.push_back({ v[6], v[6] });
+		// Top
+		verts.push_back({ v[3], v[3] }); verts.push_back({ v[6], v[6] }); verts.push_back({ v[2], v[2] });
+		verts.push_back({ v[3], v[3] }); verts.push_back({ v[7], v[7] }); verts.push_back({ v[6], v[6] });
+		// Bottom
+		verts.push_back({ v[0], v[0] }); verts.push_back({ v[1], v[1] }); verts.push_back({ v[5], v[5] });
+		verts.push_back({ v[0], v[0] }); verts.push_back({ v[5], v[5] }); verts.push_back({ v[4], v[4] });
+		
+		return verts;
+
+	}
+
+	Ref<VertexArray> CreateSkyBox()
+	{
+		auto vertices = CreateSkyBoxData();
+
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
+			{ "aPosition", AttributeType::Float3 },
+			{ "aUv", AttributeType::Float3 },
+			}, vertices.data(), vertices.size()));
+
+
+		return Ref<VertexArray>(new VertexArray(vertices.size(), { vb }));
 
 	}
 

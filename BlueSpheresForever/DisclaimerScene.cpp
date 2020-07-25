@@ -6,6 +6,8 @@
 #include "Assets.h"
 #include "Font.h"
 #include "Common.h"
+#include "SplashScene.h"
+
 namespace bsf
 {
 
@@ -37,7 +39,7 @@ namespace bsf
 		waitFadeOut->SetDoneFunction([&](SceneTask& self) {
 			auto fadeOut = MakeRef<FadeTask>(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f);
 			fadeOut->SetDoneFunction([&](SceneTask& self) {
-				GetApplication().GotoScene(MakeRef<Scene>());
+				GetApplication().GotoScene(MakeRef<SplashScene>());
 			});
 			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeOut);
 		});

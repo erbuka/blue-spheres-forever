@@ -1,0 +1,167 @@
+#version 330 core
+
+uniform mat4 uProjection;
+uniform mat4 uView;
+uniform mat4 uModel;
+
+uniform mat4 uShadowView;
+uniform mat4 uShadowProjection;
+uniform vec2 uShadowMapTexelSize;
+
+uniform vec3 uCameraPos;
+uniform vec3 uLightPos;
+
+uniform vec4 uColor;
+
+uniform sampler2D uMap;
+uniform sampler2D uMetallic;
+uniform sampler2D uRoughness;
+uniform sampler2D uAo;
+
+uniform sampler2D uBRDFLut;
+uniform samplerCube uEnvironment;
+uniform samplerCube uIrradiance;
+uniform sampler2D uShadowMap;
+
+in vec3 fNormal;
+in vec3 fPosition;
+in vec2 fUv;
+
+layout(location = 0) out vec4 oColor;
+
+const int cShadowQuality = 1;
+
+const float PI = 3.14159265359;
+
+float DistributionGGX(vec3 N, vec3 H, float roughness);
+float GeometrySchlickGGX(float NdotV, float roughness);
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
+
+float CalculateShadow(in vec3 worldPos) {
+    
+    vec3 shadowViewPos = (uShadowView * vec4(worldPos, 1.0)).xyz;
+    vec2 shadowUv = (uShadowProjection * vec4(shadowViewPos, 1.0)).xy * 0.5 + 0.5;
+
+    if(shadowUv.x < 0.0 || shadowUv.x > 1.0 || shadowUv.y < 0.0 || shadowUv.y > 1.0)
+        return 1.0;
+
+    float shadow = 0.0;
+
+    for(int x = -cShadowQuality; x <= cShadowQuality; ++x) {
+        for(int y = -cShadowQuality; y <= cShadowQuality; y++) {
+            vec2 uv = shadowUv + vec2(x,y) * uShadowMapTexelSize;
+            float shadowDepth = texture(uShadowMap, uv).r;
+            shadow += shadowDepth < shadowViewPos.z + 0.05 ? 1.0 : 0.0;
+        }
+    }
+
+    return shadow / 9.0;
+
+}
+
+void main() {
+
+
+    float metallic = texture(uMetallic, fUv).r;
+    float roughness = texture(uRoughness, fUv).r;
+    float ao = texture(uAo, fUv).r;
+    
+    vec3 normal = normalize((uModel * vec4(fNormal, 0.0)).xyz);
+    vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
+    vec3 viewPos = (uView * vec4(worldPos, 1.0)).xyz;
+
+    vec3 N = normalize(normal);
+    vec3 V = normalize(uCameraPos - worldPos);
+    vec3 L = normalize(uLightPos);
+    vec3 H = normalize(V + L);
+    vec3 R = normalize(reflect(-V, N));
+
+    float NdotL = max(dot(N, L), 0.0);                
+    float NdotV = max(dot(N, V), 0.0);
+    
+    vec3 albedo = (texture(uMap, fUv) * uColor).rgb;
+        
+    albedo.r = pow(albedo.r, 2.2);
+    albedo.g = pow(albedo.g, 2.2);
+    albedo.b = pow(albedo.b, 2.2);
+
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
+
+    vec3 fragment = vec3(0.0);
+
+    float NDF = DistributionGGX(N, H, roughness);        
+    float G   = GeometrySmith(N, V, L, roughness);      
+    vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);       
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;	  
+
+    // Main light
+    #ifdef NO_SHADOWS
+    float shadow = 1.0;
+    #else
+    float shadow = CalculateShadow(worldPos);
+    #endif
+
+    vec3 radiance = vec3(5.0, 5.0, 5.0);
+    vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
+    fragment += (kD * albedo / PI + specular) * radiance * NdotL * shadow; 
+    
+        
+    // Irradiance
+    vec3 irradiance = texture(uIrradiance, N).rgb;
+    fragment += (kD * irradiance * albedo) * ao;
+
+    // Sky reflections
+    vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
+    vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
+    fragment += indirectSpecular * ao;
+
+    oColor = vec4(fragment, 1.0);
+
+}
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a      = roughness*roughness;
+    float a2     = a*a;
+    float NdotH  = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+
+    float num   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return num / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float num   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return num / denom;
+}
+
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2  = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1  = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
+{
+    vec3 f = F0 + (1.0 - F0) * pow(1.0 - clamp(cosTheta, 0.0, 1.0), 5.0);
+    return f * (1.0 - pow(roughness, 0.25));
+}  
+
+	

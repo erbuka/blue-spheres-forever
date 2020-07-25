@@ -144,7 +144,9 @@ namespace bsf
         // Load Assets 
         Assets::GetInstance().Load();
 
-        while (!glfwWindowShouldClose(m_Window))
+        m_Running = true;
+
+        while (!glfwWindowShouldClose(m_Window) && m_Running)
         {
 
             if (m_NextScene != nullptr)
@@ -191,6 +193,11 @@ namespace bsf
     void Application::GotoScene(const std::shared_ptr<Scene> scene)
     {
         m_NextScene = scene;
+    }
+
+    void bsf::Application::Exit()
+    {
+        m_Running = false;
     }
 
     Renderer2D& bsf::Application::GetRenderer2D()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Asset.h"
 #include "Common.h"
 
 #include <glm/glm.hpp>
@@ -7,6 +8,8 @@
 #include <string>
 #include <unordered_map>
 #include <array>
+#include <tuple>
+#include <initializer_list>
 
 #define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(const std::string& name, uint32_t count, varType * ptr)
 #define UNIFORM1_INL(type, varType, size) \
@@ -18,12 +21,23 @@ namespace bsf
 {
 	class Texture;
 
-	class ShaderProgram
+
+	enum class ShaderType
+	{
+		Vertex,
+		Geometry,
+		Fragment
+	};
+
+	class ShaderProgram: public Asset
 	{
 	public:
 
+
+		static Ref<ShaderProgram> FromFile(const std::string& vertex, const std::string& fragment, const std::initializer_list<std::string>& defines = {});
+
 		ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource);
-		ShaderProgram(const std::string& vertexSource, const std::string& geometrySource, const std::string& fragmentSource);
+		ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& sources);
 		~ShaderProgram();
 
 		int32_t GetUniformLocation(const std::string& name);
@@ -60,6 +74,9 @@ namespace bsf
 
 
 	private:
+
+		static void InjectDefines(std::string& source, const std::initializer_list<std::string>& defines);
+
 		uint32_t m_Id;
 		std::unordered_map<std::string, int32_t> m_UniformLocations;
 	};

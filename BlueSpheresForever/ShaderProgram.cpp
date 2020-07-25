@@ -14,22 +14,120 @@
 namespace bsf
 {
 
+	static std::unordered_map<ShaderType, GLenum> s_glShaderType = {
+		{ ShaderType::Vertex, GL_VERTEX_SHADER },
+		{ ShaderType::Geometry, GL_GEOMETRY_SHADER },
+		{ ShaderType::Fragment, GL_FRAGMENT_SHADER }
+	};
 
-	ShaderProgram::ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource)
+
+	static uint32_t LoadShader(ShaderType type, const std::string& shaderSource)
 	{
-		m_Id = LoadProgram({
-			{ ShaderType::Vertex, vertexSource },
-			{ ShaderType::Fragment, fragmentSource }
-		});
+		// Create an empty vertex shader handle
+		GLuint shader = glCreateShader(s_glShaderType[type]);
+
+		// Send the vertex shader source code to GL
+		// Note that std::string's .c_str is NULL character terminated.
+		const GLchar* source = (const GLchar*)shaderSource.c_str();
+		glShaderSource(shader, 1, &source, 0);
+
+		// Compile the vertex shader
+		glCompileShader(shader);
+
+		GLint isCompiled = 0;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
+		if (isCompiled == GL_FALSE)
+		{
+			GLint maxLength = 0;
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+			// The maxLength includes the NULL character
+			std::vector<GLchar> infoLog(maxLength);
+			glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
+
+
+			// We don't need the shader anymore.
+			glDeleteShader(shader);
+
+			// Use the infoLog as you see fit.
+			BSF_ERROR("There were some errors while compiling the shader: {0}", infoLog.data());
+			BSF_ERROR("**** Code ****\n{0}**** End Code ****", shaderSource);
+
+			// In this simple program, we'll just leave
+			return 0;
+		}
+
+		return shader;
 	}
 
-	ShaderProgram::ShaderProgram(const std::string& vertexSource, const std::string& geometrySource, const std::string& fragmentSource)
+	static uint32_t LoadProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& shaderSources)
 	{
-		m_Id = LoadProgram({
-			{ ShaderType::Vertex, vertexSource },
-			{ ShaderType::Geometry, geometrySource },
-			{ ShaderType::Fragment, fragmentSource }
-		});
+
+		GLuint program = glCreateProgram();
+
+		std::vector<uint32_t> shaders;
+		shaders.reserve(shaderSources.size());
+
+		for (const auto& src : shaderSources)
+			shaders.push_back(LoadShader(src.first, src.second));
+
+		for (auto s : shaders)
+			glAttachShader(program, s);
+
+		// Link our program
+		glLinkProgram(program);
+
+		// Note the different functions here: glGetProgram* instead of glGetShader*.
+		GLint isLinked = 0;
+		glGetProgramiv(program, GL_LINK_STATUS, (int*)&isLinked);
+		if (isLinked == GL_FALSE)
+		{
+			GLint maxLength = 0;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+			// The maxLength includes the NULL character
+			std::vector<GLchar> infoLog(maxLength);
+			glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
+
+
+			for (uint32_t s : shaders)
+				glDetachShader(program, s);
+
+			// Use the infoLog as you see fit.
+			BSF_ERROR("There were some errors while linking the program: {0}", infoLog.data());
+
+
+			// In this simple program, we'll just leave
+			return 0;
+		}
+
+		// Always detach shaders after a successful link.
+		for (uint32_t s : shaders)
+			glDetachShader(program, s);
+
+		return program;
+	}
+
+
+	Ref<ShaderProgram> ShaderProgram::FromFile(const std::string& vertex, const std::string& fragment, const std::initializer_list<std::string>& defines)
+	{
+		auto vsSource = ReadTextFile(vertex);
+		auto fsSource = ReadTextFile(fragment);
+
+		InjectDefines(vsSource, defines);
+		InjectDefines(fsSource, defines);
+
+		return MakeRef<ShaderProgram>(vsSource, fsSource);
+	}
+
+	ShaderProgram::ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource) :
+		ShaderProgram({ { ShaderType::Vertex, vertexSource }, { ShaderType::Fragment, fragmentSource } })
+	{
+	}
+
+	ShaderProgram::ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& sources)
+	{
+		m_Id = LoadProgram(sources);
 	}
 
 	ShaderProgram::~ShaderProgram()
@@ -74,6 +172,30 @@ namespace bsf
 	UNIFORM_IMPL(f, float, 3);
 	UNIFORM_IMPL(f, float, 4);
 
+
+	void ShaderProgram::InjectDefines(std::string& source, const std::initializer_list<std::string>& defines)
+	{
+		if (defines.size() > 0)
+		{
+			std::string definesStr;
+
+			for (const auto& def : defines)
+				definesStr += "#define " + def + "\n";
+	
+			auto pos = source.find("#version");
+				
+			if (pos != std::string::npos)
+			{
+				pos = source.find("\n", pos);
+				source.insert(pos + 1, definesStr);
+			}
+			else
+			{
+				source += definesStr;
+			}
+		}
+
+	}
 
 }
 

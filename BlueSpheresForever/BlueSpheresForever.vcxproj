@@ -120,11 +120,13 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="MatrixStack.h" />
+    <ClInclude Include="MenuScene.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="RTXTestScene.h" />
     <ClInclude Include="Renderer2D.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ShaderProgram.h" />
+    <ClInclude Include="SplashScene.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VertexArray.h" />
@@ -136,6 +138,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="BsfPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="CharacterAnimator.cpp" />
     <ClCompile Include="Common.cpp" />
@@ -147,11 +150,13 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MatrixStack.cpp" />
+    <ClCompile Include="MenuScene.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="RTXTestScene.cpp" />
     <ClCompile Include="Renderer2D.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
+    <ClCompile Include="SplashScene.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VertexArray.cpp" />

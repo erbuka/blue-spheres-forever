@@ -153,6 +153,39 @@ namespace bsf
 	}
 
 
+	TextureCube::TextureCube(uint32_t size, const std::string& crossImage) :
+		TextureCube(size, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
+	{
+		auto image = LoadPng(crossImage, false);
+
+		const auto& pixels = std::get<0>(image);
+		auto width = std::get<1>(image);
+		auto height = std::get<2>(image);
+
+		assert(width / size == 4 && height / size == 3);
+
+		auto slice = [&](uint32_t row, uint32_t col) {
+			std::vector<unsigned char> result(size * size * 4);
+
+			for (uint32_t y = 0; y < size; y++)
+			{
+				std::memcpy(&(result.data()[y * size * 4]), &(pixels.data()[(row * width * size + col * size + y * width) * 4]), size * 4);
+			}
+
+			return result;
+		};
+
+		std::vector<unsigned char> data;
+
+		data = slice(1, 0);SetPixels(TextureCubeFace::Left, data.data());
+		data = slice(1, 1);SetPixels(TextureCubeFace::Front, data.data());
+		data = slice(1, 2);SetPixels(TextureCubeFace::Right, data.data());
+		data = slice(1, 3);SetPixels(TextureCubeFace::Back, data.data());
+		data = slice(0, 1);SetPixels(TextureCubeFace::Top, data.data());
+		data = slice(2, 1);SetPixels(TextureCubeFace::Bottom, data.data());
+
+	}
+
 	TextureCube::TextureCube(uint32_t size, const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top) :
 		TextureCube(size, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{

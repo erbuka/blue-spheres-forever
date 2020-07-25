@@ -1,7 +1,9 @@
 #include "BsfPch.h"
 
 #include "Assets.h"
+#include "ShaderProgram.h"
 #include "Model.h"
+#include "VertexArray.h"
 #include "Texture.h"
 #include "Log.h"
 #include "Common.h"
@@ -85,9 +87,17 @@ namespace bsf
 		m_Assets[AssetName::SfxPerfect] = MakeRef<Audio>("assets/sound/perfect.mp3");
 		m_Assets[AssetName::SfxJump] = MakeRef<Audio>("assets/sound/jump.wav");
 		m_Assets[AssetName::SfxSplash] = MakeRef<Audio>("assets/sound/splash.wav");
+		m_Assets[AssetName::SfxIntro] = MakeRef<Audio>("assets/sound/intro.mp3");
 
+
+		// Shaders
 
 		// Models
+		m_Assets[AssetName::ModSphere] = CreateIcosphere(0.15, 3);
+		m_Assets[AssetName::ModGround] = CreateGround(-10, 10, -10, 10, 10);
+		m_Assets[AssetName::ModClipSpaceQuad] = CreateClipSpaceQuad();
+		m_Assets[AssetName::ModSkyBox] = CreateSkyBox();
+
 		m_Assets[AssetName::ModRing] = 
 			CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 

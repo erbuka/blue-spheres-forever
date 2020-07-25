@@ -49,6 +49,7 @@ namespace bsf
 	class TextureCube : public Texture
 	{
 	public:
+		TextureCube(uint32_t size, const std::string& crossImage);
 		TextureCube(uint32_t size, const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top);
 		TextureCube(uint32_t size, GLenum internalFormat, GLenum format, GLenum type);
 		TextureCube(TextureCube&) = delete;

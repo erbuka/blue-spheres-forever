@@ -22,11 +22,6 @@ namespace bsf
 	struct GameStateChangedEvent;
 	struct GameActionEvent;
 
-	struct BoxVertex {
-		glm::vec3 Position, Uv;
-		BoxVertex(const glm::vec3 v) : Position(v), Uv(v) {}
-	};
-
 	struct GameMessage
 	{
 		static constexpr float s_SlideDuration = 0.5f;
@@ -64,7 +59,7 @@ namespace bsf
 
 		Ref<Framebuffer> m_fbDeferred, m_fbShadow;
 
-		Ref<VertexArray> m_vaWorld, m_vaSphere, m_vaQuad, m_vaSkyBox, m_vaDynSkyBox;
+		Ref<VertexArray> m_vaDynSkyBox;
 		Ref<ShaderProgram> m_pPBR, m_pMorphPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance, m_pShadow;
 		
 		Ref<TextureCube> m_txBaseSkyBox, m_txBaseIrradiance;
@@ -74,7 +69,7 @@ namespace bsf
 		
 		Ref<Stage> m_Stage;
 
-		std::vector<BoxVertex> m_vDynSkyBoxVertices;
+		std::vector<std::array<glm::vec3, 2>> m_vDynSkyBoxVertices;
 
 		std::list<GameMessage> m_GameMessages;
 

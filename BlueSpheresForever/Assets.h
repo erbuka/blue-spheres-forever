@@ -13,12 +13,12 @@ namespace bsf
 		TexWhite,
 		TexBlack,
 		TexNormalPosZ,
-		
+
 		TexBumper,
 
 		TexSphereMetallic,
 		TexSphereRoughness,
-		
+
 		TexGroundNormal,
 		TexGroundMetallic,
 		TexGroundRoughness,
@@ -38,6 +38,10 @@ namespace bsf
 		ModRing,
 		ModSonic,
 		ModChaosEmerald,
+		ModSphere,
+		ModGround,
+		ModClipSpaceQuad,
+		ModSkyBox,
 
 		SfxBlueSphere,
 		SfxYellowSphere,
@@ -48,6 +52,7 @@ namespace bsf
 		SfxPerfect,
 		SfxJump,
 		SfxSplash,
+		SfxIntro,
 
 		StageGenerator
 	};

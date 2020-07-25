@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Asset.h"
 
 #include <string>
 #include <initializer_list>
@@ -23,7 +24,7 @@ namespace bsf
 	};
 
 
-	class VertexBuffer
+	class VertexBuffer: public Asset
 	{
 	public:
 
@@ -55,7 +56,7 @@ namespace bsf
 		uint32_t m_Id, m_Count;
 	};
 
-	class VertexArray
+	class VertexArray : public Asset
 	{
 	public:
 		VertexArray(uint32_t vertexCount, const std::initializer_list<Ref<VertexBuffer>>& buffers = {});
