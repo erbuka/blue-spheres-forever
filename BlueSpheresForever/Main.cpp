@@ -17,6 +17,7 @@ static void LoadSectionsBinary();
 
 int main() 
 {
+
 	//auto stage = StageGenerator().Generate(365989603263);
 	auto stage = MakeRef<Stage>();
 	stage->FromFile("assets/data/s3stage1.bss");

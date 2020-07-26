@@ -14,7 +14,7 @@
 namespace bsf
 {
 	static constexpr float s_SplashTime = 5.0f;
-	static constexpr float s_FadeOutDuration = 1.0f;
+	static constexpr float s_FadeOutDuration = 0.5f;
 	static constexpr float s_FadeOutTime = s_SplashTime - s_FadeOutDuration;
 	static constexpr float s_EmeraldAngularVelocity = glm::pi<float>();
 	static constexpr float s_EmeraldStartingRadius = 4.0f;
@@ -36,7 +36,7 @@ namespace bsf
 		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &SplashScene::OnResize));
 
 		// fadeIn
-		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f }, glm::vec4{ 0.0f, 0.0f, 0.0f, 0.0f }, 1.0f);
+		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f }, glm::vec4{ 0.0f, 0.0f, 0.0f, 0.0f }, 0.5f);
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
 
 		// fadeOut

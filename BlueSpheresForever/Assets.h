@@ -12,6 +12,7 @@ namespace bsf
 	{
 		TexWhite,
 		TexBlack,
+		TexTransparent,
 		TexNormalPosZ,
 
 		TexBumper,
@@ -53,6 +54,8 @@ namespace bsf
 		SfxJump,
 		SfxSplash,
 		SfxIntro,
+		SfxCodeOk,
+		SfxCodeWrong,
 
 		StageGenerator
 	};

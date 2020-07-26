@@ -15,6 +15,7 @@
 #include "Model.h"
 #include "CharacterAnimator.h"
 #include "Audio.h"
+#include "MenuScene.h"
 
 #pragma region Shaders
 
@@ -435,7 +436,7 @@ namespace bsf
 
 		}));
 
-		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 1.0f);
+		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 0.5f);
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
 
 	}
@@ -964,7 +965,7 @@ namespace bsf
 				// For now let's restart the game
 				auto stage = MakeRef<Stage>();
 				stage->FromFile("assets/data/playground.bss");
-				auto scene = Ref<Scene>(new GameScene(stage));
+				auto scene = MakeRef<MenuScene>();
 				GetApplication().GotoScene(scene);
 			});
 

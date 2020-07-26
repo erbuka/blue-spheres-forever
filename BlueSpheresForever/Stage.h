@@ -37,6 +37,8 @@ namespace bsf
 	};
 
 
+
+
 	class StageGenerator : public Asset
 	{
 	public:

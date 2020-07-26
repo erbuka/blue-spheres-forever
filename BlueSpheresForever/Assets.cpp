@@ -34,6 +34,7 @@ namespace bsf
 		// Textures
 		m_Assets[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));
 		m_Assets[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
+		m_Assets[AssetName::TexTransparent] = Ref<Texture>(new Texture2D(0));
 		m_Assets[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
@@ -88,6 +89,8 @@ namespace bsf
 		m_Assets[AssetName::SfxJump] = MakeRef<Audio>("assets/sound/jump.wav");
 		m_Assets[AssetName::SfxSplash] = MakeRef<Audio>("assets/sound/splash.wav");
 		m_Assets[AssetName::SfxIntro] = MakeRef<Audio>("assets/sound/intro.mp3");
+		m_Assets[AssetName::SfxCodeOk] = MakeRef<Audio>("assets/sound/ok.wav");
+		m_Assets[AssetName::SfxCodeWrong] = MakeRef<Audio>("assets/sound/wrong.wav");
 
 
 		// Shaders

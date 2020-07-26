@@ -194,20 +194,34 @@ namespace bsf
 
 	}
 
-	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text, const glm::vec2& position)
+	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text, const glm::vec2& position, const std::vector<glm::vec4>& colors)
 	{
 		static std::array<glm::vec2, 4> pos, uvs = {};
+		bool useColors = false;
 
 		float strWidth = font->GetStringWidth(text);
+
+		if (colors.size() > 0)
+		{
+			if (colors.size() == text.size())
+				useColors = true;
+			else
+				BSF_WARN("Color vector size is incorrect. Expected {0}, got {1}", text.size(), colors.size());
+		}
+
+		Push();
 
 		Texture(font->GetTexture());
 
 		float offsetX = position.x - m_State.top().Pivot.x * strWidth;
 		float offsetY = position.y - m_State.top().Pivot.y;
 
-		for (auto c : text)
+		for (uint32_t i = 0; i < text.size(); ++i)
 		{
-			const auto& glyph = font->GetGlyphInfo(c);
+			if (useColors)
+				Color(colors[i]);
+
+			const auto& glyph = font->GetGlyphInfo(text[i]);
 
 			pos[0] = { offsetX + glyph.Min.x, offsetY + glyph.Min.y };
 			pos[1] = { offsetX + glyph.Max.x, offsetY + glyph.Min.y };
@@ -227,6 +241,8 @@ namespace bsf
 			offsetX += glyph.Advance;
 
 		}
+
+		Pop();
 	}
 
 

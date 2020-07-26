@@ -14,13 +14,16 @@ namespace bsf
 	class Renderer2D;
 	class MenuRoot;
 	class Menu;
+	class Stage;
 
 	class MenuNode
 	{
 	public:
 		virtual bool OnConfirm(MenuRoot& root) = 0;
 		virtual bool OnDirectionInput(MenuRoot& root, Direction direction) = 0;
+		virtual bool OnKeyTyped(MenuRoot& root, int32_t keyCode) { return false; }
 		virtual void Render(MenuRoot& root, Renderer2D& renderer) = 0;
+		virtual float GetUIHeight() const { return 1.0f; }
 	};
 
 	class MenuItem : public MenuNode
@@ -29,14 +32,15 @@ namespace bsf
 		bool Selected = false;
 	};
 
-	class MenuLinkItem : public MenuItem
+
+	class LinkMenuItem : public MenuItem
 	{
 	public:
 
 		std::string Caption;
 		Ref<Menu> LinkedMenu = nullptr;
 		
-		MenuLinkItem(const std::string& caption, const Ref<Menu>& linkedMenu);
+		LinkMenuItem(const std::string& caption, const Ref<Menu>& linkedMenu);
 
 		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override { return false; }
@@ -44,14 +48,14 @@ namespace bsf
 	};
 
 
-	class MenuButtonItem : public MenuItem
+	class ButtonMenuItem : public MenuItem
 	{
 	public:
 		using ConfirmFn = std::function<bool(MenuRoot&)>;
 
 		std::string Caption;
 
-		MenuButtonItem(const std::string& caption);
+		ButtonMenuItem(const std::string& caption);
 
 		void SetConfirmFunction(const ConfirmFn& fn) { m_ConfirmFn = fn; }
 
@@ -62,6 +66,65 @@ namespace bsf
 		ConfirmFn m_ConfirmFn = nullptr;
 	};
 
+	template<typename T>
+	class SelectMenuItem : public MenuItem
+	{
+	public:
+
+		std::string Caption;
+
+		SelectMenuItem(const std::string& caption);
+
+		bool OnConfirm(MenuRoot& root) override { return false; }
+		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
+		void Render(MenuRoot& root, Renderer2D& renderer) override;
+		float GetUIHeight() const override { return 1.5f; }
+
+		void AddOption(const std::string& caption, const Ref<T>& value);
+		const Ref<T>& GetSelectedOption();
+
+	private:
+		uint32_t m_SelectedOption;
+		std::vector<std::pair<std::string, Ref<T>>> m_Options;
+	};
+
+	class StageCodeMenuItem : public MenuItem
+	{
+	public:
+
+		class StageCode
+		{
+		public:
+
+			static constexpr uint8_t DigitCount = 12;
+
+			StageCode() : StageCode(0) {}
+			StageCode(uint64_t code);
+
+			uint8_t& operator[](uint8_t index);
+			const uint8_t& operator[](uint8_t index) const;
+
+			operator uint64_t() const;
+
+		private:
+
+			std::array<uint8_t, 12> m_Digits;
+		};
+
+		StageCodeMenuItem();
+
+		bool OnConfirm(MenuRoot& root) override;
+		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
+		bool OnKeyTyped(MenuRoot& root, int32_t keyCode) override;
+		void Render(MenuRoot& root, Renderer2D& renderer) override;
+		float GetUIHeight() const override { return 1.5f; }
+		uint64_t GetStageCode() const { return m_CurrentCode; }
+
+	private:
+		uint32_t m_CursorPos;
+		StageCode m_CurrentCode, m_PreviousCode;
+		bool m_Input = false;
+	};
 
 	class Menu : public MenuNode
 	{
@@ -79,6 +142,7 @@ namespace bsf
 		void ResetSelected();
 		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
+		bool OnKeyTyped(MenuRoot& root, int32_t keyCode) override;
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
 
 	private:
@@ -92,8 +156,8 @@ namespace bsf
 		glm::vec2 ViewportSize;
 
 		void OnConfirm();
-
 		void OnDirectionInput(Direction direction);
+		void OnKeyTyped(int32_t keyCode);
 
 		void PushMenu(const Ref<Menu>& menu);
 		void PopMenu();
@@ -113,9 +177,18 @@ namespace bsf
 		void OnRender(const Time& time) override;
 		void OnDetach() override;
 	private:
+
+		std::vector<Ref<Stage>> LoadCustomStages();
+
+
+		void PlayStage(const Ref<Stage>& stage);
+
 		MenuRoot m_MenuRoot;
+		Ref<SelectMenuItem<Stage>> m_SelectStageMenuItem;
+		Ref<StageCodeMenuItem> m_StageCodeMenuItem;
 		std::list<Unsubscribe> m_Subscriptions;
 	};
+
 
 }
 

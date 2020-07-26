@@ -334,7 +334,7 @@ namespace bsf
 		result->EmeraldColor = s_EmeraldColors[tr % s_EmeraldColors.size()];
 
 		result->StartDirection = { 0, 1 };
-		result->StartPoint = { 28, 16 }; 
+		result->StartPoint = { 28, 15 }; 
 
 		return result;
 
@@ -440,5 +440,7 @@ namespace bsf
 	}
 
 
+
 	#pragma endregion
+
 }
