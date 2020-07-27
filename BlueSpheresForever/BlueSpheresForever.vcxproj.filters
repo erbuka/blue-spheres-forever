@@ -39,6 +39,7 @@
     <ClInclude Include="WafefrontLoader.h" />
     <ClInclude Include="SplashScene.h" />
     <ClInclude Include="MenuScene.h" />
+    <ClInclude Include="SkyGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -66,5 +67,6 @@
     <ClCompile Include="WafefrontLoader.cpp" />
     <ClCompile Include="SplashScene.cpp" />
     <ClCompile Include="MenuScene.cpp" />
+    <ClCompile Include="SkyGenerator.cpp" />
   </ItemGroup>
 </Project>

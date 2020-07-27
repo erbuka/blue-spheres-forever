@@ -11,7 +11,7 @@
 #include <tuple>
 #include <initializer_list>
 
-#define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(const std::string& name, uint32_t count, varType * ptr)
+#define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(const std::string& name, uint32_t count, const varType * ptr)
 #define UNIFORM1_INL(type, varType, size) \
 	inline void Uniform ## size ## type(const std::string& name, std::array<varType,size> v) { \
 		Uniform ## size ## type ## v(name, 1, v.data()); \

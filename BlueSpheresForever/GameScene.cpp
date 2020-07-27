@@ -16,6 +16,7 @@
 #include "CharacterAnimator.h"
 #include "Audio.h"
 #include "MenuScene.h"
+#include "SkyGenerator.h"
 
 #pragma region Shaders
 
@@ -349,6 +350,7 @@ namespace bsf
 	void GameScene::OnAttach()
 	{
 		auto& app = GetApplication();
+		auto& assets = Assets::GetInstance();
 
 		auto windowSize = app.GetWindowSize();
 
@@ -363,12 +365,11 @@ namespace bsf
 		m_fbShadow->GetColorAttachment("depth")->Bind(0);
 
 		// Vertex arrays
-		m_vaDynSkyBox = CreateSkyBox();
-		m_vDynSkyBoxVertices = CreateSkyBoxData();
+		m_vaDynSkyBox = CreateCube();
+		m_vDynSkyBoxVertices = CreateCubeData();
 
 		// Programs
 
-		//m_pPBR = MakeRef<ShaderProgram>(s_PBRVertex, s_PBRFragment);
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
 		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/morph_pbr.vert", "assets/shaders/pbr.frag");
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
@@ -393,7 +394,10 @@ namespace bsf
 
 
 		
-		m_txBaseSkyBox = CreateBaseSkyBox();
+		m_txBaseSkyBox = assets.Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({
+			2048,
+			glm::vec3(0.3f, 0.2f, 0.8f)
+		});
 		m_txBaseIrradiance = CreateBaseIrradianceMap(m_txBaseSkyBox, 32);
 
 
@@ -532,6 +536,7 @@ namespace bsf
 				m_pSkyBox->UniformTexture("uSkyBox", m_ccSkyBox->GetTexture(), 0);
 				assets.Get<VertexArray>(AssetName::ModSkyBox)->Draw(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
+
 			}
 			
 
@@ -1043,58 +1048,7 @@ namespace bsf
 		}
 
 	}
-
-	Ref<TextureCube> GameScene::CreateBaseSkyBox()
-	{
-		constexpr uint32_t resolution = 1024;
-
-		auto camera = MakeRef<CubeCamera>(resolution, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		static std::array<TextureCubeFace, 6> faces = {
-			TextureCubeFace::Right,
-			TextureCubeFace::Left,
-			TextureCubeFace::Top,
-			TextureCubeFace::Bottom,
-			TextureCubeFace::Front,
-			TextureCubeFace::Back
-		};
-		
-		/*
-		auto skyBox = Ref<TextureCube>(new TextureCube(
-			1024,
-			"assets/textures/sky_front5.png",
-			"assets/textures/sky_back6.png",
-			"assets/textures/sky_left2.png",
-			"assets/textures/sky_right1.png",
-			"assets/textures/sky_bottom4.png",
-			"assets/textures/sky_top3.png"
-		));
-		*/
-		
-		//auto skyBox = Ref<TextureCube>(new TextureCube(256, "assets/textures/skybox.png"));
-		auto skyBox = Ref<TextureCube>(new TextureCube(1024, "assets/textures/miramar.png"));
-
-		auto modSkyBox = Assets::GetInstance().Get<VertexArray>(AssetName::ModSkyBox);
-
-		for (auto face : faces)
-		{
-			camera->BindForRender(face);
-
-			glEnable(GL_DEPTH_TEST);
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			m_pSkyBox->Use();
-			m_pSkyBox->UniformTexture("uSkyBox", skyBox, 0);
-			m_pSkyBox->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
-			m_pSkyBox->UniformMatrix4f("uView", camera->GetViewMatrix());
-			m_pSkyBox->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-			modSkyBox->Draw(GL_TRIANGLES);
-
-		}
-		
-
-		return Ref<TextureCube>(camera->GetTexture());
-	}
+	
 
 	Ref<TextureCube> GameScene::CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size)
 	{

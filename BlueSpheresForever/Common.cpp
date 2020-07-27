@@ -257,7 +257,7 @@ namespace bsf
 
 	}
 
-	std::vector<std::array<glm::vec3, 2>> CreateSkyBoxData()
+	std::vector<std::array<glm::vec3, 2>> CreateCubeData()
 	{
 
 		std::array<glm::vec3, 8> v = {
@@ -302,9 +302,9 @@ namespace bsf
 
 	}
 
-	Ref<VertexArray> CreateSkyBox()
+	Ref<VertexArray> CreateCube()
 	{
-		auto vertices = CreateSkyBoxData();
+		auto vertices = CreateCubeData();
 
 		auto vb = Ref<VertexBuffer>(new VertexBuffer({
 			{ "aPosition", AttributeType::Float3 },

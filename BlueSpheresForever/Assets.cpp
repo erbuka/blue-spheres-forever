@@ -12,6 +12,7 @@
 #include "CharacterAnimator.h"
 #include "Audio.h"
 #include "Stage.h"
+#include "SkyGenerator.h"
 
 namespace bsf
 {
@@ -26,6 +27,9 @@ namespace bsf
 	{
 		// Stage generator
 		m_Assets[AssetName::StageGenerator] = MakeRef<StageGenerator>();
+
+		// Sky generator
+		m_Assets[AssetName::SkyGenerator] = MakeRef<SkyGenerator>();
 
 		// Fonts
 		m_Assets[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf", 128.0f));
@@ -99,7 +103,7 @@ namespace bsf
 		m_Assets[AssetName::ModSphere] = CreateIcosphere(0.15, 3);
 		m_Assets[AssetName::ModGround] = CreateGround(-10, 10, -10, 10, 10);
 		m_Assets[AssetName::ModClipSpaceQuad] = CreateClipSpaceQuad();
-		m_Assets[AssetName::ModSkyBox] = CreateSkyBox();
+		m_Assets[AssetName::ModSkyBox] = CreateCube();
 
 		m_Assets[AssetName::ModRing] = 
 			CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);

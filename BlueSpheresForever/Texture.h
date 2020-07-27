@@ -27,6 +27,15 @@ namespace bsf
 		Back = 5
 	};
 
+	constexpr std::array<TextureCubeFace, 6> TextureCubeFaces = {
+		TextureCubeFace::Right,
+		TextureCubeFace::Left,
+		TextureCubeFace::Top,
+		TextureCubeFace::Bottom,
+		TextureCubeFace::Front,
+		TextureCubeFace::Back
+	};
+
 	class Texture : public Asset
 	{
 	public:

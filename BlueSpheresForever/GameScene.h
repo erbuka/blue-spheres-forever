@@ -81,7 +81,6 @@ namespace bsf
 		void OnGameStateChanged(const GameStateChangedEvent& evt);
 		void OnGameAction(const GameActionEvent& action);
 
-		Ref<TextureCube> CreateBaseSkyBox();
 		Ref<TextureCube> CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size);
 
 		void RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);

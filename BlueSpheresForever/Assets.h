@@ -57,7 +57,8 @@ namespace bsf
 		SfxCodeOk,
 		SfxCodeWrong,
 
-		StageGenerator
+		StageGenerator,
+		SkyGenerator
 	};
 
 	class Assets
