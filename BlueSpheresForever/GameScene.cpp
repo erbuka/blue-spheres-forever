@@ -370,7 +370,7 @@ namespace bsf
 
 		// Programs
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
-		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/morph_pbr.vert", "assets/shaders/pbr.frag");
+		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "MORPH" });
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
 		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
@@ -378,7 +378,6 @@ namespace bsf
 		m_pShadow = MakeRef<ShaderProgram>(s_ShadowVertex, s_ShadowFragment);
 		
 		// Textures
-
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
 		{
 			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->CheckerColors[0]), ToHexColor(m_Stage->CheckerColors[1]) });
@@ -482,8 +481,7 @@ namespace bsf
 			m_View.LoadIdentity();
 			m_Model.LoadIdentity();
 
-			//m_View.LookAt({ -1.5f, 2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
-			m_View.LookAt({ -1.5f, -2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, -1.0f, 0.0f });
+			m_View.LookAt({ -1.5f, 2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
 			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 		};
@@ -513,8 +511,6 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Draw Sky
-			
-
 			{
 				GLEnableScope scope({ GL_DEPTH_TEST });
 
