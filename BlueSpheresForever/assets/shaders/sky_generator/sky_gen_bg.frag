@@ -1,6 +1,8 @@
 #version 330 core
 
-uniform vec3 uColor;
+uniform samplerCube uBackgroundPattern;
+uniform vec3 uColor0;
+uniform vec3 uColor1;
 
 in vec3 fPosition;
 in vec3 fUv;
@@ -8,5 +10,6 @@ in vec3 fUv;
 out vec4 oColor;
 
 void main() {
-    oColor = vec4(uColor, 1.0);
+    float factor = texture(uBackgroundPattern, fUv).r;
+    oColor = vec4(mix(uColor0, uColor1, factor), 1.0);
 }

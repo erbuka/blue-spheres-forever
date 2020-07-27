@@ -18,7 +18,7 @@ namespace bsf
 		struct Options
 		{
 			uint32_t Size;
-			glm::vec3 BaseColor;
+			glm::vec3 BaseColor0, BaseColor1;
 		};
 
 		SkyGenerator();

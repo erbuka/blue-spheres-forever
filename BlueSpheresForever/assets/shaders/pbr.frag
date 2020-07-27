@@ -77,6 +77,7 @@ void main() {
     vec3 H = normalize(V + L);
     vec3 R = normalize(reflect(-V, N));
 
+
     float NdotL = max(dot(N, L), 0.0);                
     float NdotV = max(dot(N, V), 0.0);
     
@@ -105,11 +106,10 @@ void main() {
     float shadow = CalculateShadow(worldPos);
     #endif
 
-    vec3 radiance = vec3(5.0, 5.0, 5.0);
+    vec3 radiance = vec3(1.0f);
     vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
     fragment += (kD * albedo / PI + specular) * radiance * NdotL * shadow; 
     
-        
     // Irradiance
     vec3 irradiance = texture(uIrradiance, N).rgb;
     fragment += (kD * irradiance * albedo) * ao;

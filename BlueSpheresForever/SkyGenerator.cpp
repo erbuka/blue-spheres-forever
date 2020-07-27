@@ -37,11 +37,13 @@ namespace bsf
 
 	Ref<TextureCube> SkyGenerator::Generate(const Options& options)
 	{	
-		return Ref<TextureCube>(new TextureCube(1024, "assets/textures/miramar.png"));
+
+		return Ref<TextureCube>(new TextureCube(256, "assets/textures/skybox.png"));
 
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE });
 		auto& assets = Assets::GetInstance();
 		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
+		auto bgPattern = Ref<TextureCube>(new TextureCube(1024, "assets/textures/skyback.png"));
 
 		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
@@ -50,6 +52,7 @@ namespace bsf
 
 		for (auto& pos : starPos)
 			pos = glm::ballRand(100.0f);
+		
 
 		for (auto face : TextureCubeFaces)
 		{
@@ -60,6 +63,7 @@ namespace bsf
 			glDisable(GL_DEPTH_TEST);
 			glDisable(GL_CULL_FACE);
 
+
 			// Draw background
 			{
 				glDepthMask(GL_FALSE);
@@ -67,7 +71,9 @@ namespace bsf
 				m_pGenBg->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
 				m_pGenBg->UniformMatrix4f("uView", camera.GetViewMatrix());
 				m_pGenBg->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-				m_pGenBg->Uniform3fv("uColor", 1, glm::value_ptr(options.BaseColor));
+				m_pGenBg->Uniform3fv("uColor0", 1, glm::value_ptr(options.BaseColor0));
+				m_pGenBg->Uniform3fv("uColor1", 1, glm::value_ptr(options.BaseColor1));
+				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern, 1);
 				m_vaCube->Draw(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
 			}

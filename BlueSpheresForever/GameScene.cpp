@@ -369,7 +369,6 @@ namespace bsf
 		m_vDynSkyBoxVertices = CreateCubeData();
 
 		// Programs
-
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
 		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/morph_pbr.vert", "assets/shaders/pbr.frag");
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
@@ -396,10 +395,10 @@ namespace bsf
 		
 		m_txBaseSkyBox = assets.Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({
 			2048,
-			glm::vec3(0.3f, 0.2f, 0.8f)
+			m_Stage->SkyColors[0],
+			m_Stage->SkyColors[1],
 		});
 		m_txBaseIrradiance = CreateBaseIrradianceMap(m_txBaseSkyBox, 32);
-
 
 		// Sky box camera
 		m_ccSkyBox = MakeRef<CubeCamera>(1024, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
@@ -483,7 +482,8 @@ namespace bsf
 			m_View.LoadIdentity();
 			m_Model.LoadIdentity();
 
-			m_View.LookAt({ -1.5f, 2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
+			//m_View.LookAt({ -1.5f, 2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, 1.0f, 0.0f });
+			m_View.LookAt({ -1.5f, -2.5f, 0.0f }, { 1.0f, 0.0, 0.0f }, { 0.0f, -1.0f, 0.0f });
 			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 		};
@@ -538,7 +538,6 @@ namespace bsf
 				glDepthMask(GL_TRUE);
 
 			}
-			
 
 			// Draw scene
 			{
@@ -553,7 +552,6 @@ namespace bsf
 				glm::vec3 lightVector = { 0.0f, 2.0f, 0.0f };
 
 				// Draw player
-
 				modSonic->SetTimeMultiplier(m_GameLogic->GetNormalizedVelocity());
 				modSonic->Update(time);
 
@@ -592,6 +590,7 @@ namespace bsf
 				m_pMorphPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 5);
 				m_pMorphPBR->UniformTexture("uIrradiance", m_ccIrradiance->GetTexture(), 6);
 				m_pMorphPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
+
 
 				m_pMorphPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 				m_pMorphPBR->Uniform2f("uUvOffset", { 0, 0 });
@@ -714,9 +713,10 @@ namespace bsf
 
 			}
 			
-
 		}
 		m_fbDeferred->Unbind();
+
+
 
 		// Draw to default frame buffer
 		{
