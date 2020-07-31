@@ -17,6 +17,7 @@
 #include "Audio.h"
 #include "MenuScene.h"
 #include "SkyGenerator.h"
+#include "SplashScene.h"
 
 #pragma region Shaders
 
@@ -213,112 +214,6 @@ static const std::string s_DeferredFragment = R"Fragment(
 )Fragment";
 
 
-static const std::string s_SkyBoxVertex = R"Vertex(
-	#version 330 core
-
-	uniform mat4 uProjection;	
-	uniform mat4 uView;
-	uniform mat4 uModel;
-
-	layout(location = 0) in vec3 aPosition;
-	layout(location = 1) in vec3 aUv;
-
-	out vec3 fPosition;
-	out vec3 fUv;
-
-	void main() {
-		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-		fUv = aUv;
-		fPosition = aPosition;
-	}
-	
-)Vertex";
-
-static const std::string s_SkyBoxFragment = R"Fragment(
-	#version 330 core
-	
-	uniform samplerCube uSkyBox;
-
-	in vec3 fUv;
-	in vec3 fPosition;
-
-	layout(location = 0) out vec4 oColor;
-	layout(location = 1) out vec3 oPosition;
-
-	void main() {
-		oColor = vec4(texture(uSkyBox, fUv).rgb, 1.0);
-		oPosition = fPosition * 100.0;
-	}
-	
-)Fragment";
-
-
-static std::string s_IrradianceVertex = R"Vertex(
-	#version 330 core
-	
-	uniform mat4 uProjection;	
-	uniform mat4 uView;
-	uniform mat4 uModel;
-
-	layout(location = 0) in vec3 aPosition;
-	layout(location = 1) in vec3 aUv;
-
-	out vec3 fPosition;
-	out vec3 fUv;
-
-	void main() {
-		gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
-		fUv = aUv;
-		fPosition = aPosition;
-	}
-
-)Vertex";
-
-
-static std::string s_IrradianceFragment = R"Fragment(
-	#version 330 core
-	
-	uniform samplerCube uEnvironment;
-
-	in vec3 fUv;
-	in vec3 fPosition;
-
-	out vec4 oColor;
-
-	const float PI = 3.141592;
-
-	void main() {
-		vec3 normal = normalize(fPosition);
-
-		vec3 irradiance = vec3(1.0);  
-		
-		vec3 up    = vec3(0.0, 1.0, 0.0);
-		vec3 right = cross(up, normal);
-		up         = cross(normal, right);
-
-		float sampleDelta = 0.1;
-		float nrSamples = 0.0; 
-		for(float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
-		{
-			for(float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
-			{
-				// spherical to cartesian (in tangent space)
-				vec3 tangentSample = vec3(sin(theta) * cos(phi),  sin(theta) * sin(phi), cos(theta));
-
-				// tangent space to world
-				vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
-
-				irradiance += texture(uEnvironment, sampleVec).rgb * cos(theta) * sin(theta);
-				nrSamples += 1.0;
-			}
-		}
-		irradiance = PI * irradiance * (1.0 / float(nrSamples));
-		
-		oColor = vec4(irradiance, 1.0);
-		
-	}
-)Fragment";
-
 #pragma endregion
 
 namespace bsf
@@ -340,6 +235,7 @@ namespace bsf
 
 
 #pragma endregion
+
 
 
 	GameScene::GameScene(const Ref<Stage>& stage) :
@@ -364,17 +260,12 @@ namespace bsf
 		m_fbShadow->AddColorAttachment("depth", GL_R16F, GL_RED, GL_FLOAT);
 		m_fbShadow->GetColorAttachment("depth")->Bind(0);
 
-		// Vertex arrays
-		m_vaDynSkyBox = CreateCube();
-		m_vDynSkyBoxVertices = CreateCubeData();
-
 		// Programs
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
 		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "MORPH" });
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
+		m_pSkyBox = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
-		m_pSkyBox = MakeRef<ShaderProgram>(s_SkyBoxVertex, s_SkyBoxFragment);
-		m_pIrradiance = MakeRef<ShaderProgram>(s_IrradianceVertex, s_IrradianceFragment);
 		m_pShadow = MakeRef<ShaderProgram>(s_ShadowVertex, s_ShadowFragment);
 		
 		// Textures
@@ -391,24 +282,15 @@ namespace bsf
 		} 
 
 
-		
-		m_txBaseSkyBox = assets.Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({
-			2048,
-			m_Stage->SkyColors[0],
-			m_Stage->SkyColors[1],
-		});
-		m_txBaseIrradiance = CreateBaseIrradianceMap(m_txBaseSkyBox, 32);
-
-		// Sky box camera
-		m_ccSkyBox = MakeRef<CubeCamera>(1024, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_ccIrradiance = MakeRef<CubeCamera>(32, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		// Skybox
+		auto& skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);
+		m_Sky = skyGenerator->Generate({ 1024, m_Stage->SkyColors[0], m_Stage->SkyColors[1] });
 
 		// Event hanlders
-
-
 		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
 		m_Subscriptions.push_back(m_GameLogic->GameStateChanged.Subscribe(this, &GameScene::OnGameStateChanged));
 		m_Subscriptions.push_back(m_GameLogic->GameAction.Subscribe(this, &GameScene::OnGameAction));
+
 
 		m_Subscriptions.push_back(app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
 			if (evt.KeyCode == GLFW_KEY_LEFT)
@@ -489,13 +371,11 @@ namespace bsf
 		m_Projection.Reset();
 		m_Projection.Perspective(glm::pi<float>() / 4.0f, aspect, 0.1f, 30.0f);
 
-		// Render skybox
+		// Update skybox
 		{
 			m_Model.Reset();
 			m_View.Reset();
-			RotateDynamicCubeMap(pos, deltaPos, windowSize);
-			GenerateDynamicCubeMap(m_ccSkyBox, m_txBaseSkyBox);
-			GenerateDynamicCubeMap(m_ccIrradiance, m_txBaseIrradiance);
+			RotateSky(pos, deltaPos, windowSize);
 		}
 
 		// Render shadow map
@@ -529,7 +409,7 @@ namespace bsf
 				m_pSkyBox->UniformMatrix4f("uProjection", m_Projection);
 				m_pSkyBox->UniformMatrix4f("uView", m_View);
 				m_pSkyBox->UniformMatrix4f("uModel", m_Model);
-				m_pSkyBox->UniformTexture("uSkyBox", m_ccSkyBox->GetTexture(), 0);
+				m_pSkyBox->UniformTexture("uSkyBox", m_Sky->GetEnvironment(), 0);
 				assets.Get<VertexArray>(AssetName::ModSkyBox)->Draw(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
 
@@ -583,8 +463,8 @@ namespace bsf
 				m_pMorphPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
 
 				m_pMorphPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut), 4);
-				m_pMorphPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 5);
-				m_pMorphPBR->UniformTexture("uIrradiance", m_ccIrradiance->GetTexture(), 6);
+				m_pMorphPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment(), 5);
+				m_pMorphPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance(), 6);
 				m_pMorphPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
 
 
@@ -619,8 +499,8 @@ namespace bsf
 				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
 
 				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut), 4);
-				m_pPBR->UniformTexture("uEnvironment", m_ccSkyBox->GetTexture(), 5);
-				m_pPBR->UniformTexture("uIrradiance", m_ccIrradiance->GetTexture(), 6);
+				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment(), 5);
+				m_pPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance(), 6);
 				m_pPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
 				
 
@@ -712,12 +592,10 @@ namespace bsf
 		}
 		m_fbDeferred->Unbind();
 
-
-
 		// Draw to default frame buffer
 		{
 			GLEnableScope scope({ GL_FRAMEBUFFER_SRGB });
-
+			
 			glEnable(GL_FRAMEBUFFER_SRGB);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -725,9 +603,11 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
+			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 
 		}
+
 	
 		RenderGameUI(time);
 		
@@ -905,6 +785,7 @@ namespace bsf
 				renderer2d.Pop();
 			}
 
+
 			{
 				auto rings = Format("%d", m_Stage->Rings);
 				renderer2d.Push();
@@ -963,10 +844,7 @@ namespace bsf
 			animator->SetRunning(false);
 
 			task->SetDoneFunction([&](SceneTask& self) {
-				// For now let's restart the game
-				auto stage = MakeRef<Stage>();
-				stage->FromFile("assets/data/playground.bss");
-				auto scene = MakeRef<MenuScene>();
+				auto scene = MakeRef<SplashScene>();
 				GetApplication().GotoScene(scene);
 			});
 
@@ -1046,44 +924,7 @@ namespace bsf
 	}
 	
 
-	Ref<TextureCube> GameScene::CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size)
-	{
-		auto camera = MakeRef<CubeCamera>(size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		static std::array<TextureCubeFace, 6> faces = {
-			TextureCubeFace::Right,
-			TextureCubeFace::Left,
-			TextureCubeFace::Top,
-			TextureCubeFace::Bottom,
-			TextureCubeFace::Front,
-			TextureCubeFace::Back
-		};
-
-		GLEnableScope scope({ GL_DEPTH_TEST });
-		glEnable(GL_DEPTH_TEST);
-
-		auto modSkyBox = Assets::GetInstance().Get<VertexArray>(AssetName::ModSkyBox);
-
-		for (auto face : faces)
-		{
-			camera->BindForRender(face);
-
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			m_pIrradiance->Use();
-			m_pIrradiance->UniformTexture("uEnvironment", source, 0);
-			m_pIrradiance->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
-			m_pIrradiance->UniformMatrix4f("uView", camera->GetViewMatrix());
-			m_pIrradiance->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-			modSkyBox->Draw(GL_TRIANGLES);
-
-		}
-
-
-		return Ref<TextureCube>(camera->GetTexture());
-	}
-
-	void GameScene::RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize)
+	void GameScene::RotateSky(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize)
 	{
 		float du = deltaPosition.x / m_Stage->GetWidth();
 		float dv = deltaPosition.y / m_Stage->GetHeight();
@@ -1099,44 +940,10 @@ namespace bsf
 		glm::mat4 rotateX = glm::rotate(glm::identity<glm::mat4>(), dv * glm::pi<float>() * 2.0f, { 1.0f, 0.0f, 0.0f });
 		glm::mat rotate = rotateZ * rotateX;
 
-		for (auto& v : m_vDynSkyBoxVertices)
-			v[0] = rotate * glm::vec4(v[0], 1.0);
-
-		m_vaDynSkyBox->GetVertexBuffer(0)->SetSubData(m_vDynSkyBoxVertices.data(), 0, m_vDynSkyBoxVertices.size());
+		m_Sky->ApplyMatrix(rotate);
 	}
 
-
-	void GameScene::GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source)
-	{
-		auto& assets = Assets::GetInstance();
-
-		static std::array<TextureCubeFace, 6> faces = {
-			TextureCubeFace::Right,
-			TextureCubeFace::Left,
-			TextureCubeFace::Top,
-			TextureCubeFace::Bottom,
-			TextureCubeFace::Front,
-			TextureCubeFace::Back
-		};
-
-
-		for (auto face : faces) {
-			camera->BindForRender(face);
-
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-			m_pSkyBox->Use();
-			m_pSkyBox->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
-			m_pSkyBox->UniformMatrix4f("uView", camera->GetViewMatrix());
-			m_pSkyBox->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-			m_pSkyBox->UniformTexture("uSkyBox", source, 0);
-			m_vaDynSkyBox->Draw(GL_TRIANGLES);
-			
-		}
-
-
-	}
+	
 	void GameScene::RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model)
 	{
 		auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();

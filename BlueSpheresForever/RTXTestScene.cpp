@@ -124,7 +124,7 @@ namespace bsf
 		m_pQuad = MakeRef<ShaderProgram>(s_vsQuad, s_fsQuad);
 		m_pRtx = MakeRef<ShaderProgram>(s_vsQuad, s_fsRTX);
 
-		m_fbRTX = MakeRef<Framebuffer>(windowSize.x / 4, windowSize.y / 4, false);
+		m_fbRTX = MakeRef<Framebuffer>(windowSize.x, windowSize.y, false);
 		m_fbRTX->AddColorAttachment("color", GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 		m_fbRTX->GetColorAttachment("color")->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
 
@@ -149,7 +149,7 @@ namespace bsf
 		{
 			constexpr float minDist = 30.0f;
 			constexpr float maxDist = 70.0f;
-			constexpr uint32_t count = 512;
+			constexpr uint32_t count = 100;
 
 			for (uint32_t i = 0; i < count; i++)
 			{

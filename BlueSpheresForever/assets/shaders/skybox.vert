@@ -1,6 +1,6 @@
 #version 330 core
 
-uniform mat4 uProjection;
+uniform mat4 uProjection;	
 uniform mat4 uView;
 uniform mat4 uModel;
 
@@ -11,7 +11,7 @@ out vec3 fPosition;
 out vec3 fUv;
 
 void main() {
-	fPosition = aPosition;
-	fUv = aUv;
-	gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+    fUv = aUv;
+    fPosition = aPosition;
 }

@@ -8,6 +8,7 @@
 #include "Common.h"
 #include "MenuScene.h"
 #include "DisclaimerScene.h"
+#include "SplashScene.h"
 
 using namespace bsf;
 using namespace glm;
@@ -21,10 +22,10 @@ int main()
 	//auto stage = StageGenerator().Generate(365989603263);
 	auto stage = MakeRef<Stage>();
 	stage->FromFile("assets/data/s3stage1.bss");
-	auto scene = Ref<Scene>(new GameScene(stage));
+	//auto scene = Ref<Scene>(new GameScene(stage));
 	//auto scene = Ref<Scene>(new DisclaimerScene());
+	auto scene = Ref<Scene>(new SplashScene());
 	//auto scene = Ref<Scene>(new MenuScene());
-
 	Application app;
 	app.GotoScene(std::move(scene));
 	app.Start();

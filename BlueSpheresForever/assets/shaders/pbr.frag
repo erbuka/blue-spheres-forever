@@ -93,7 +93,8 @@ void main() {
 
     float NDF = DistributionGGX(N, H, roughness);        
     float G   = GeometrySmith(N, V, L, roughness);      
-    vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);       
+    //vec3 F    = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);       
+    vec3 F    = fresnelSchlick(max(dot(N, H), 0.0), F0, roughness);       
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
@@ -106,11 +107,17 @@ void main() {
     float shadow = CalculateShadow(worldPos);
     #endif
 
-    vec3 radiance = vec3(1.0f);
+    /*
+    float distance = length(worldPos - uLightPos);
+    float attenuation = 1.0 / (distance * distance);
+    vec3 radiance = vec3(5.0f) * attenuation;
+    */
+    vec3 radiance = vec3(5.0f);
     vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
-    fragment += (kD * albedo / PI + specular) * radiance * NdotL * shadow; 
+    //fragment += (kD * albedo / PI + specular) * radiance * NdotL * shadow; 
     
     // Irradiance
+    #ifndef NO_INDIRECT_LIGHTING
     vec3 irradiance = texture(uIrradiance, N).rgb;
     fragment += (kD * irradiance * albedo) * ao;
 
@@ -118,6 +125,7 @@ void main() {
     vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
     vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
     fragment += indirectSpecular * ao;
+    #endif
 
     oColor = vec4(fragment, 1.0);
 

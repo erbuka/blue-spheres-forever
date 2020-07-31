@@ -62,7 +62,7 @@ namespace bsf
 
 	Texture2D::Texture2D()
 	{
-		BSF_GLCALL(glGenTextures(1, &m_Id));
+		//BSF_GLCALL(glGenTextures(1, &m_Id));
 	}
 
 
@@ -128,7 +128,7 @@ namespace bsf
 	{
 		auto [pixels, width, height] = LoadPng(fileName, true);
 
-		BSF_GLCALL(glGenTextures(1, &m_Id));
+		//BSF_GLCALL(glGenTextures(1, &m_Id));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
 		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
@@ -141,12 +141,15 @@ namespace bsf
 	Texture::Texture() :
 		m_Id(0)
 	{
+		BSF_GLCALL(glGenTextures(1, &m_Id));
+		BSF_INFO("Create texture id: {0}", m_Id);
 	}
 
 	Texture::~Texture()
 	{
 		if (m_Id != 0)
 		{
+			BSF_INFO("Delete texture id: {0}", m_Id);
 			BSF_GLCALL(glDeleteTextures(1, &m_Id));
 			m_Id = 0;
 		}
@@ -263,7 +266,7 @@ namespace bsf
 
 	void TextureCube::Initialize()
 	{
-		BSF_GLCALL(glGenTextures(1, &m_Id));
+		//BSF_GLCALL(glGenTextures(1, &m_Id));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
 
 		SetFilter(TextureFilter::Linear, TextureFilter::Linear);

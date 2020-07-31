@@ -152,7 +152,6 @@ namespace bsf
             if (m_NextScene != nullptr)
             {
                 m_CurrentScene->OnDetach();
-                
                 m_CurrentScene = std::move(m_NextScene); // m_NextScene = nullptr implicit
                 m_CurrentScene->m_App = this;
                 m_CurrentScene->OnAttach();
@@ -170,8 +169,8 @@ namespace bsf
 
 
             /* FPS counter */
-            char buffer[40];
-            sprintf_s(buffer, "Period: %f", delta.count());
+            char buffer[4255];
+            sprintf_s(buffer, "Period: %f, FPS: %f", delta.count(), 1.0f / delta.count());
             glfwSetWindowTitle(m_Window, buffer);
             /* FPS counter */
             

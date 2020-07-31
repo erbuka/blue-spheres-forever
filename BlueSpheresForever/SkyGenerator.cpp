@@ -33,68 +33,184 @@ namespace bsf
 		// Shaders
 		m_pGenBg = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen_bg.frag");
 		m_pGenStars = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_stars.vert", "assets/shaders/sky_generator/sky_gen_stars.frag");
+		m_pGenIrradiance = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_irradiance.vert", "assets/shaders/sky_generator/sky_gen_irradiance.frag");
 	}
 
-	Ref<TextureCube> SkyGenerator::Generate(const Options& options)
+	Ref<Sky> SkyGenerator::Generate(const Options& options)
+	{
+		auto env = GenerateEnvironment(options);
+		auto irr = GenerateIrradiance(env, 32);
+		return Ref<Sky>(new Sky(env, irr));
+	}
+
+	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
+		return Ref<TextureCube>(new TextureCube(1024, "assets/textures/miramar.png"));
 
-		return Ref<TextureCube>(new TextureCube(256, "assets/textures/skybox.png"));
-
-		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE });
+		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
 		auto& assets = Assets::GetInstance();
 		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
-		auto bgPattern = Ref<TextureCube>(new TextureCube(1024, "assets/textures/skyback.png"));
+		auto bgPattern = Ref<TextureCube>(new TextureCube(
+			1024,
+			"assets/textures/noise_front5.png",
+			"assets/textures/noise_back6.png",
+			"assets/textures/noise_left2.png",
+			"assets/textures/noise_right1.png",
+			"assets/textures/noise_bottom4.png",
+			"assets/textures/noise_top3.png"
+		));
+
+		auto starsPattern = Ref<TextureCube>(new TextureCube(
+			1024,
+			"assets/textures/stars_front5.png",
+			"assets/textures/stars_back6.png",
+			"assets/textures/stars_left2.png",
+			"assets/textures/stars_right1.png",
+			"assets/textures/stars_bottom4.png",
+			"assets/textures/stars_top3.png"
+		));
 
 		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		// Generate stars
-		std::vector<glm::vec3> starPos(1000);
-
-		for (auto& pos : starPos)
-			pos = glm::ballRand(100.0f);
-		
-
 		for (auto face : TextureCubeFaces)
 		{
 			camera.BindForRender(face);
 
-			glClearColor(0, 0, 0, 0);
+			glClearColor(0, 0, 0, 1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glDisable(GL_DEPTH_TEST);
-			glDisable(GL_CULL_FACE);
-
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 			// Draw background
 			{
-				glDepthMask(GL_FALSE);
 				m_pGenBg->Use();
 				m_pGenBg->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
 				m_pGenBg->UniformMatrix4f("uView", camera.GetViewMatrix());
 				m_pGenBg->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
 				m_pGenBg->Uniform3fv("uColor0", 1, glm::value_ptr(options.BaseColor0));
 				m_pGenBg->Uniform3fv("uColor1", 1, glm::value_ptr(options.BaseColor1));
-				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern, 1);
+				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern, 0);
 				m_vaCube->Draw(GL_TRIANGLES);
-				glDepthMask(GL_TRUE);
 			}
+
+
 			// Draw stars
-			m_pGenStars->Use();
-			m_pGenStars->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
-			m_pGenStars->UniformMatrix4f("uView", camera.GetViewMatrix());
-			m_pGenStars->Uniform3f("uColor", { 20.0f, 20.0f, 20.0f });
-			m_pGenStars->UniformTexture("uTexture", starTex, 0);
-			
-			for (const auto& pos : starPos)
 			{
-				m_pGenStars->UniformMatrix4f("uModel", glm::translate(pos));
-				//assets.Get<VertexArray>(AssetName::ModSphere)->Draw(GL_TRIANGLES);
-				//m_vaBillboard->Draw(GL_TRIANGLES);
+				m_pGenStars->Use();
+				m_pGenStars->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
+				m_pGenStars->UniformMatrix4f("uView", camera.GetViewMatrix());
+				m_pGenStars->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+				m_pGenStars->UniformTexture("uStarsPattern", starsPattern, 1);
+				m_vaCube->Draw(GL_TRIANGLES);
 			}
-
-
 		}
 
 		return camera.GetTexture();
+	}
+
+	Ref<TextureCube> SkyGenerator::GenerateIrradiance(const Ref<TextureCube>& sky, uint32_t size)
+	{
+		auto camera = MakeRef<CubeCamera>(size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		static std::array<TextureCubeFace, 6> faces = {
+			TextureCubeFace::Right,
+			TextureCubeFace::Left,
+			TextureCubeFace::Top,
+			TextureCubeFace::Bottom,
+			TextureCubeFace::Front,
+			TextureCubeFace::Back
+		};
+
+		GLEnableScope scope({ GL_DEPTH_TEST });
+		glEnable(GL_DEPTH_TEST);
+
+		auto modSkyBox = Assets::GetInstance().Get<VertexArray>(AssetName::ModSkyBox);
+
+		for (auto face : faces)
+		{
+			camera->BindForRender(face);
+
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			m_pGenIrradiance->Use();
+			m_pGenIrradiance->UniformTexture("uEnvironment", sky, 0);
+			m_pGenIrradiance->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
+			m_pGenIrradiance->UniformMatrix4f("uView", camera->GetViewMatrix());
+			m_pGenIrradiance->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+			modSkyBox->Draw(GL_TRIANGLES);
+
+		}
+
+
+		return camera->GetTexture();
+	}
+
+	Sky::Sky(const Ref<TextureCube>& env, const Ref<TextureCube>& irradiance) :
+		m_SrcEnv(env), m_SrcIrr(irradiance)
+	{
+		m_Vertices = CreateCubeData();
+		m_VertexArray = CreateCube();
+		
+		m_pSky = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+		m_Env = Ref<CubeCamera>(new CubeCamera(env->GetSize(), GL_RGB16F, GL_RGB, GL_HALF_FLOAT));
+		m_Irr = Ref<CubeCamera>(new CubeCamera(irradiance->GetSize(), GL_RGB16F, GL_RGB, GL_HALF_FLOAT));
+		
+		ApplyMatrix(glm::identity<glm::mat4>());
+
+	}
+
+	void Sky::ApplyMatrix(const glm::mat4& matrix)
+	{
+		for (auto& v : m_Vertices)
+			v[0] = matrix * glm::vec4(v[0], 1.0);
+
+		m_VertexArray->GetVertexBuffer(0)->SetSubData(m_Vertices.data(), 0, m_Vertices.size());
+
+		Update(m_Env, m_SrcEnv);
+		Update(m_Irr, m_SrcIrr);
+	}
+
+	const Ref<TextureCube>& Sky::GetEnvironment()
+	{
+		return m_Env->GetTexture();
+	}
+
+	const Ref<TextureCube>& Sky::GetIrradiance()
+	{
+		return m_Irr->GetTexture();
+	}
+
+	void Sky::Update(Ref<CubeCamera>& camera, Ref<TextureCube>& source)
+	{
+
+		auto& assets = Assets::GetInstance();
+
+		static std::array<TextureCubeFace, 6> faces = {
+			TextureCubeFace::Right,
+			TextureCubeFace::Left,
+			TextureCubeFace::Top,
+			TextureCubeFace::Bottom,
+			TextureCubeFace::Front,
+			TextureCubeFace::Back
+		};
+
+
+		for (auto face : faces) {
+			camera->BindForRender(face);
+
+			glClearColor(0, 0, 0, 1);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+			m_pSky->Use();
+			m_pSky->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
+			m_pSky->UniformMatrix4f("uView", camera->GetViewMatrix());
+			m_pSky->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+			m_pSky->UniformTexture("uSkyBox", source, 0);
+			m_VertexArray->Draw(GL_TRIANGLES);
+
+		}
 	}
 
 }

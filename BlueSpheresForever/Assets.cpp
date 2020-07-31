@@ -30,6 +30,7 @@ namespace bsf
 		// Stage generator
 		m_Assets[AssetName::StageGenerator] = MakeRef<StageGenerator>();
 
+
 		// Sky generator
 		m_Assets[AssetName::SkyGenerator] = MakeRef<SkyGenerator>();
 
@@ -43,15 +44,16 @@ namespace bsf
 		m_Assets[AssetName::TexTransparent] = Ref<Texture>(new Texture2D(0));
 		m_Assets[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
-		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
-		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.1f);
-
+		m_Assets[AssetName::TexSphereMetallic] = CreateGray(1.0f);
+		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.0f);
+		
 		m_Assets[AssetName::TexGroundNormal] = m_Assets[AssetName::TexNormalPosZ];
-		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.1f);
-		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
+		m_Assets[AssetName::TexGroundMetallic] = CreateGray(1.0f);
+		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.0f);
 
-		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.1f);
+		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.8f);
 		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.0f);
+
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
 			bumper->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);

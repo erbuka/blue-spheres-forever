@@ -51,6 +51,7 @@ namespace bsf
 		uint32_t GetId() const { return m_Id; }
 
 	protected:
+
 		uint32_t m_Id;
 	};
 
@@ -69,6 +70,8 @@ namespace bsf
 		void Bind(uint32_t textureUnit) override;
 
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
+
+		uint32_t GetSize() const { return m_Size; }
 
 	private:
 		void Initialize();

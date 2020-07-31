@@ -18,6 +18,7 @@ namespace bsf
 	class Framebuffer;
 	class Renderer2D;
 	class CubeCamera;
+	class Sky;
 
 	struct GameStateChangedEvent;
 	struct GameActionEvent;
@@ -59,17 +60,13 @@ namespace bsf
 
 		Ref<Framebuffer> m_fbDeferred, m_fbShadow;
 
-		Ref<VertexArray> m_vaDynSkyBox;
-		Ref<ShaderProgram> m_pPBR, m_pMorphPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pIrradiance, m_pShadow;
+		Ref<ShaderProgram> m_pPBR, m_pMorphPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pShadow;
 		
-		Ref<TextureCube> m_txBaseSkyBox, m_txBaseIrradiance;
-		Ref<CubeCamera> m_ccSkyBox, m_ccIrradiance;
+		Ref<Sky> m_Sky;
 		Ref<Texture2D> m_txGroundMap;
 		Ref<GameLogic> m_GameLogic;
 		
 		Ref<Stage> m_Stage;
-
-		std::vector<std::array<glm::vec3, 2>> m_vDynSkyBoxVertices;
 
 		std::list<GameMessage> m_GameMessages;
 
@@ -81,10 +78,7 @@ namespace bsf
 		void OnGameStateChanged(const GameStateChangedEvent& evt);
 		void OnGameAction(const GameActionEvent& action);
 
-		Ref<TextureCube> CreateBaseIrradianceMap(const Ref<TextureCube>& source, uint32_t size);
-
-		void RotateDynamicCubeMap(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
-		void GenerateDynamicCubeMap(Ref<CubeCamera>& camera, Ref<TextureCube> source);
+		void RotateSky(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
 
 		void RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model);
 

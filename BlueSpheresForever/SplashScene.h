@@ -13,6 +13,7 @@ namespace bsf
 
 	class Framebuffer;
 	class ShaderProgram;
+	class Sky;
 
 	class SplashScene : public Scene
 	{
@@ -25,7 +26,8 @@ namespace bsf
 
 	private:
 		Ref<Framebuffer> m_fbDeferred;
-		Ref<ShaderProgram> m_pPBR, m_pDeferred;
+		Ref<ShaderProgram> m_pPBR, m_pDeferred, m_pSky;
+		Ref<Sky> m_Sky;
 
 		MatrixStack m_Projection, m_View, m_Model;
 
