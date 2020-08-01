@@ -39,7 +39,6 @@ namespace bsf
 			BSF_ERROR("Can't create stream from file: {0}", fileName);
 			return;
 		}
-
 	}
 
 	Audio::~Audio()
@@ -53,6 +52,12 @@ namespace bsf
 	{
 		BASS_CHECK(BASS_ChannelPlay(m_Impl->m_Stream, true));
 	}
+
+	void Audio::Stop()
+	{
+		BASS_CHECK(BASS_ChannelStop(m_Impl->m_Stream));
+	}
+
 
 }
 

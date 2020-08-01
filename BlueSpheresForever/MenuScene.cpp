@@ -200,6 +200,8 @@ namespace bsf
 	{
 		auto fadeTask = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
 
+		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->Stop();
+
 		fadeTask->SetDoneFunction([&, stage](SceneTask& self) {
 			GetApplication().GotoScene(MakeRef<GameScene>(stage));
 		});

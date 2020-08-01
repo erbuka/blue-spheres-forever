@@ -16,6 +16,11 @@ namespace bsf
 		TexNormalPosZ,
 
 		TexBumper,
+		TexBumperMetallic,
+		TexBumperRoughness,
+
+		TexEmeraldMetallic,
+		TexEmeraldRoughness,
 
 		TexSphereMetallic,
 		TexSphereRoughness,

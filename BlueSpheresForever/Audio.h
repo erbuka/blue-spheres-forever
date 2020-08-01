@@ -24,7 +24,10 @@ namespace bsf
 	public:
 		Audio(const std::string& fileName);
 		~Audio();
+
 		void Play();
+		void Stop();
+
 	private:
 		struct Impl;
 		std::unique_ptr<Impl> m_Impl;

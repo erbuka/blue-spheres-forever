@@ -38,27 +38,45 @@ namespace bsf
 		m_Assets[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf", 128.0f));
 		m_Assets[AssetName::FontText] = Ref<Font>(new Font("assets/fonts/arial.ttf", 72.0f));
 
+
 		// Textures
 		m_Assets[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));
 		m_Assets[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
 		m_Assets[AssetName::TexTransparent] = Ref<Texture>(new Texture2D(0));
 		m_Assets[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
-		m_Assets[AssetName::TexSphereMetallic] = CreateGray(1.0f);
-		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.0f);
+		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.9f);
+		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.1f);
+
+		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
+		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.1f);
 		
 		m_Assets[AssetName::TexGroundNormal] = m_Assets[AssetName::TexNormalPosZ];
-		m_Assets[AssetName::TexGroundMetallic] = CreateGray(1.0f);
-		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.0f);
+		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.9f);
+		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.8f);
 		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.0f);
 
 		{
-			auto bumper = MakeRef<Texture2D>("assets/textures/star1.png");
+			auto bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
 			bumper->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_Assets[AssetName::TexBumper] = bumper;
 		}
+
+
+		{
+			auto bumperMetal = MakeRef<Texture2D>("assets/textures/bumper_metal.png");
+			bumperMetal->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
+			m_Assets[AssetName::TexBumperMetallic] = bumperMetal;
+		}
+
+		{
+			auto bumperRough = MakeRef<Texture2D>("assets/textures/bumper_roughness.png");
+			bumperRough->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
+			m_Assets[AssetName::TexBumperRoughness] = bumperRough;
+		}
+
 
 		{
 			auto star = MakeRef<Texture2D>("assets/textures/star.png");
@@ -99,11 +117,9 @@ namespace bsf
 		m_Assets[AssetName::SfxCodeOk] = MakeRef<Audio>("assets/sound/ok.wav");
 		m_Assets[AssetName::SfxCodeWrong] = MakeRef<Audio>("assets/sound/wrong.wav");
 
-
-		// Shaders
-
 		// Models
-		m_Assets[AssetName::ModSphere] = CreateIcosphere(0.15, 3);
+		//m_Assets[AssetName::ModSphere] = CreateIcosphere(0.15, 3);
+		m_Assets[AssetName::ModSphere] = CreateModel(WavefrontLoader().Load("assets/models/sphere.obj"))->GetMesh(0);
 		m_Assets[AssetName::ModGround] = CreateGround(-10, 10, -10, 10, 10);
 		m_Assets[AssetName::ModClipSpaceQuad] = CreateClipSpaceQuad();
 		m_Assets[AssetName::ModSkyBox] = CreateCube();

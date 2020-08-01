@@ -99,9 +99,10 @@ namespace bsf
 		// Draw to deferred framebuffer
 		m_fbDeferred->Bind();
 		{
-			GLEnableScope scope({ GL_DEPTH_TEST });
+			GLEnableScope scope({ GL_DEPTH_TEST, GL_BLEND });
 			glEnable(GL_DEPTH_TEST);
-			
+			glDisable(GL_BLEND);
+
 			glViewport(0, 0, windowSize.x, windowSize.y);
 
 			glClearColor(0, 0, 0, 1);
@@ -145,13 +146,15 @@ namespace bsf
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightPos));
 
 				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
-				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexWhite), 1);
-				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexBlack), 2);
+				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic), 1);
+				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness), 2);
 				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
 
 				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut), 4);
 				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment(), 5);
 				m_pPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance(), 6);
+				m_pPBR->UniformTexture("uReflections", assets.Get<Texture2D>(AssetName::TexBlack), 7);
+
 
 				for (uint32_t i = 0; i < 7; i++)
 				{

@@ -4,6 +4,8 @@ uniform mat4 uProjection;
 uniform mat4 uView;
 uniform mat4 uModel;
 
+uniform vec2 uResolution;
+
 uniform mat4 uShadowView;
 uniform mat4 uShadowProjection;
 uniform vec2 uShadowMapTexelSize;
@@ -23,6 +25,8 @@ uniform samplerCube uEnvironment;
 uniform samplerCube uIrradiance;
 uniform sampler2D uShadowMap;
 
+uniform sampler2D uReflections;
+
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUv;
@@ -37,28 +41,6 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
-
-float CalculateShadow(in vec3 worldPos) {
-    
-    vec3 shadowViewPos = (uShadowView * vec4(worldPos, 1.0)).xyz;
-    vec2 shadowUv = (uShadowProjection * vec4(shadowViewPos, 1.0)).xy * 0.5 + 0.5;
-
-    if(shadowUv.x < 0.0 || shadowUv.x > 1.0 || shadowUv.y < 0.0 || shadowUv.y > 1.0)
-        return 1.0;
-
-    float shadow = 0.0;
-
-    for(int x = -cShadowQuality; x <= cShadowQuality; ++x) {
-        for(int y = -cShadowQuality; y <= cShadowQuality; y++) {
-            vec2 uv = shadowUv + vec2(x,y) * uShadowMapTexelSize;
-            float shadowDepth = texture(uShadowMap, uv).r;
-            shadow += shadowDepth < shadowViewPos.z + 0.05 ? 1.0 : 0.0;
-        }
-    }
-
-    return shadow / 9.0;
-
-}
 
 void main() {
 
@@ -100,21 +82,9 @@ void main() {
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;	  
 
-    // Main light
-    #ifdef NO_SHADOWS
-    float shadow = 1.0;
-    #else
-    float shadow = CalculateShadow(worldPos);
-    #endif
-
-    /*
-    float distance = length(worldPos - uLightPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = vec3(5.0f) * attenuation;
-    */
     vec3 radiance = vec3(5.0f);
     vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
-    //fragment += (kD * albedo / PI + specular) * radiance * NdotL * shadow; 
+    fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
     
     // Irradiance
     #ifndef NO_INDIRECT_LIGHTING
@@ -122,9 +92,15 @@ void main() {
     fragment += (kD * irradiance * albedo) * ao;
 
     // Sky reflections
-    vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
-    vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
-    fragment += indirectSpecular * ao;
+    vec3 reflections = texture(uReflections, gl_FragCoord.xy / uResolution).rgb * F;
+    fragment += reflections * ao;
+
+    if(length(reflections) == 0.0) { 
+        vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
+        vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
+        fragment += indirectSpecular * ao;
+    }
+
     #endif
 
     oColor = vec4(fragment, 1.0);
