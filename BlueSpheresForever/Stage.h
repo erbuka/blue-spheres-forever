@@ -45,8 +45,8 @@ namespace bsf
 		StageGenerator();
 		~StageGenerator();
 		Ref<Stage> Generate(uint64_t code);
-		uint64_t GetCodeFromLevel(uint32_t level);
-		std::optional<uint32_t> GetLevelFromCode(uint64_t code);
+		uint64_t GetCodeFromStage(uint32_t stage);
+		std::optional<uint32_t> GetStageFromCode(uint64_t code);
 	private:
 		struct Impl;
 		std::unique_ptr<Impl> m_Impl;

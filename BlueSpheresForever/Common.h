@@ -48,7 +48,7 @@ namespace bsf
 		glm::vec2 Uv0, Uv1;
 	};
 
-	std::array<glm::vec3, 4> Project(const glm::vec3& position);
+	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position);
 	Ref<VertexArray> CreateClipSpaceQuad();
 	Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion);
 	Ref<VertexArray> CreateGround(int32_t left, int32_t right, int32_t bottom, int32_t top, int32_t divisions);

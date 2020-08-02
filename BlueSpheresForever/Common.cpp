@@ -67,7 +67,7 @@ namespace bsf
 
 	}
 
-	std::array<glm::vec3, 4> Project(const glm::vec3& position)
+	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position)
 	{
 		constexpr float radius = 12.5f;
 		constexpr glm::vec3 center = { 0.0f, 0.0f, -radius };
@@ -80,7 +80,13 @@ namespace bsf
 		glm::vec3 binormal = glm::cross(normal, tangent);
 		glm::vec3 pos = center + normal * (radius + offset);
 
-		return { pos, normal, tangent, binormal };
+		glm::mat4 tbn = glm::identity<glm::mat4>();
+
+		tbn[0] = { tangent, 0.0f };
+		tbn[1] = { binormal, 0.0f };
+		tbn[2] = { normal, 0.0f };
+
+		return { pos, tbn };
 
 	}
 
@@ -235,8 +241,8 @@ namespace bsf
 
 						for (uint32_t i = 0; i < 4; i++)
 						{
-							auto [pos, normal, tangent, binormal] = Project(glm::vec3(coords[i], 0.0f));
-							v[i] = { pos, normal, uvs[i] };
+							auto [pos, tbn] = Project(glm::vec3(coords[i], 0.0f));
+							v[i] = { pos, glm::vec3(tbn[2]), uvs[i] };
 						}
 
 

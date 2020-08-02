@@ -256,19 +256,19 @@ namespace bsf
 
 	Ref<Stage> StageGenerator::Generate(uint64_t code)
 	{
-		auto levelOpt = GetLevelFromCode(code);
+		auto stageOpt = GetStageFromCode(code);
 
-		if (!levelOpt.has_value())
+		if (!stageOpt.has_value())
 			return nullptr;
 
-		uint32_t level = levelOpt.value();
+		uint32_t stage = stageOpt.value();
 
 		// Calculating sections
 
-		uint32_t tr = (level - 1) % 128;					// Top right
-		uint32_t br = (1 + ((level - 1) % 127) * 3) % 127;	// Bottom righe
-		uint32_t tl = (2 + ((level - 1) % 126) * 5) % 126;	// Top left
-		uint32_t bl = (3 + ((level - 1) % 125) * 7) % 125;	// Bottom left
+		uint32_t tr = (stage - 1) % 128;					// Top right
+		uint32_t br = (1 + ((stage - 1) % 127) * 3) % 127;	// Bottom righe
+		uint32_t tl = (2 + ((stage - 1) % 126) * 5) % 126;	// Top left
+		uint32_t bl = (3 + ((stage - 1) % 125) * 7) % 125;	// Bottom left
 
 
 		std::array<StageSection, 4> sections = { 
@@ -340,7 +340,7 @@ namespace bsf
 
 	}
 
-	uint64_t StageGenerator::GetCodeFromLevel(uint32_t level)
+	uint64_t StageGenerator::GetCodeFromStage(uint32_t stage)
 	{
 
 		// cb -> stage number (binary form)
@@ -357,7 +357,7 @@ namespace bsf
 		ca[38] = true;
 
 		// Before calculating the binary form, stage number is increased by 19088742
-		cb = (level + 19088742);
+		cb = (stage + 19088742);
 
 		// Calculate code in binary form (note that some values (ca) are missing here)
 
@@ -368,7 +368,7 @@ namespace bsf
 
 
 		// Stage is decreased by 1 and then the binary form is recalculated
-		cb = (level - 1);
+		cb = (stage - 1);
 
 		// The missing code values are filled with pseudo-random data generated from the stage number decreased by 1
 
@@ -392,9 +392,9 @@ namespace bsf
 
 	}
 
-	std::optional<uint32_t> StageGenerator::GetLevelFromCode(uint64_t code)
+	std::optional<uint32_t> StageGenerator::GetStageFromCode(uint64_t code)
 	{
-		uint32_t level = 0;
+		uint32_t stage = 0;
 		std::bitset<39> ca;
 		std::bitset<28> cb;
 
@@ -415,28 +415,28 @@ namespace bsf
 		// This bit is always 0 (it seems)
 		cb[27] = false;
 
-		// Getting the level number (binary) from the code
+		// Getting the stage number (binary) from the code
 		for (uint32_t i = 0; i < 6; i++)
 			cb[i] = ca[i + 26];
 
 		for (uint32_t i = 6; i < 27; i++)
 			cb[i] = ca[i - 6];
 
-		/* Calculate the level number in decimal form */
-		level = (uint32_t)cb.to_ulong();
+		/* Calculate the stage number in decimal form */
+		stage = (uint32_t)cb.to_ulong();
 
-		/* The true level number is found by subtracting 19088742 from the result */
-		level -= 19088742;
+		/* The true stage number is found by subtracting 19088742 from the result */
+		stage -= 19088742;
 
 		/* If the stage is <= 0, we add the max_stage (cyclic stages) */
-		level %= s_MaxStage;
+		stage %= s_MaxStage;
 
 		/* Checking that the given code is fully correct. If not, return -1 (invalid code) */
-		if (GetCodeFromLevel(level) != code) {
-			BSF_ERROR("Invalid level code: {0}", code);
+		if (GetCodeFromStage(stage) != code) {
+			BSF_ERROR("Invalid stage code: {0}", code);
 			return std::nullopt;
 		}
-		return level;
+		return stage;
 	}
 
 

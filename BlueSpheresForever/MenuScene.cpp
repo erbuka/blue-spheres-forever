@@ -360,7 +360,7 @@ namespace bsf
 	StageCodeMenuItem::StageCodeMenuItem() : m_CursorPos(0)
 	{
 		auto generator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
-		m_CurrentCode = generator->GetCodeFromLevel(1);
+		m_CurrentCode = generator->GetCodeFromStage(1);
 	}
 
 	bool StageCodeMenuItem::OnConfirm(MenuRoot& root)
@@ -375,7 +375,7 @@ namespace bsf
 		{
 			auto& assets = Assets::GetInstance();
 			auto generator = assets.Get<StageGenerator>(AssetName::StageGenerator);
-			auto stage = generator->GetLevelFromCode(m_CurrentCode);
+			auto stage = generator->GetStageFromCode(m_CurrentCode);
 
 			if (stage != std::nullopt)
 			{

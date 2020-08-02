@@ -437,7 +437,7 @@ namespace bsf
 						continue;
 
 					m_Model.Push();
-					m_Model.Translate(Project({ x - fx, y - fy, -0.15f - m_GameOverObjectsHeight })[0]);
+					m_Model.Translate(std::get<0>(Project({ x - fx, y - fy, -0.15f - m_GameOverObjectsHeight })));
 
 					if (value == EStageObject::Ring)
 						m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
@@ -630,8 +630,11 @@ namespace bsf
 						if (value == EStageObject::None)
 							continue;
 
+						auto [p, tbn] = Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight });
+
 						m_Model.Push();
-						m_Model.Translate(Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight })[0]);
+						m_Model.Translate(p);
+						m_Model.Multiply(tbn); 
 					
 						if (value == EStageObject::Ring)
 							m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
@@ -781,7 +784,7 @@ namespace bsf
 					continue;
 
 				m_ShadowModel.Push();
-				m_ShadowModel.Translate(Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight })[0]);
+				m_ShadowModel.Translate(std::get<0>(Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight })));
 
 				if (value == EStageObject::Ring)
 					m_ShadowModel.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
@@ -1058,15 +1061,14 @@ namespace bsf
 	void GameScene::RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model)
 	{
 		auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
-		auto projectedEmeraldPos = Project({ emeraldPos.x, emeraldPos.y, 0.8f })[0];
+		auto [pos, tbn] = Project({ emeraldPos.x, emeraldPos.y, 0.8f });
 
 		model.Push();
-		{
-			model.Translate(projectedEmeraldPos);
-			model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
-			currentProgram->UniformMatrix4f("uModel", model);
-			Assets::GetInstance().Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
-		}
+		model.Translate(pos);
+		model.Multiply(tbn);
+		model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
+		currentProgram->UniformMatrix4f("uModel", model);
+		Assets::GetInstance().Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
 		model.Pop();
 	}
 }
