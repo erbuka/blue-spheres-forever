@@ -436,8 +436,11 @@ namespace bsf
 					if (value == EStageObject::None)
 						continue;
 
+					auto [p, tbn] = Project({ x - fx, y - fy, -0.15f - m_GameOverObjectsHeight });
+
 					m_Model.Push();
-					m_Model.Translate(std::get<0>(Project({ x - fx, y - fy, -0.15f - m_GameOverObjectsHeight })));
+					m_Model.Translate(p);
+					m_Model.Multiply(tbn);
 
 					if (value == EStageObject::Ring)
 						m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
