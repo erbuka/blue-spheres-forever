@@ -403,6 +403,7 @@ namespace bsf
 			setupView();
 
 			glm::vec3 cameraPosition = glm::inverse(m_View.GetMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			glm::vec3 cameraWorldPosition = glm::inverse(m_Model.GetMatrix()) * glm::vec4(cameraPosition, 1.0f);
 			glm::vec3 lightVector = { 0.0f, -1.0f, 0.0f };
 
 			m_pPBR->Use();
@@ -427,6 +428,18 @@ namespace bsf
 			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 			m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
 
+			auto hd = [](const glm::vec3& obs) -> float {
+				auto v = obs - s_GroundCenter;
+				float h = glm::length(v) - s_GroundRadius;
+				return glm::sqrt(h * (2.0f * s_GroundRadius + h));
+			};
+
+			auto hd2 = [](float h) -> float {
+				return glm::sqrt(h * (2.0f * s_GroundRadius + h));
+			};
+
+			float horizon = hd(cameraWorldPosition);
+
 			for (int32_t x = -12; x <= 12; x++)
 			{
 				for (int32_t y = -12; y <= 12; y++)
@@ -436,12 +449,21 @@ namespace bsf
 					if (value == EStageObject::None)
 						continue;
 
-					auto [p, tbn] = Project({ x - fx, y - fy, -0.15f - m_GameOverObjectsHeight });
+					auto top = std::get<0>(Project({ x - fx, y - fy, 0.3f + m_GameOverObjectsHeight }));
+					float maxTopDist = hd(top) + horizon;
+					float topDist = glm::length(top - cameraWorldPosition);
+					float factor = glm::clamp((topDist - horizon) / (maxTopDist - horizon), 0.0f, 1.0f);
+					
+					if (factor == 1.0f)
+						continue;
 
+					//auto [p, tbn] = Project({ x - fx, y - fy, 0.30f * factor - 0.15f - m_GameOverObjectsHeight });
+					auto [p, tbn] = Project({ x - fx, y - fy, glm::lerp(-0.15f - m_GameOverObjectsHeight, 0.45f + m_GameOverObjectsHeight,  factor * factor) });
+					
 					m_Model.Push();
 					m_Model.Translate(p);
 					m_Model.Multiply(tbn);
-
+					
 					if (value == EStageObject::Ring)
 						m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
 

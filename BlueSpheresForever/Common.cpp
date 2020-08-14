@@ -11,7 +11,6 @@ namespace bsf
 {
 
 
-
 	uint32_t ToHexColor(const glm::vec3& rgb)
 	{
 		return ToHexColor({ rgb, 1.0f });
@@ -67,18 +66,17 @@ namespace bsf
 
 	}
 
+
 	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position)
 	{
-		constexpr float radius = 12.5f;
-		constexpr glm::vec3 center = { 0.0f, 0.0f, -radius };
 
 		float offset = position.z;
 		glm::vec3 ground = { position.x, position.y, 0.0f };
 
-		glm::vec3 normal = glm::normalize(ground - center);
+		glm::vec3 normal = glm::normalize(ground - s_GroundCenter);
 		glm::vec3 tangent = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), normal);
 		glm::vec3 binormal = glm::cross(normal, tangent);
-		glm::vec3 pos = center + normal * (radius + offset);
+		glm::vec3 pos = s_GroundCenter + normal * (s_GroundRadius + offset);
 
 		glm::mat4 tbn = glm::identity<glm::mat4>();
 

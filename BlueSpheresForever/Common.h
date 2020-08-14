@@ -47,7 +47,10 @@ namespace bsf
 		glm::vec3 Normal0, Normal1;
 		glm::vec2 Uv0, Uv1;
 	};
-
+	
+	constexpr float s_GroundRadius = 12.5f;
+	constexpr glm::vec3 s_GroundCenter = { 0.0f, 0.0f, -s_GroundRadius };
+	
 	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position);
 	Ref<VertexArray> CreateClipSpaceQuad();
 	Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion);

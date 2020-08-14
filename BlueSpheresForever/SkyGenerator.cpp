@@ -46,7 +46,7 @@ namespace bsf
 
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
-		return Ref<TextureCube>(new TextureCube(1024, "assets/textures/miramar.png"));
+		// return Ref<TextureCube>(new TextureCube(1024, "assets/textures/miramar.png"));
 		// return Ref<TextureCube>(new TextureCube(256, "assets/textures/skybox.png"));
 
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
