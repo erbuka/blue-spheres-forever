@@ -448,19 +448,6 @@ namespace bsf
 
 					if (value == EStageObject::None)
 						continue;
-					/*
-					auto top = std::get<0>(Project({ x - fx, y - fy, 0.3f + m_GameOverObjectsHeight }));
-					float maxTopDist = hd(top) + horizon;
-					float topDist = glm::length(top - cameraWorldPosition);
-					float factor = glm::clamp((topDist - horizon) / (maxTopDist - horizon), 0.0f, 1.0f);
-					
-
-					if (factor == 1.0f)
-						continue;
-
-					//auto [p, tbn] = Project({ x - fx, y - fy, 0.30f * factor - 0.15f - m_GameOverObjectsHeight });
-					auto [p, tbn] = Project({ x - fx, y - fy, glm::lerp(-0.15f - m_GameOverObjectsHeight, 0.45f + m_GameOverObjectsHeight,  factor * factor) });
-					*/
 
 					auto [visible, p, tbn] = Reflect(cameraWorldPosition, { x - fx, y - fy, 0.15f + m_GameOverObjectsHeight }, 0.15f);
 
