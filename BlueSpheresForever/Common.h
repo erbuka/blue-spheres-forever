@@ -51,6 +51,7 @@ namespace bsf
 	constexpr float s_GroundRadius = 12.5f;
 	constexpr glm::vec3 s_GroundCenter = { 0.0f, 0.0f, -s_GroundRadius };
 	
+	std::tuple<bool, glm::vec3, glm::mat4> Reflect(const glm::vec3& cameraPosition, const glm::vec3& position, float radius);
 	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position);
 	Ref<VertexArray> CreateClipSpaceQuad();
 	Ref<VertexArray> CreateIcosphere(float radius, uint32_t recursion);

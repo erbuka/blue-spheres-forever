@@ -67,6 +67,26 @@ namespace bsf
 	}
 
 
+	std::tuple<bool, glm::vec3, glm::mat4> Reflect(const glm::vec3& cameraPosition, const glm::vec3& position, float radius)
+	{
+		static auto calcHorizon = [](const glm::vec3& obs) -> float {
+			auto v = obs - s_GroundCenter;
+			float h = glm::length(v) - s_GroundRadius;
+			return glm::sqrt(h * (2.0f * s_GroundRadius + h));
+		};
+
+		float horizon = calcHorizon(cameraPosition);
+		
+		auto top = std::get<0>(Project(position + glm::vec3(0.0f, 0.0f, radius)));
+		float maxTopDist = calcHorizon(top) + horizon;
+		float topDist = glm::length(top - cameraPosition);
+		float factor = glm::max((topDist - horizon) / (maxTopDist - horizon), 0.0f);
+
+		return factor >= 1.0f ? std::make_tuple(false, glm::vec3(), glm::mat4()) :
+			std::tuple_cat(std::make_tuple(true), Project({ position.x, position.y, glm::lerp(-position.z, 2.0f * radius + position.z,  factor * factor) }));
+
+	}
+
 	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position)
 	{
 
