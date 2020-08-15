@@ -227,20 +227,10 @@ namespace bsf
 		float Size;
 	};
 
-
-
-
-#pragma region Utilities
-
-
-
-#pragma endregion
-
-
-
 	GameScene::GameScene(const Ref<Stage>& stage) :
 		m_Stage(stage)
 	{
+
 	}
 
 	void GameScene::OnAttach()
@@ -379,7 +369,7 @@ namespace bsf
 		{
 			m_Model.Reset();
 			m_View.Reset();
-			RotateSky(pos, deltaPos, windowSize);
+			RotateSky(deltaPos);
 		}
 
 		// Render shadow map
@@ -413,9 +403,8 @@ namespace bsf
 			m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
 			m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
 
-			m_pMorphPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
-			m_pMorphPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
-
+			m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
+			m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
 
 			m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
 
@@ -427,19 +416,8 @@ namespace bsf
 
 			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
 			m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
-
-			auto hd = [](const glm::vec3& obs) -> float {
-				auto v = obs - s_GroundCenter;
-				float h = glm::length(v) - s_GroundRadius;
-				return glm::sqrt(h * (2.0f * s_GroundRadius + h));
-			};
-
-			auto hd2 = [](float h) -> float {
-				return glm::sqrt(h * (2.0f * s_GroundRadius + h));
-			};
-
-			float horizon = hd(cameraWorldPosition);
-
+			
+			// Stage objects
 			for (int32_t x = -12; x <= 12; x++)
 			{
 				for (int32_t y = -12; y <= 12; y++)
@@ -508,6 +486,31 @@ namespace bsf
 				}
 			}
 
+			// Emerald
+			if (m_GameLogic->IsEmeraldVisible())
+			{
+
+				auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
+				auto [visible, pos, tbn] = Reflect(cameraWorldPosition, { emeraldPos.x, emeraldPos.y, 0.8f }, 0.15f);
+
+				if (visible)
+				{
+					m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
+					m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic), 1);
+					m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness), 2);
+					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(m_Stage->EmeraldColor));
+
+					m_Model.Push();
+					m_Model.Translate(pos);
+					m_Model.Multiply(tbn);
+					m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
+					m_pPBR->UniformMatrix4f("uModel", m_Model);
+					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
+					m_Model.Pop();
+				}
+
+
+			}
 
 		}
 
@@ -707,13 +710,25 @@ namespace bsf
 				}
 
 				// Draw Emerald if visible
-				if(m_GameLogic->IsEmeraldVisible()){
+				if(m_GameLogic->IsEmeraldVisible())
+				{
+
+					auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
+					auto [pos, tbn] = Project({ emeraldPos.x, emeraldPos.y, 0.8f });
 
 					m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 					m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic), 1);
 					m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness), 2);
 					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(m_Stage->EmeraldColor));
-					RenderEmerald(m_pPBR, time, m_Model);
+					
+					m_Model.Push();
+					m_Model.Translate(pos);
+					m_Model.Multiply(tbn);
+					m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
+					m_pPBR->UniformMatrix4f("uModel", m_Model);
+					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
+					m_Model.Pop();
+
 
 				}
 
@@ -838,14 +853,16 @@ namespace bsf
 
 	void GameScene::RenderGameUI(const Time& time)
 	{
+		static constexpr float scale = 5.0f;
+
 		auto windowSize = GetApplication().GetWindowSize();
 		auto& renderer2d = GetApplication().GetRenderer2D();
 
 		auto& assets = Assets::GetInstance();
 		// In-game messages
 		{
-			float sw = 5.0f * windowSize.x / windowSize.y;
-			float sh = 5.0f;
+			float sw = scale * windowSize.x / windowSize.y;
+			float sh = scale;
 
 			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh, -1.0f, 1.0f));
 			renderer2d.Pivot({ 0.5f, 0.5f });
@@ -866,12 +883,11 @@ namespace bsf
 				renderer2d.Push();
 				renderer2d.Translate({ x, sh / 4.0f * 3.0f });
 
-				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
-				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
-
-				renderer2d.Translate({ -0.02, 0.02 });
+				renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.TextShadowOffset({ 0.02, -0.02 });
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), it->Message);
+
+				renderer2d.DrawStringShadow(assets.Get<Font>(AssetName::FontMain), it->Message);
 
 				renderer2d.Pop();
 			}
@@ -909,11 +925,10 @@ namespace bsf
 	
 				renderer2d.Translate({ 1.0f + padding / 2.0f, textOffset });
 
-				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
-				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), blueSpheres, { shadowOffset, -shadowOffset });
-				
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), blueSpheres);
+				renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.TextShadowOffset({ shadowOffset, -shadowOffset });
+				renderer2d.DrawStringShadow(assets.Get<Font>(AssetName::FontMain), blueSpheres);
 				
 				renderer2d.Pop();
 			}
@@ -935,11 +950,10 @@ namespace bsf
 
 				renderer2d.Translate({ -1.0f - padding / 2.0f, textOffset });
 
-				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
-				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), rings, { shadowOffset, -shadowOffset });
-
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-				renderer2d.DrawString(assets.Get<Font>(AssetName::FontMain), rings);
+				renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.TextShadowOffset({ shadowOffset, -shadowOffset });
+				renderer2d.DrawStringShadow(assets.Get<Font>(AssetName::FontMain), rings);
 
 				renderer2d.Pop();
 			}
@@ -1057,18 +1071,11 @@ namespace bsf
 	}
 	
 
-	void GameScene::RotateSky(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize)
+	void GameScene::RotateSky(const glm::vec2& deltaPosition)
 	{
 		float du = deltaPosition.x / m_Stage->GetWidth();
 		float dv = deltaPosition.y / m_Stage->GetHeight();
-		float u = 1.0f - position.x / m_Stage->GetWidth();
-		float v = 1.0f - position.y / m_Stage->GetHeight();
-
-		uint32_t ix = position.x;
-		uint32_t iy = position.y;
-		float fx = position.x - ix;
-		float fy = position.y - iy;
-
+		
 		glm::mat4 rotateZ = glm::rotate(glm::identity<glm::mat4>(), du * glm::pi<float>() * 2.0f, { 0.0f, 0.0f, 1.0f });
 		glm::mat4 rotateX = glm::rotate(glm::identity<glm::mat4>(), dv * glm::pi<float>() * 2.0f, { 1.0f, 0.0f, 0.0f });
 		glm::mat rotate = rotateZ * rotateX;

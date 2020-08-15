@@ -70,9 +70,7 @@ namespace bsf
 	{
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
 		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color));
-
 		SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
-
 	}
 
 

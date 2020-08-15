@@ -78,7 +78,7 @@ namespace bsf
 		void OnGameStateChanged(const GameStateChangedEvent& evt);
 		void OnGameAction(const GameActionEvent& action);
 
-		void RotateSky(const glm::vec2& position, const glm::vec2& deltaPosition, const glm::vec2& windowSize);
+		void RotateSky(const glm::vec2& deltaPosition);
 
 		void RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model);
 

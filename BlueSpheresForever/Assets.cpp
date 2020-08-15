@@ -56,7 +56,7 @@ namespace bsf
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.8f);
-		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.0f);
+		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.1f);
 
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
@@ -118,7 +118,6 @@ namespace bsf
 		m_Assets[AssetName::SfxCodeWrong] = MakeRef<Audio>("assets/sound/wrong.wav");
 
 		// Models
-		//m_Assets[AssetName::ModSphere] = CreateIcosphere(0.15, 3);
 		m_Assets[AssetName::ModSphere] = CreateModel(WavefrontLoader().Load("assets/models/sphere.obj"))->GetMesh(0);
 		m_Assets[AssetName::ModGround] = CreateGround(-10, 10, -10, 10, 10);
 		m_Assets[AssetName::ModClipSpaceQuad] = CreateClipSpaceQuad();

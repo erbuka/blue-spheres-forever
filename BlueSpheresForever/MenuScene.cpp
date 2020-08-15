@@ -437,16 +437,23 @@ namespace bsf
 		auto color = Selected ? s_SelectedMenuColor : s_MenuColor;
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		
-		char codeStrBuffer[15];
-		std::vector<glm::vec4> colors(StageCode::DigitCount + 2);
-		auto& c = m_CurrentCode;
+		auto& code = m_CurrentCode;
 
-		std::sprintf(codeStrBuffer, codeStrFormat.c_str(), c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11]);
-			
-		std::fill(colors.begin(), colors.end(), color);
+		FormattedString codeString;
+		for (uint32_t i = 0; i < code.DigitCount; i++)
+		{
 
-		if (m_Input)
-			colors[m_CursorPos + m_CursorPos / 4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+			if (i > 0 && i % 4 == 0)
+			{
+				codeString.SetColor(color);
+				codeString += "-";
+			}
+
+			codeString.SetColor(m_Input && m_CursorPos == i ? glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } : color);
+			codeString += std::to_string(code[i]);
+
+		}
+
 		
 		renderer.Push();
 		renderer.Scale({ 0.5f, 0.5f });
@@ -454,7 +461,7 @@ namespace bsf
 		renderer.DrawString(font, "Stage Code");
 		renderer.Translate({ 0.0f, -1.0f });
 		renderer.Scale({ 2.0f, 2.0f });
-		renderer.DrawString(font, codeStrBuffer, { 0.0f, 0.0f }, colors);
+		renderer.DrawString(font, codeString);
 		renderer.Color({ 1.0f, 0.0f, 0.0f, 1.0f });
 		renderer.Pop();
 	}

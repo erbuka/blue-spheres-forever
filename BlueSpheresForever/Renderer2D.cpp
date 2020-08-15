@@ -194,20 +194,11 @@ namespace bsf
 
 	}
 
-	void Renderer2D::DrawString(const Ref<Font>& font, const std::string& text, const glm::vec2& position, const std::vector<glm::vec4>& colors)
+	void Renderer2D::DrawString(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position)
 	{
 		static std::array<glm::vec2, 4> pos, uvs = {};
-		bool useColors = false;
 
-		float strWidth = font->GetStringWidth(text);
-
-		if (colors.size() > 0)
-		{
-			if (colors.size() == text.size())
-				useColors = true;
-			else
-				BSF_WARN("Color vector size is incorrect. Expected {0}, got {1}", text.size(), colors.size());
-		}
+		float strWidth = font->GetStringWidth(str.GetText());
 
 		Push();
 
@@ -216,12 +207,14 @@ namespace bsf
 		float offsetX = position.x - m_State.top().Pivot.x * strWidth;
 		float offsetY = position.y - m_State.top().Pivot.y;
 
-		for (uint32_t i = 0; i < text.size(); ++i)
+		for (uint32_t i = 0; i < str.Size(); ++i)
 		{
-			if (useColors)
-				Color(colors[i]);
+			if (str[i].Color.has_value())
+				Color(str[i].Color.value());
+			else
+				Color(m_State.top().Color);
 
-			const auto& glyph = font->GetGlyphInfo(text[i]);
+			const auto& glyph = font->GetGlyphInfo(str[i].Code);
 
 			pos[0] = { offsetX + glyph.Min.x, offsetY + glyph.Min.y };
 			pos[1] = { offsetX + glyph.Max.x, offsetY + glyph.Min.y };
@@ -243,6 +236,20 @@ namespace bsf
 		}
 
 		Pop();
+	}
+
+	void Renderer2D::DrawStringShadow(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position)
+	{
+
+		const auto& state = m_State.top();
+		Push();
+		Color(state.TextShadowColor);
+		// Draw the shadow (no color/formatting)
+		DrawString(font, str.GetText(), position + state.TextShadowOffset);
+		Pop();
+
+		DrawString(font, str, position);
+
 	}
 
 
@@ -309,6 +316,16 @@ namespace bsf
 		m_State.top().Color = color;
 	}
 
+	void Renderer2D::TextShadowColor(const glm::vec4& color)
+	{
+		m_State.top().TextShadowColor = color;
+	}
+
+	void Renderer2D::TextShadowOffset(const glm::vec2& offset)
+	{
+		m_State.top().TextShadowOffset = offset;
+	}
+
 
 	void Renderer2D::Push()
 	{
@@ -357,5 +374,27 @@ namespace bsf
 		std::memset(m_Textures.data(), 0, m_Textures.size() * sizeof(uint32_t));
 		m_Textures[0] = Assets::GetInstance().Get<Texture2D>(AssetName::TexWhite)->GetId();
 
+	}
+	FormattedString::FormattedString(const char* ch) : FormattedString(std::string(ch))
+	{
+	}
+	FormattedString::FormattedString(const std::string& str)
+	{
+		Add(str);
+	}
+	void FormattedString::SetColor(const glm::vec4& color)
+	{
+		m_CurrentColor = color;
+	}
+	void FormattedString::ResetColor()
+	{
+		m_CurrentColor.reset();
+	}
+
+	void FormattedString::Add(const std::string& str)
+	{
+		m_PlainText += str;
+		for (auto c : str)
+			m_Characters.push_back({ c, m_CurrentColor });
 	}
 }

@@ -61,7 +61,7 @@ namespace bsf
 
 		auto result = MakeRef<Texture2D>();
 		result->SetPixels(data.data(), 2, 2, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-	
+		result->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 		return result;
 
 	}
@@ -83,11 +83,14 @@ namespace bsf
 		float factor = glm::max((topDist - horizon) / (maxTopDist - horizon), 0.0f);
 
 		return factor >= 1.0f ? std::make_tuple(false, glm::vec3(), glm::mat4()) :
-			std::tuple_cat(std::make_tuple(true), Project({ position.x, position.y, glm::lerp(-position.z, 2.0f * radius + position.z,  factor * factor) }));
+			std::tuple_cat(
+				std::make_tuple(true), 
+				Project({ position.x, position.y, glm::lerp(-position.z, 2.0f * radius + position.z,  factor * factor) }, true));
+
 
 	}
 
-	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position)
+	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position, bool invertOrientation)
 	{
 
 		float offset = position.z;
@@ -100,9 +103,9 @@ namespace bsf
 
 		glm::mat4 tbn = glm::identity<glm::mat4>();
 
-		tbn[0] = { tangent, 0.0f };
+		tbn[0] = { tangent * (invertOrientation ? -1.0f : 1.0f), 0.0f };
 		tbn[1] = { binormal, 0.0f };
-		tbn[2] = { normal, 0.0f };
+		tbn[2] = { normal * (invertOrientation ? -1.0f : 1.0f), 0.0f };
 
 		return { pos, tbn };
 

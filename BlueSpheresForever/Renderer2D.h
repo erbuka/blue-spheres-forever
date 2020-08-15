@@ -6,6 +6,8 @@
 #include <memory>
 #include <stack>
 #include <unordered_map>
+#include <optional>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -37,8 +39,45 @@ namespace bsf
 		Ref<Texture2D> CurrentTexture = nullptr;
 		glm::mat4 Matrix = glm::identity<glm::mat4>();
 		glm::vec4 Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-
+		glm::vec4 TextShadowColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glm::vec2 TextShadowOffset = { 0.1f, 0.1f };
 		glm::vec2 Pivot = { 0, 0 };
+	};
+
+
+	struct FormattedString
+	{
+	public:
+
+		struct Character
+		{
+			char Code;
+			std::optional<glm::vec4> Color;
+		};
+
+		FormattedString() = default;
+		FormattedString(const char* ch);
+		FormattedString(const std::string& str);
+		void SetColor(const glm::vec4& color);
+		void ResetColor();
+
+		void Add(const std::string& str);
+
+		size_t Size() const { return m_Characters.size(); }
+
+		const std::string& GetText() const { return m_PlainText; }
+
+		std::vector<Character>::iterator begin() { return m_Characters.begin(); }
+		std::vector<Character>::iterator end() { return m_Characters.end(); }
+
+		const Character& operator[](size_t i) const { return m_Characters[i]; }
+		FormattedString& operator+=(const std::string& str) { Add(str); return *this; }
+		FormattedString& operator+=(char c) { Add(std::string(1, c)); return *this; }
+
+	private:
+		std::string m_PlainText;
+		std::vector<Character> m_Characters;
+		std::optional<glm::vec4> m_CurrentColor;
 	};
 
 	class Renderer2D
@@ -53,7 +92,8 @@ namespace bsf
 		void Begin(const glm::mat4& projection);
 
 		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f });
-		void DrawString(const Ref<Font>& font, const std::string& text, const glm::vec2& position = { 0.0f, 0.0f }, const std::vector<glm::vec4>& colors = {});
+		void DrawString(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
+		void DrawStringShadow(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		
 		void LoadIdentity();
 		void Scale(const glm::vec2& scale);
@@ -67,6 +107,8 @@ namespace bsf
 		void Pivot(const glm::vec2& pivot);
 
 		void Color(const glm::vec4& color);
+		void TextShadowColor(const glm::vec4& color);
+		void TextShadowOffset(const glm::vec2& offset);
 
 		void Push();
 		void Pop();
