@@ -111,6 +111,8 @@ namespace bsf
 
 	Ref<ShaderProgram> ShaderProgram::FromFile(const std::string& vertex, const std::string& fragment, const std::initializer_list<std::string>& defines)
 	{
+
+
 		auto vsSource = ReadTextFile(vertex);
 		auto fsSource = ReadTextFile(fragment);
 
@@ -127,7 +129,50 @@ namespace bsf
 
 	ShaderProgram::ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& sources)
 	{
+		static constexpr std::array<GLenum, 2> samplerTypes = {
+			GL_SAMPLER_2D,
+			GL_SAMPLER_CUBE
+		};
+
+		BSF_INFO("Loading shader program");
+
 		m_Id = LoadProgram(sources);
+
+		uint32_t uniformCount;
+		BSF_GLCALL(glGetProgramiv(m_Id, GL_ACTIVE_UNIFORMS, (int32_t*)&uniformCount));
+
+		uint32_t textureUnit = 0;
+
+		for (uint32_t i = 0; i < uniformCount; i++)
+		{
+			std::array<char, 50> buffer;
+			int32_t size;
+			uint32_t type;
+			glGetActiveUniform(m_Id, i, buffer.size(), nullptr, &size, &type, buffer.data());
+
+			uint32_t location = glGetUniformLocation(m_Id, buffer.data());
+
+
+			if(std::find(samplerTypes.begin(), samplerTypes.end(), type) != samplerTypes.end())
+			{
+				m_UniformInfo[buffer.data()] = { std::string(buffer.data()), location, textureUnit++ };
+			}
+			else
+			{
+				m_UniformInfo[buffer.data()] = { std::string(buffer.data()), location, 0 };
+			}
+
+		}
+
+
+		std::vector<UniformInfo> infos;
+
+		std::transform(m_UniformInfo.begin(), m_UniformInfo.end(), std::back_inserter(infos), [](const auto& i) { return i.second; });
+		std::sort(infos.begin(), infos.end(), [](const auto& a, const auto& b) -> bool { return a.Location < b.Location; });
+		
+		for (const auto& info : infos)
+			BSF_INFO("\t{1} - {0}, textureUnit: {2}", info.Name, info.Location, info.TextureUnit);
+
 	}
 
 	ShaderProgram::~ShaderProgram()
@@ -137,6 +182,19 @@ namespace bsf
 
 	int32_t ShaderProgram::GetUniformLocation(const std::string& name)
 	{
+
+		auto it = m_UniformInfo.find(name);
+
+		if (it == m_UniformInfo.end())
+		{
+			BSF_ERROR("Can't find uniform '{0}'", name);
+			return -1;
+		}
+
+		return it->second.Location;
+
+
+		/*
 		auto cachedLoc = m_UniformLocations.find(name);
 
 		if (cachedLoc != m_UniformLocations.end())
@@ -150,7 +208,7 @@ namespace bsf
 			m_UniformLocations[name] = location;
 
 		return location;
-
+		*/
 	}
 
 	void ShaderProgram::UniformMatrix4f(const std::string& name, const glm::mat4& matrix)

@@ -65,6 +65,7 @@ namespace bsf
 		m_Format(format),
 		m_Type(type)
 	{
+		SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 	}
 
 
@@ -72,7 +73,6 @@ namespace bsf
 	{
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
 		SetPixels(&color, 1, 1);
-		SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 	}
 
 
@@ -122,6 +122,12 @@ namespace bsf
 	{
 		BSF_GLCALL(glActiveTexture(GL_TEXTURE0 + textureUnit));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
+	}
+
+	void Texture2D::GenerateMipmaps()
+	{
+		Bind(0);
+		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
 	uint32_t Texture2D::GetWidth() const

@@ -351,6 +351,7 @@ namespace bsf
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+
 			m_TriangleProgram->Use();
 
 			m_TriangleProgram->UniformMatrix4f("uProjection", m_Projection);
@@ -361,7 +362,7 @@ namespace bsf
 				BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Textures[i]));
 			}
 			
-			m_TriangleProgram->Uniform1iv("uTextures", m_Textures.size(), m_TextureUnits.data());
+			m_TriangleProgram->Uniform1iv("uTextures[0]", m_Textures.size(), m_TextureUnits.data());
 			
 			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurTriangleIndex);
 

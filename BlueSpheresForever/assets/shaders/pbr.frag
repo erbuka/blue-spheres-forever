@@ -10,10 +10,13 @@ uniform mat4 uShadowView;
 uniform mat4 uShadowProjection;
 uniform vec2 uShadowMapTexelSize;
 
+
 uniform vec3 uCameraPos;
 uniform vec3 uLightPos;
 
 uniform vec4 uColor;
+
+uniform float uEmission;
 
 uniform sampler2D uMap;
 uniform sampler2D uMetallic;
@@ -26,17 +29,14 @@ uniform samplerCube uIrradiance;
 uniform sampler2D uShadowMap;
 
 uniform sampler2D uReflections;
+uniform sampler2D uReflectionsEmission;
 
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUv;
 
 layout(location = 0) out vec4 oColor;
-
-#ifdef OUTPUT_BRIGHT
-uniform float uBrightThresold;
-layout(location = 1) out vec4 oBright;
-#endif
+layout(location = 1) out vec4 oEmission;
 
 const int cShadowQuality = 1;
 
@@ -46,7 +46,6 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
-float brightness(vec3 color);
 
 void main() {
 
@@ -64,7 +63,6 @@ void main() {
     vec3 L = normalize(uLightPos);
     vec3 H = normalize(V + L);
     vec3 R = normalize(reflect(-V, N));
-
 
     float NdotL = max(dot(N, L), 0.0);                
     float NdotV = max(dot(N, V), 0.0);
@@ -99,6 +97,7 @@ void main() {
 
     // Sky reflections
     vec3 reflections = texture(uReflections, gl_FragCoord.xy / uResolution).rgb * F;
+    vec3 reflectionsEmission = texture(uReflectionsEmission, gl_FragCoord.xy / uResolution).rgb * F;
     fragment += reflections * ao;
 
     if(length(reflections) == 0.0) { 
@@ -110,9 +109,7 @@ void main() {
     #endif
 
     oColor = vec4(fragment, 1.0);
-    #ifdef OUTPUT_BRIGHT
-    oBright = vec4(fragment * max(0.0, sign(brightness(fragment) - 4.0)), 1.0);
-    #endif
+    oEmission = vec4(uEmission * albedo + reflectionsEmission, 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -154,11 +151,5 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
 {
     vec3 f = F0 + (1.0 - F0) * pow(1.0 - clamp(cosTheta, 0.0, 1.0), 5.0);
     return f * (1.0 - pow(roughness, 0.25));
-}  
-
-float brightness(vec3 color)
-{
-    return dot(color, vec3(0.2126, 0.7152, 0.0722));
-}
-
+} 
 	

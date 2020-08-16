@@ -195,6 +195,7 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
+			m_pDeferred->UniformTexture("uEmission", assets.Get<Texture2D>(AssetName::TexBlack), 1);
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 		

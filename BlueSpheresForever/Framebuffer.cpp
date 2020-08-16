@@ -58,7 +58,7 @@ namespace bsf
 		auto att = MakeRef<Texture2D>(internalFormat, format, type);
 		att->Bind(0);
 		att->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
-		att->SetPixels(0, m_Width, m_Height);
+		att->SetPixels(nullptr, m_Width, m_Height);
 		uint32_t attIdx = m_ColorAttachments.size();
 	
 		return SetColorAttachment(name, att);
@@ -80,7 +80,7 @@ namespace bsf
 			ca.second->SetPixels(nullptr, width, height);
 
 		if (m_DepthAttachment != nullptr)
-			m_DepthAttachment->SetPixels(0, width, height);
+			m_DepthAttachment->SetPixels(nullptr, width, height);
 	}
 
 	void Framebuffer::Bind()

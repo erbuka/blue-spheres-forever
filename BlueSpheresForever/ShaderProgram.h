@@ -75,10 +75,19 @@ namespace bsf
 
 	private:
 
+		struct UniformInfo
+		{
+			std::string Name;
+			uint32_t Location;
+			uint32_t TextureUnit;
+		};
+
 		static void InjectDefines(std::string& source, const std::initializer_list<std::string>& defines);
 
 		uint32_t m_Id;
+		std::map<std::string, UniformInfo> m_UniformInfo;
 		std::unordered_map<std::string, int32_t> m_UniformLocations;
+		std::unordered_map<std::string, uint32_t> m_TextureUnits;
 	};
 
 }

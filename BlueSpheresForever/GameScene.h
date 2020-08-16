@@ -8,7 +8,8 @@
 
 namespace bsf
 {
-
+	
+	class BlurFilter;
 	class ShaderProgram;
 	class VertexArray;
 	class Stage;
@@ -59,6 +60,7 @@ namespace bsf
 		MatrixStack m_ShadowView, m_ShadowProjection, m_ShadowModel;
 
 		Ref<Framebuffer> m_fbDeferred, m_fbShadow, m_fbGroundReflections;
+		Ref<BlurFilter> m_fBloom;
 
 		Ref<ShaderProgram> m_pPBR, m_pMorphPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pShadow;
 		

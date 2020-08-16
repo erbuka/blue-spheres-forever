@@ -108,6 +108,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="Asset.h" />
     <ClInclude Include="Assets.h" />
     <ClInclude Include="Audio.h" />
+    <ClInclude Include="BlurFilter.h" />
     <ClInclude Include="BsfPch.h" />
     <ClInclude Include="CharacterAnimator.h" />
     <ClInclude Include="Common.h" />
@@ -137,6 +138,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Assets.cpp" />
     <ClCompile Include="Audio.cpp" />
+    <ClCompile Include="BlurFilter.cpp" />
     <ClCompile Include="BsfPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

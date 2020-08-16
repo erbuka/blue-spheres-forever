@@ -17,6 +17,7 @@
 namespace bsf
 {
 
+
 	Assets& Assets::GetInstance()
 	{
 		static Assets instance;
@@ -52,29 +53,19 @@ namespace bsf
 		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.1f);
 		
 		m_Assets[AssetName::TexGroundNormal] = m_Assets[AssetName::TexNormalPosZ];
-		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.9f);
+		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.8f);
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
-		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.1f);
+		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.9f);
 		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.1f);
+
+		m_Assets[AssetName::TexBumperMetallic] = CreateGray(0.1f);
+		m_Assets[AssetName::TexBumperRoughness] = CreateGray(0.1f);
 
 		{
 			auto bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
 			bumper->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_Assets[AssetName::TexBumper] = bumper;
-		}
-
-
-		{
-			auto bumperMetal = MakeRef<Texture2D>("assets/textures/bumper_metal.png");
-			bumperMetal->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_Assets[AssetName::TexBumperMetallic] = bumperMetal;
-		}
-
-		{
-			auto bumperRough = MakeRef<Texture2D>("assets/textures/bumper_roughness.png");
-			bumperRough->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_Assets[AssetName::TexBumperRoughness] = bumperRough;
 		}
 
 

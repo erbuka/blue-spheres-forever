@@ -99,8 +99,14 @@ namespace bsf
 		void SetAnisotropy(float value);
 		void Bind(uint32_t textureUnit) const override;
 
+		void GenerateMipmaps();
+
 		uint32_t GetWidth() const;
 		uint32_t GetHeight() const;
+
+		GLenum GetInternalFormat() const { return m_InternalFormat; }
+		GLenum GetFormat() const { return m_Format; }
+		GLenum GetType() const { return m_Type; }
 	
 	private:
 
