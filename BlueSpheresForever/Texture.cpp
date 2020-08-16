@@ -116,11 +116,29 @@ namespace bsf
 
 	}
 
-	void Texture2D::Bind(uint32_t textureUnit)
+	void Texture2D::Bind(uint32_t textureUnit) const
 	{
 		BSF_GLCALL(glActiveTexture(GL_TEXTURE0 + textureUnit));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
 	}
+
+	uint32_t Texture2D::GetWidth() const
+	{
+		GLint width;
+		Bind(0);
+		BSF_GLCALL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width));
+		return (uint32_t)width;
+	}
+
+	uint32_t Texture2D::GetHeight() const
+	{
+		GLint height;
+		Bind(0);
+		BSF_GLCALL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height));
+		return (uint32_t)height;
+	}
+
+
 
 	bool Texture2D::Load(const std::string& fileName)
 	{
@@ -243,7 +261,7 @@ namespace bsf
 		BSF_GLCALL(glTexImage2D(s_glTexCubeFace[face], 0, m_InternalFormat, m_Size, m_Size, 0, m_Format, m_Type, pixels));
 	}
 
-	void TextureCube::Bind(uint32_t textureUnit)
+	void TextureCube::Bind(uint32_t textureUnit) const
 	{
 		BSF_GLCALL(glActiveTexture(GL_TEXTURE0 + textureUnit));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));

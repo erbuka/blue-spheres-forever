@@ -33,6 +33,11 @@ in vec2 fUv;
 
 layout(location = 0) out vec4 oColor;
 
+#ifdef OUTPUT_BRIGHT
+uniform float uBrightThresold;
+layout(location = 1) out vec4 oBright;
+#endif
+
 const int cShadowQuality = 1;
 
 const float PI = 3.14159265359;
@@ -41,6 +46,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness);
+float brightness(vec3 color);
 
 void main() {
 
@@ -104,7 +110,9 @@ void main() {
     #endif
 
     oColor = vec4(fragment, 1.0);
-
+    #ifdef OUTPUT_BRIGHT
+    oBright = vec4(fragment * max(0.0, sign(brightness(fragment) - 4.0)), 1.0);
+    #endif
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -147,5 +155,10 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
     vec3 f = F0 + (1.0 - F0) * pow(1.0 - clamp(cosTheta, 0.0, 1.0), 5.0);
     return f * (1.0 - pow(roughness, 0.25));
 }  
+
+float brightness(vec3 color)
+{
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
 
 	

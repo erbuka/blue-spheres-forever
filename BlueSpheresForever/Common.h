@@ -32,6 +32,17 @@ namespace bsf
 
 	#pragma endregion
 
+	namespace Colors
+	{
+		constexpr glm::vec4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
+		constexpr glm::vec4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 BlueSphere = { 0.0f, 0.0f, 1.0f, 1.0f };
+		constexpr glm::vec4 RedSphere = { 1.0f, 0.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 YellowSphere = { 1.0f, 1.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f) * 4.0f, 1.0f };
+	}
+
+
 	#pragma region PBR
 
 	struct Vertex3D

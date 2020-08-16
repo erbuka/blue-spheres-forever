@@ -19,6 +19,8 @@
 #include "SkyGenerator.h"
 #include "SplashScene.h"
 
+
+
 #pragma region Shaders
 
 bool paused = false;
@@ -191,6 +193,7 @@ static const std::string s_SkyGradientFragment = R"Vertex(
 
 )Vertex";
 
+
 static const std::string s_DeferredFragment = R"Fragment(
 	#version 330 core
 
@@ -203,7 +206,6 @@ static const std::string s_DeferredFragment = R"Fragment(
 	in vec2 fUv;
 
 	out vec4 oColor;	
-
 
 	void main() {
 		vec3 color = texture(uColor, fUv).rgb;
@@ -245,6 +247,7 @@ namespace bsf
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbDeferred->AddColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbDeferred->AddColorAttachment("bright", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		m_fbGroundReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbGroundReflections->AddColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
@@ -255,8 +258,8 @@ namespace bsf
 
 
 		// Programs
-		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
-		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "MORPH" });
+		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "OUTPUT_BRIGHT" });
+		m_pMorphPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "MORPH", "OUTPUT_BRIGHT" });
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
 		m_pSkyBox = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 		m_pSkyGradient = MakeRef<ShaderProgram>(s_SkyGradientVertex, s_SkyGradientFragment);
@@ -325,11 +328,6 @@ namespace bsf
 		float aspect = windowSize.x / windowSize.y;
 		auto& assets = Assets::GetInstance();
 
-		glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-		glm::vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
-		glm::vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
-		glm::vec4 yellow(1.0f, 1.0f, 0.0f, 1.0f);
-		glm::vec4 gold(0.83f, 0.69f, 0.22f, 1.0f);
 
 		auto modSphere = assets.Get<VertexArray>(AssetName::ModSphere);
 		auto modRing = assets.Get<Model>(AssetName::ModRing);
@@ -414,7 +412,7 @@ namespace bsf
 			m_pPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
 			m_pPBR->UniformTexture("uReflections", assets.Get<Texture2D>(AssetName::TexBlack), 8);
 
-			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 			m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
 			
 			// Stage objects
@@ -448,35 +446,35 @@ namespace bsf
 						m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 						m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexRingMetallic), 1); // Sphere metallic
 						m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexRingRoughness), 2); // Sphere roughness
-						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(gold));
+						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::Ring));
 						modRing->GetMesh(0)->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::RedSphere:
 						m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 						m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
 						m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
-						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(red));
+						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::RedSphere));
 						modSphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::BlueSphere:
 						m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 						m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
 						m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
-						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(blue));
+						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::BlueSphere));
 						modSphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::YellowSphere:
 						m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 						m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1); // Sphere metallic
 						m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2); // Sphere roughness
-						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
+						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::YellowSphere));
 						modSphere->Draw(GL_TRIANGLES);
 						break;
 					case EStageObject::Bumper:
 						m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexBumper), 0);
 						m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexBumperMetallic), 1); 
 						m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexBumperRoughness), 2);
-						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 						modSphere->Draw(GL_TRIANGLES);
 
 						break;
@@ -485,6 +483,8 @@ namespace bsf
 					m_Model.Pop();
 				}
 			}
+
+
 
 			// Emerald
 			if (m_GameLogic->IsEmeraldVisible())
@@ -595,7 +595,7 @@ namespace bsf
 				m_pMorphPBR->UniformTexture("uReflections", assets.Get<Texture2D>(AssetName::TexBlack), 8);
 
 
-				m_pMorphPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+				m_pMorphPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 				m_pMorphPBR->Uniform2f("uUvOffset", { 0, 0 });
 				m_pMorphPBR->Uniform1f("uMorphDelta", { modSonic->GetDelta() });
 
@@ -633,7 +633,7 @@ namespace bsf
 				m_pPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"), 7);
 				m_pPBR->UniformTexture("uReflections", m_fbGroundReflections->GetColorAttachment("color"), 8);
 
-				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 				m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
 
 				assets.Get<VertexArray>(AssetName::ModGround)->Draw(GL_TRIANGLES);
@@ -663,6 +663,7 @@ namespace bsf
 
 						m_pPBR->UniformMatrix4f("uModel", m_Model);
 
+
 						switch (value)
 						{
 						case EStageObject::Ring:
@@ -670,35 +671,35 @@ namespace bsf
 							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexRingMetallic), 1); // Sphere metallic
 							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexRingRoughness), 2); // Sphere roughness
-							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(gold));
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::Ring));
 							modRing->GetMesh(0)->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::RedSphere:
 							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
 							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
-							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(red));
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::RedSphere));
 							modSphere->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::BlueSphere:
 							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
 							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
-							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(blue));
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::BlueSphere));
 							modSphere->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::YellowSphere:
 							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
 							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexSphereMetallic), 1);
 							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexSphereRoughness), 2);
-							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(yellow));
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::YellowSphere));
 							modSphere->Draw(GL_TRIANGLES);
 							break;
 						case EStageObject::Bumper:
 							m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexBumper), 0);
 							m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexBumperMetallic), 1);
 							m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexBumperRoughness), 2);
-							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(white));
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 							modSphere->Draw(GL_TRIANGLES);
 
 							break;
@@ -737,6 +738,8 @@ namespace bsf
 		}
 		m_fbDeferred->Unbind();
 
+
+
 		// Draw to default frame buffer
 		{
 			GLEnableScope scope({ GL_FRAMEBUFFER_SRGB });
@@ -747,13 +750,13 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			m_pDeferred->Use();
-			//m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
 			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
+			m_pDeferred->UniformTexture("uBright", m_fbDeferred->GetColorAttachment("bright"), 1);
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 
-
 		}
+
 
 	
 		RenderGameUI(time);

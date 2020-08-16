@@ -44,7 +44,7 @@ namespace bsf
 
 		virtual ~Texture();
 
-		virtual void Bind(uint32_t textureUnit) = 0;
+		virtual void Bind(uint32_t textureUnit) const = 0;
 
 		virtual void SetFilter(TextureFilter minFilter, TextureFilter magFilter) = 0;
 
@@ -67,11 +67,13 @@ namespace bsf
 
 		void SetPixels(TextureCubeFace face, const void* pixels);
 
-		void Bind(uint32_t textureUnit) override;
+		void Bind(uint32_t textureUnit) const override;
 
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
 
 		uint32_t GetSize() const { return m_Size; }
+
+
 
 	private:
 		void Initialize();
@@ -95,8 +97,11 @@ namespace bsf
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
 
 		void SetAnisotropy(float value);
-		void Bind(uint32_t textureUnit) override;
+		void Bind(uint32_t textureUnit) const override;
 
+		uint32_t GetWidth() const;
+		uint32_t GetHeight() const;
+	
 	private:
 
 		bool Load(const std::string& fileName);

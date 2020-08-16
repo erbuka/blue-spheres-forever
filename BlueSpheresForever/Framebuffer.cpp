@@ -18,10 +18,10 @@ namespace bsf
 		if (hasDepth)
 		{
 			m_DepthAttachment = MakeRef<Texture2D>();
-			m_DepthAttachment->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 			m_DepthAttachment->Bind(0);
+			m_DepthAttachment->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+			m_DepthAttachment->SetPixels(0, width, height, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
 
-			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
 			BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_DepthAttachment->GetId(), 0));
 		}
 
@@ -85,7 +85,7 @@ namespace bsf
 
 	void Framebuffer::Bind()
 	{
-		static std::array<uint32_t, 16>  s_ColorAttachments = {
+		static const std::array<uint32_t, 16> s_ColorAttachments = {
 			GL_COLOR_ATTACHMENT0,
 			GL_COLOR_ATTACHMENT1,
 			GL_COLOR_ATTACHMENT2,
