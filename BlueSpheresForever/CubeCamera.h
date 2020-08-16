@@ -11,6 +11,7 @@
 namespace bsf
 {
 	class ShaderProgram;
+	class Framebuffer;
 
 	class CubeCamera
 	{
@@ -30,9 +31,9 @@ namespace bsf
 		glm::mat4 m_Projection, m_ActiveView;
 		std::unordered_map<TextureCubeFace, glm::mat4> m_Views;
 
-		uint32_t m_fbId;
-		Ref<Texture2D> m_fbDepth;
+		Ref<Framebuffer> m_Fb;
 		Ref<TextureCube> m_TextureCube;
+		
 		uint32_t m_Size;
 	};
 }

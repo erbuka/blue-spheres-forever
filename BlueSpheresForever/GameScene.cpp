@@ -246,14 +246,14 @@ namespace bsf
 
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbDeferred->AddColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbDeferred->AddColorAttachment("bright", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbDeferred->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbDeferred->CreateColorAttachment("bright", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		m_fbGroundReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbGroundReflections->AddColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbGroundReflections->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		m_fbShadow = MakeRef<Framebuffer>(2048, 2048, true);
-		m_fbShadow->AddColorAttachment("depth", GL_R16F, GL_RED, GL_FLOAT);
+		m_fbShadow->CreateColorAttachment("depth", GL_R16F, GL_RED, GL_FLOAT);
 		m_fbShadow->GetColorAttachment("depth")->Bind(0);
 
 

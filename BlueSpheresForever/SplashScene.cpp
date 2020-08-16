@@ -35,7 +35,7 @@ namespace bsf
 
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbDeferred->AddColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbDeferred->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		// Shaders
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "NO_SHADOWS", "NO_UV_OFFSET" });

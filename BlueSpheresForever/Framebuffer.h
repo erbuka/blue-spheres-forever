@@ -18,7 +18,9 @@ namespace bsf
 		Framebuffer(uint32_t width, uint32_t height, bool hasDepth);
 		~Framebuffer();
 
-		Ref<Texture2D> AddColorAttachment(const std::string& name, GLenum internalFormat = GL_RGBA8, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE);
+		Ref<Texture2D> SetColorAttachment(const std::string& name, const Ref<Texture2D>& att);
+		
+		Ref<Texture2D> CreateColorAttachment(const std::string& name, GLenum internalFormat = GL_RGBA8, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE);
 
 		Ref<Texture2D> GetColorAttachment(const std::string& name);
 
@@ -35,15 +37,8 @@ namespace bsf
 		bool Check();
 
 	private:
-
-		struct ColorAttachment
-		{
-			GLenum InternalFormat, Format, Type;
-			Ref<Texture2D> Texture;
-		};
-
 		Ref<Texture2D> m_DepthAttachment;
-		std::unordered_map<std::string, ColorAttachment> m_ColorAttachments;
+		std::vector<std::pair<std::string, Ref<Texture2D>>> m_ColorAttachments;
 
 		uint32_t m_Id;
 		uint32_t m_Width, m_Height;

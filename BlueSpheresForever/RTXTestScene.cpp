@@ -125,7 +125,7 @@ namespace bsf
 		m_pRtx = MakeRef<ShaderProgram>(s_vsQuad, s_fsRTX);
 
 		m_fbRTX = MakeRef<Framebuffer>(windowSize.x, windowSize.y, false);
-		m_fbRTX->AddColorAttachment("color", GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+		m_fbRTX->CreateColorAttachment("color", GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 		m_fbRTX->GetColorAttachment("color")->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
 
 		{

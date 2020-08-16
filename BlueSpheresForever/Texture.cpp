@@ -60,35 +60,37 @@ namespace bsf
 		{ TextureCubeFace::Bottom, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y  },
 	};
 
-	Texture2D::Texture2D()
+	Texture2D::Texture2D(GLenum internalFormat, GLenum format, GLenum type) :
+		m_InternalFormat(internalFormat),
+		m_Format(format),
+		m_Type(type)
 	{
-		//BSF_GLCALL(glGenTextures(1, &m_Id));
 	}
 
 
-	Texture2D::Texture2D(uint32_t color) : Texture2D()
+	Texture2D::Texture2D(uint32_t color) : Texture2D(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color));
+		SetPixels(&color, 1, 1);
 		SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 	}
 
 
-	Texture2D::Texture2D(const std::string& fileName)
+	Texture2D::Texture2D(const std::string& fileName) : Texture2D(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
 		Load(fileName);
 	}
 
-	Texture2D::Texture2D(Texture2D&& other) noexcept	
+	Texture2D::Texture2D(Texture2D&& other) noexcept : Texture2D(other.m_InternalFormat, other.m_Format, other.m_Type)
 	{
 		m_Id = 0;
 		std::swap(m_Id, other.m_Id);
 	}
 
-	void Texture2D::SetPixels(void* pixels, uint32_t width, uint32_t height, GLenum internalFormat, GLenum format, GLenum type)
+	void Texture2D::SetPixels(void* pixels, uint32_t width, uint32_t height)
 	{
 		Bind(0);
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels));
+		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, m_InternalFormat, width, height, 0, m_Format, m_Type, pixels));
 	}
 
 	void Texture2D::SetFilter(TextureFilter minFilter, TextureFilter magFilter)

@@ -85,14 +85,14 @@ namespace bsf
 	class Texture2D : public Texture
 	{
 	public:
-		Texture2D();
+		Texture2D(GLenum internalFormat, GLenum format, GLenum type);
 		Texture2D(uint32_t color);
 		Texture2D(const std::string& fileName);
 
 		Texture2D(Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
 
-		void SetPixels(void * pixels, uint32_t width, uint32_t height, GLenum internalFormat, GLenum format, GLenum type);
+		void SetPixels(void * pixels, uint32_t width, uint32_t height);
 
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
 
@@ -103,6 +103,8 @@ namespace bsf
 		uint32_t GetHeight() const;
 	
 	private:
+
+		GLenum m_InternalFormat, m_Format, m_Type;
 
 		bool Load(const std::string& fileName);
 

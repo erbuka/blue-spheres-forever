@@ -17,10 +17,10 @@ namespace bsf
 
 		if (hasDepth)
 		{
-			m_DepthAttachment = MakeRef<Texture2D>();
+			m_DepthAttachment = MakeRef<Texture2D>(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
 			m_DepthAttachment->Bind(0);
 			m_DepthAttachment->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
-			m_DepthAttachment->SetPixels(0, width, height, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
+			m_DepthAttachment->SetPixels(nullptr, width, height);
 
 			BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_DepthAttachment->GetId(), 0));
 		}
@@ -34,33 +34,40 @@ namespace bsf
 		BSF_GLCALL(glDeleteFramebuffers(1, &m_Id));
 	}
 
-	Ref<Texture2D> Framebuffer::AddColorAttachment(const std::string& name, GLenum internalFormat, GLenum format, GLenum type)
+	Ref<Texture2D> Framebuffer::SetColorAttachment(const std::string& name, const Ref<Texture2D>& att)
 	{
-		if (m_ColorAttachments.find(name) != m_ColorAttachments.end())
+
+		auto it = std::find_if(m_ColorAttachments.begin(), m_ColorAttachments.end(), [&](const auto& val) { return val.first == name; });
+
+		if (it != m_ColorAttachments.end())
+			it->second = att;
+		else
+			m_ColorAttachments.push_back({ name, att });
+
+		return att;
+	}
+
+	Ref<Texture2D> Framebuffer::CreateColorAttachment(const std::string& name, GLenum internalFormat, GLenum format, GLenum type)
+	{
+		if (GetColorAttachment(name) != nullptr)
 		{
 			BSF_ERROR("Color attachment '{0}' is already present", name);
 			return nullptr;
 		}
 
-		auto att = MakeRef<Texture2D>();
+		auto att = MakeRef<Texture2D>(internalFormat, format, type);
 		att->Bind(0);
 		att->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
-		att->SetPixels(0, m_Width, m_Height, internalFormat, format, type);
+		att->SetPixels(0, m_Width, m_Height);
 		uint32_t attIdx = m_ColorAttachments.size();
-		
-		Bind();
-		BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attIdx, GL_TEXTURE_2D, att->GetId(), 0));
-		Unbind();
-
-		m_ColorAttachments[name] = { internalFormat, format, type, att };
-
-		return att;
+	
+		return SetColorAttachment(name, att);
 	}
 
 	Ref<Texture2D> Framebuffer::GetColorAttachment(const std::string& name)
 	{
-		auto att = m_ColorAttachments.find(name);
-		return att == m_ColorAttachments.end() ? nullptr : m_ColorAttachments[name].Texture;
+		auto att = std::find_if(m_ColorAttachments.begin(), m_ColorAttachments.end(), [&](const auto& val) { return val.first == name; });
+		return att == m_ColorAttachments.end() ? nullptr : att->second;
 	}
 
 	void Framebuffer::Resize(uint32_t width, uint32_t height)
@@ -70,17 +77,10 @@ namespace bsf
 		m_Height = height;
 
 		for (auto& ca : m_ColorAttachments)
-		{
-			ca.second.Texture->Bind(0);
-			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, ca.second.InternalFormat, m_Width, m_Height, 0, ca.second.Format, ca.second.Type, 0));
-		}
+			ca.second->SetPixels(nullptr, width, height);
 
 		if (m_DepthAttachment != nullptr)
-		{
-			m_DepthAttachment->Bind(0);
-			BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, m_Width, m_Height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0));
-		}
-
+			m_DepthAttachment->SetPixels(0, width, height);
 	}
 
 	void Framebuffer::Bind()
@@ -105,6 +105,11 @@ namespace bsf
 		};
 
 		BSF_GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, m_Id));
+
+		for(uint32_t i = 0; i < m_ColorAttachments.size(); i++)
+			BSF_GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, m_ColorAttachments[i].second->GetId(), 0));
+
+
 		BSF_GLCALL(glDrawBuffers(m_ColorAttachments.size(), s_ColorAttachments.data()));
 	}
 

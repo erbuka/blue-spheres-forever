@@ -59,8 +59,8 @@ namespace bsf
 		};
 
 
-		auto result = MakeRef<Texture2D>();
-		result->SetPixels(data.data(), 2, 2, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		auto result = MakeRef<Texture2D>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		result->SetPixels(data.data(), 2, 2);
 		result->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
 		return result;
 
