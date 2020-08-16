@@ -122,7 +122,7 @@ namespace bsf
 				m_pSky->UniformMatrix4f("uProjection", m_Projection);
 				m_pSky->UniformMatrix4f("uView", m_View);
 				m_pSky->UniformMatrix4f("uModel", m_Model);
-				m_pSky->UniformTexture("uSkyBox", m_Sky->GetEnvironment(), 0);
+				m_pSky->UniformTexture("uSkyBox", m_Sky->GetEnvironment());
 				assets.Get<VertexArray>(AssetName::ModSkyBox)->Draw(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
 			}
@@ -145,15 +145,16 @@ namespace bsf
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPos));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightPos));
 
-				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite), 0);
-				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic), 1);
-				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness), 2);
-				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite), 3);
+				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
+				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
+				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
+				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite));
 
-				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut), 4);
-				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment(), 5);
-				m_pPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance(), 6);
-				m_pPBR->UniformTexture("uReflections", assets.Get<Texture2D>(AssetName::TexBlack), 7);
+				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
+				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
+				m_pPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance());
+				m_pPBR->UniformTexture("uReflections", assets.Get<Texture2D>(AssetName::TexBlack));
+				m_pPBR->UniformTexture("uReflectionsEmission", assets.Get<Texture2D>(AssetName::TexBlack));
 
 
 				for (uint32_t i = 0; i < 7; i++)
@@ -194,8 +195,8 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			m_pDeferred->Use();
-			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"), 0);
-			m_pDeferred->UniformTexture("uEmission", assets.Get<Texture2D>(AssetName::TexBlack), 1);
+			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"));
+			m_pDeferred->UniformTexture("uEmission", assets.Get<Texture2D>(AssetName::TexBlack));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 		

@@ -31,6 +31,8 @@ namespace bsf
 
 	class ShaderProgram: public Asset
 	{
+
+
 	public:
 
 
@@ -38,6 +40,10 @@ namespace bsf
 
 		ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource);
 		ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& sources);
+
+		ShaderProgram(ShaderProgram&) = delete;
+		ShaderProgram(ShaderProgram&&) = delete;
+
 		~ShaderProgram();
 
 		int32_t GetUniformLocation(const std::string& name);
@@ -47,11 +53,12 @@ namespace bsf
 		void Use();
 
 		template<typename T>
-		void UniformTexture(const std::string name, const Ref<T>& texture, uint32_t textureUnit)
+		void UniformTexture(const std::string name, const Ref<T>& texture)
 		{
 			static_assert(std::is_base_of_v<Texture, T>);
-			Uniform1i(name, { (int32_t)textureUnit });
-			texture->Bind(textureUnit);
+			uint32_t texUnit = m_UniformInfo[name].TextureUnit;
+			Uniform1i(name, { (int32_t)texUnit });
+			texture->Bind(texUnit);
 		}
 
 		uint32_t GetId() { return m_Id; }
@@ -86,8 +93,6 @@ namespace bsf
 
 		uint32_t m_Id;
 		std::map<std::string, UniformInfo> m_UniformInfo;
-		std::unordered_map<std::string, int32_t> m_UniformLocations;
-		std::unordered_map<std::string, uint32_t> m_TextureUnits;
 	};
 
 }

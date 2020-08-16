@@ -166,7 +166,6 @@ namespace bsf
 
 
 		std::vector<UniformInfo> infos;
-
 		std::transform(m_UniformInfo.begin(), m_UniformInfo.end(), std::back_inserter(infos), [](const auto& i) { return i.second; });
 		std::sort(infos.begin(), infos.end(), [](const auto& a, const auto& b) -> bool { return a.Location < b.Location; });
 		
@@ -229,6 +228,7 @@ namespace bsf
 	UNIFORM_IMPL(f, float, 2);
 	UNIFORM_IMPL(f, float, 3);
 	UNIFORM_IMPL(f, float, 4);
+
 
 
 	void ShaderProgram::InjectDefines(std::string& source, const std::initializer_list<std::string>& defines)

@@ -46,8 +46,6 @@ namespace bsf
 
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
-		// return Ref<TextureCube>(new TextureCube(1024, "assets/textures/miramar.png"));
-		// return Ref<TextureCube>(new TextureCube(256, "assets/textures/skybox.png"));
 
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
 		auto& assets = Assets::GetInstance();
@@ -73,6 +71,12 @@ namespace bsf
 		));
 
 		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		
+		
+		auto gradient = CreateGradient(16, {
+			{ 0.0f, options.BaseColor0 },
+			{ 1.0f, options.BaseColor1 },
+		});
 
 		// Generate stars
 		for (auto face : TextureCubeFaces)
@@ -85,15 +89,18 @@ namespace bsf
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
+
+
 			// Draw background
 			{
 				m_pGenBg->Use();
 				m_pGenBg->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
 				m_pGenBg->UniformMatrix4f("uView", camera.GetViewMatrix());
 				m_pGenBg->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-				m_pGenBg->Uniform3fv("uColor0", 1, glm::value_ptr(options.BaseColor0));
-				m_pGenBg->Uniform3fv("uColor1", 1, glm::value_ptr(options.BaseColor1));
-				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern, 0);
+				//m_pGenBg->Uniform3fv("uColor0", 1, glm::value_ptr(options.BaseColor0));
+				//m_pGenBg->Uniform3fv("uColor1", 1, glm::value_ptr(options.BaseColor1));
+				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern);
+				m_pGenBg->UniformTexture("uGradient", gradient);
 				m_vaCube->Draw(GL_TRIANGLES);
 			}
 
@@ -104,7 +111,7 @@ namespace bsf
 				m_pGenStars->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
 				m_pGenStars->UniformMatrix4f("uView", camera.GetViewMatrix());
 				m_pGenStars->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-				m_pGenStars->UniformTexture("uStarsPattern", starsPattern, 1);
+				m_pGenStars->UniformTexture("uStarsPattern", starsPattern);
 				m_vaCube->Draw(GL_TRIANGLES);
 			}
 		}
@@ -137,7 +144,7 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			m_pGenIrradiance->Use();
-			m_pGenIrradiance->UniformTexture("uEnvironment", sky, 0);
+			m_pGenIrradiance->UniformTexture("uEnvironment", sky);
 			m_pGenIrradiance->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
 			m_pGenIrradiance->UniformMatrix4f("uView", camera->GetViewMatrix());
 			m_pGenIrradiance->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
@@ -209,7 +216,7 @@ namespace bsf
 			m_pSky->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
 			m_pSky->UniformMatrix4f("uView", camera->GetViewMatrix());
 			m_pSky->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-			m_pSky->UniformTexture("uSkyBox", source, 0);
+			m_pSky->UniformTexture("uSkyBox", source);
 			m_VertexArray->Draw(GL_TRIANGLES);
 
 		}

@@ -50,9 +50,11 @@ namespace bsf
 
 		Ref<Sky> Generate(const Options& options);
 
+	private:
+
 		Ref<TextureCube> GenerateEnvironment(const Options& options);
 		Ref<TextureCube> GenerateIrradiance(const Ref<TextureCube>& sky, uint32_t size);
-	private:
+
 		Ref<VertexArray> m_vaCube, m_vaBillboard;
 		Ref<ShaderProgram> m_pGenBg, m_pGenStars, m_pGenIrradiance;
 	};

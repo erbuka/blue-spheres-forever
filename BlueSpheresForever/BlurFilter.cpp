@@ -44,7 +44,7 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			m_pBlur->Use();
-			m_pBlur->UniformTexture("uSource", src, 0);
+			m_pBlur->UniformTexture("uSource", src);
 			m_pBlur->Uniform1i("uHorizontal", { (int32_t)horizonal });
 			Assets::GetInstance().Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 

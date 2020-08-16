@@ -270,6 +270,7 @@ namespace bsf
 
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
 	Ref<Texture2D> CreateGray(float value);
+	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps);
 
 	std::string ReadTextFile(const std::string& file);
 

@@ -194,7 +194,7 @@ namespace bsf
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_pQuad->Use();
-		m_pQuad->UniformTexture("uTexture", m_fbRTX->GetColorAttachment("color"), 0);
+		m_pQuad->UniformTexture("uTexture", m_fbRTX->GetColorAttachment("color"));
 		m_pQuad->Uniform2f("uTexelSize", { 1.0f / (windowSize.x / 4.0f), 1.0f / (windowSize.y / 4.0f) });
 		m_vaQuad->Draw(GL_TRIANGLES);
 	}

@@ -30,6 +30,35 @@ namespace bsf
 		return MakeRef<Texture2D>(ToHexColor({ value, value, value, 1.0 }));
 	}
 
+	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps)
+	{
+		std::vector<std::pair<float, glm::vec3>> sortedSteps;
+		std::vector<uint32_t> pixels(size);
+		std::copy(steps.begin(), steps.end(), std::back_inserter(sortedSteps));
+
+		for (uint32_t i = 0; i < size; ++i)
+		{
+			float t = (float)i / (size - 1);
+
+			uint32_t j = 0;
+			while (sortedSteps[j].first <= t && j < sortedSteps.size() - 1)
+				++j;
+
+			auto color = glm::lerp(sortedSteps[j - 1].second, sortedSteps[j].second,
+				(t - sortedSteps[j - 1].first) / (sortedSteps[j].first - sortedSteps[j - 1].first));
+
+			pixels[i] = ToHexColor(color);
+
+		}
+
+
+		auto result = MakeRef<Texture2D>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		result->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
+		result->SetPixels(pixels.data(), size, 1);
+		return result;
+
+	}
+
 	std::string ReadTextFile(const std::string& file)
 	{
 		std::ifstream is;
