@@ -443,7 +443,7 @@ namespace bsf
 					if (value == EStageObject::Ring)
 						m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, glm::pi<float>() * time.Elapsed);
 
-					m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.25f : 0.0f });
+					m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.75f : 0.0f });
 
 					m_pPBR->UniformMatrix4f("uModel", m_Model);
 
@@ -680,7 +680,7 @@ namespace bsf
 
 						m_pPBR->UniformMatrix4f("uModel", m_Model);
 
-						m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.25f : 0.0f });
+						m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.75f : 0.0f });
 
 						switch (value)
 						{

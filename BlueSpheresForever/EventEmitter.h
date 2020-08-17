@@ -25,6 +25,8 @@ namespace bsf
 
 		inline Unsubscribe Subscribe(HandlerFnPtr fnPtr)
 		{
+			auto x = [fnPtr](const Event& evt) { fnPtr(evt); };
+
 			return Subscribe(std::bind(fnPtr, std::placeholders::_1));
 		}
 

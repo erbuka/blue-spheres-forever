@@ -11,6 +11,7 @@
 #include "Audio.h"
 #include "MenuScene.h"
 #include "SkyGenerator.h"
+#include "BlurFilter.h"
 
 namespace bsf
 {
@@ -26,16 +27,23 @@ namespace bsf
 		auto& app = GetApplication();
 		auto windowSize = app.GetWindowSize();
 
+
 		// Sky
+		
 		m_Sky = assets.Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({ 
 			1024,
-			glm::vec3(1.0f, 1.0f, 1.0f),
-			glm::vec3(1.0f, 1.0f, 1.0f)
+			glm::vec3(31.0f, 98.0f, 255.0f) / 255.0f,
+			glm::vec3(82.0f, 134.0f, 255.0f) / 255.0f
 		});
+
 
 		// Framebuffers
 		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbDeferred->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbDeferred->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+
+		// PP
+		m_fBlur = MakeRef<BlurFilter>(m_fbDeferred->GetColorAttachment("emission"));
 
 		// Shaders
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "NO_SHADOWS", "NO_UV_OFFSET" });
@@ -145,6 +153,8 @@ namespace bsf
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPos));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightPos));
 
+				m_pPBR->Uniform1f("uEmission", { 0.25f });
+
 				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
 				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
@@ -182,6 +192,8 @@ namespace bsf
 		}
 		m_fbDeferred->Unbind();
 
+		// Post processing
+		m_fBlur->Apply(5);
 
 		// Draw to screen
 		{
@@ -196,7 +208,7 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", assets.Get<Texture2D>(AssetName::TexBlack));
+			m_pDeferred->UniformTexture("uEmission", m_fbDeferred->GetColorAttachment("emission"));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 		

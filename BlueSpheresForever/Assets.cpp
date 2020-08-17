@@ -46,7 +46,7 @@ namespace bsf
 		m_Assets[AssetName::TexTransparent] = Ref<Texture>(new Texture2D(0));
 		m_Assets[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
 
-		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.9f);
+		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);

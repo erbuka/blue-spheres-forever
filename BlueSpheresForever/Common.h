@@ -39,24 +39,11 @@ namespace bsf
 		constexpr glm::vec4 BlueSphere = { 0.0f, 0.0f, 1.0f, 1.0f };
 		constexpr glm::vec4 RedSphere = { 1.0f, 0.0f, 0.0f, 1.0f };
 		constexpr glm::vec4 YellowSphere = { 1.0f, 1.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f) * 2.0f, 1.0f };
+		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f), 1.0f };
 	}
 
 
 	#pragma region PBR
-
-	namespace  PBRTexUnit {
-		constexpr uint32_t Map = 0;
-		constexpr uint32_t Metallic = 1;
-		constexpr uint32_t Roughness = 2;
-		constexpr uint32_t Ao = 3;
-		constexpr uint32_t BRDF = 4;
-		constexpr uint32_t Environment = 5;
-		constexpr uint32_t Irradiance = 6;
-		constexpr uint32_t ShadowMap = 7;
-		constexpr uint32_t Reflections = 8;
-		constexpr uint32_t ReflectionsEmission = 9;
-	}
 
 	struct Vertex3D
 	{

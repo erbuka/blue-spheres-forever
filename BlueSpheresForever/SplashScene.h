@@ -14,6 +14,7 @@ namespace bsf
 	class Framebuffer;
 	class ShaderProgram;
 	class Sky;
+	class BlurFilter;
 
 	class SplashScene : public Scene
 	{
@@ -25,6 +26,7 @@ namespace bsf
 		void OnResize(const WindowResizedEvent& evt);
 
 	private:
+		Ref<BlurFilter> m_fBlur;
 		Ref<Framebuffer> m_fbDeferred;
 		Ref<ShaderProgram> m_pPBR, m_pDeferred, m_pSky;
 		Ref<Sky> m_Sky;
