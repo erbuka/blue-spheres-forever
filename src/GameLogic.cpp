@@ -458,7 +458,7 @@ namespace bsf
 
 	void GameLogic::RunForward()
 	{
-		if (m_IsGoingBackward)
+		if (m_IsGoingBackward && !m_IsJumping)
 		{
 			m_RunForwardCommand = true;
 		}

@@ -37,7 +37,7 @@ namespace bsf
 		auto waitFadeOut = MakeRef<WaitForTask>(5.0f);
 
 		waitFadeOut->SetDoneFunction([&](SceneTask& self) {
-			auto fadeOut = MakeRef<FadeTask>(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 0.5f);
+			auto fadeOut = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
 			fadeOut->SetDoneFunction([&](SceneTask& self) {
 				GetApplication().GotoScene(MakeRef<SplashScene>());
 			});

@@ -54,7 +54,7 @@ namespace bsf
 		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &SplashScene::OnResize));
 
 		// fadeIn
-		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f }, glm::vec4{ 0.0f, 0.0f, 0.0f, 0.0f }, 0.5f);
+		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f);
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
 
 		// fadeOut

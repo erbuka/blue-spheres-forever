@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{BDD6857C-A90D-870D-52FA-6C103E10030F}</ProjectGuid>
+    <ProjectGuid>{154B857C-0182-860D-AA6E-6C109684020F}</ProjectGuid>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Glad</RootNamespace>
+    <RootNamespace>GLFW</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -41,23 +41,23 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\bin\Debug\Glad\</OutDir>
-    <IntDir>..\..\bin-int\Debug\Glad\</IntDir>
-    <TargetName>Glad</TargetName>
+    <OutDir>..\bin\Debug\GLFW\</OutDir>
+    <IntDir>..\bin-int\Debug\GLFW\</IntDir>
+    <TargetName>GLFW</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\bin\Release\Glad\</OutDir>
-    <IntDir>..\..\bin-int\Release\Glad\</IntDir>
-    <TargetName>Glad</TargetName>
+    <OutDir>..\bin\Release\GLFW\</OutDir>
+    <IntDir>..\bin-int\Release\GLFW\</IntDir>
+    <TargetName>GLFW</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;GLFW_STATIC;_GLFW_WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\vendor\glfw\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
     </ClCompile>
@@ -70,7 +70,8 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLFW_STATIC;_GLFW_WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\vendor\glfw\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -86,7 +87,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="..\vendor\glfw\src\context.c" />
+    <ClCompile Include="..\vendor\glfw\src\egl_context.c" />
+    <ClCompile Include="..\vendor\glfw\src\init.c" />
+    <ClCompile Include="..\vendor\glfw\src\input.c" />
+    <ClCompile Include="..\vendor\glfw\src\monitor.c" />
+    <ClCompile Include="..\vendor\glfw\src\osmesa_context.c" />
+    <ClCompile Include="..\vendor\glfw\src\vulkan.c" />
+    <ClCompile Include="..\vendor\glfw\src\wgl_context.c" />
+    <ClCompile Include="..\vendor\glfw\src\win32_init.c" />
+    <ClCompile Include="..\vendor\glfw\src\win32_joystick.c" />
+    <ClCompile Include="..\vendor\glfw\src\win32_monitor.c" />
+    <ClCompile Include="..\vendor\glfw\src\win32_thread.c" />
+    <ClCompile Include="..\vendor\glfw\src\win32_time.c" />
+    <ClCompile Include="..\vendor\glfw\src\win32_window.c" />
+    <ClCompile Include="..\vendor\glfw\src\window.c" />
+    <ClCompile Include="..\vendor\glfw\src\xkb_unicode.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

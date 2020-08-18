@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{154B857C-0182-860D-AA6E-6C109684020F}</ProjectGuid>
+    <ProjectGuid>{0E9C40E8-7A7B-BF83-8393-4A5AEFF125E5}</ProjectGuid>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>GLFW</RootNamespace>
+    <RootNamespace>LodePng</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -41,23 +41,23 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\bin\Debug\GLFW\</OutDir>
-    <IntDir>..\..\bin-int\Debug\GLFW\</IntDir>
-    <TargetName>GLFW</TargetName>
+    <OutDir>..\bin\Debug\LodePng\</OutDir>
+    <IntDir>..\bin-int\Debug\LodePng\</IntDir>
+    <TargetName>LodePng</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\bin\Release\GLFW\</OutDir>
-    <IntDir>..\..\bin-int\Release\GLFW\</IntDir>
-    <TargetName>GLFW</TargetName>
+    <OutDir>..\bin\Release\LodePng\</OutDir>
+    <IntDir>..\bin-int\Release\LodePng\</IntDir>
+    <TargetName>LodePng</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DEBUG;GLFW_STATIC;_GLFW_WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\vendor\lodepng\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
     </ClCompile>
@@ -70,8 +70,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>GLFW_STATIC;_GLFW_WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\lodepng\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -87,22 +86,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\context.c" />
-    <ClCompile Include="src\egl_context.c" />
-    <ClCompile Include="src\init.c" />
-    <ClCompile Include="src\input.c" />
-    <ClCompile Include="src\monitor.c" />
-    <ClCompile Include="src\osmesa_context.c" />
-    <ClCompile Include="src\vulkan.c" />
-    <ClCompile Include="src\wgl_context.c" />
-    <ClCompile Include="src\win32_init.c" />
-    <ClCompile Include="src\win32_joystick.c" />
-    <ClCompile Include="src\win32_monitor.c" />
-    <ClCompile Include="src\win32_thread.c" />
-    <ClCompile Include="src\win32_time.c" />
-    <ClCompile Include="src\win32_window.c" />
-    <ClCompile Include="src\window.c" />
-    <ClCompile Include="src\xkb_unicode.c" />
+    <ClCompile Include="..\vendor\lodepng\src\lodepng.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

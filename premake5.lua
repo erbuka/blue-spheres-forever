@@ -1,7 +1,10 @@
+_BSF_LOCATION = _ACTION
+
 workspace "BlueSpheresForever"
     architecture "x86_64"
     configurations { "Debug", "Release" }
-    startproject "Main"
+    startproject "BlueSpheresForever"
+    location(_ACTION)
 
     filter "configurations:Debug"
         symbols "On"
@@ -16,7 +19,7 @@ workspace "BlueSpheresForever"
         systemversion "latest"
 
 project "Glad"
-    location "vendor/glad"
+    location(_ACTION)
     kind "StaticLib"
     language "C"
     
@@ -28,7 +31,7 @@ project "Glad"
     files { "vendor/glad/src/**.c" }
 
 project "GLFW" 
-    location "vendor/glfw"
+    location(_ACTION)
     kind "StaticLib"
     language "C"
 
@@ -66,8 +69,32 @@ project "GLFW"
         }
 
 
+project "ImGui"
+    location(_ACTION)
+    kind "StaticLib"
+    language "C++"
+    
+    objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
+    targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
+    debugdir "bin/%{cfg.buildcfg}/%{prj.name}"
+
+    includedirs { 
+        "vendor/imgui", 
+        "vendor/imgui/examples",
+        "vendor/glfw/include",
+        "vendor/glad/include" 
+    }
+
+    defines { "IMGUI_IMPL_OPENGL_LOADER_GLAD" }
+    
+    files { 
+        "vendor/imgui/*.cpp",
+        "vendor/imgui/examples/imgui_impl_glfw.cpp",
+        "vendor/imgui/examples/imgui_impl_opengl3.cpp",
+     }
+
 project "LodePng"
-    location "vendor/lodepng"
+    location(_ACTION)
     kind "StaticLib"
     language "C++"
     
@@ -80,7 +107,7 @@ project "LodePng"
     files { "vendor/lodepng/src/**.cpp" }
 
 project "BlueSpheresForever"
-    location "BlueSpheresForever"
+    location(_ACTION)
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
@@ -97,18 +124,20 @@ project "BlueSpheresForever"
         "vendor/lodepng/include",
         "vendor/stb/include",
         "vendor/bass/include",
-        "vendor/json/include"
+        "vendor/json/include",
+        "vendor/imgui",
+        "vendor/imgui/examples",
     }
 
     pchheader "BsfPch.h"
     pchsource "BsfPch.cpp"
 
-    files { "BlueSpheresForever/**.cpp", "BlueSpheresForever/**.h"  }
+    files { "src/**.cpp", "src/**.h"  }
 
-    links { "opengl32", "Glad", "GLFW", "LodePng", "bass" }
+    links { "opengl32", "Glad", "GLFW", "LodePng", "bass", "ImGui" }
 
     postbuildcommands {
-        "{COPY} ./assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
+        "{COPY} ../src/assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
     }
 
     filter "system:windows"

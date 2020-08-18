@@ -1,5 +1,7 @@
 #include "BsfPch.h"
 
+#include <imgui.h>
+
 #include "GameScene.h"
 #include "VertexArray.h"
 #include "ShaderProgram.h"
@@ -999,6 +1001,7 @@ namespace bsf
 			renderer2d.End();
 		}
 
+		
 	}
 
 	void GameScene::OnGameStateChanged(const GameStateChangedEvent& evt)

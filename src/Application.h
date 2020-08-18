@@ -47,7 +47,7 @@ namespace bsf {
 
 	private:
 
-
+		void InitImGui();
 		void RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt);
 
 		bool m_Running = false;

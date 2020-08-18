@@ -1,5 +1,9 @@
 #include "BsfPch.h"
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include "Application.h"
 #include "Log.h"
 #include "Assets.h"
@@ -116,6 +120,8 @@ namespace bsf
 
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+        // Initialize ImGui
+        InitImGui();
 
         // Setup GLFW callbacks
         glfwSetWindowUserPointer(m_Window, this);
@@ -169,14 +175,30 @@ namespace bsf
 
 
             /* FPS counter */
-            char buffer[4255];
+            char buffer[0x80];
             sprintf_s(buffer, "Period: %f, FPS: %f", delta.count(), 1.0f / delta.count());
             glfwSetWindowTitle(m_Window, buffer);
             /* FPS counter */
+
+            if (m_CurrentScene->m_ImGui)
+            {
+                ImGui_ImplOpenGL3_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+            }
             
             RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PreRender);
             m_CurrentScene->OnRender(time);
             RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PostRender);
+
+            if (m_CurrentScene->m_ImGui)
+            {
+                auto windowSize = GetWindowSize();
+                glViewport(0, 0, windowSize.x, windowSize.y);
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            }
+
 
             glfwSwapBuffers(m_Window);
 
@@ -209,7 +231,28 @@ namespace bsf
         return *(m_AudioMixer.get());
     }
 
-    void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)
+	void bsf::Application::InitImGui()
+	{
+        
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+        //ImGui::StyleColorsClassic();
+
+        // Setup Platform/Renderer bindings
+        ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
+        ImGui_ImplOpenGL3_Init("#version 130");
+        
+	}
+
+
+	void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)
     {
         auto& tasks = scene->m_ScheduledTasks[evt];
         auto taskIt = tasks.begin();
