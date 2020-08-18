@@ -75,7 +75,13 @@ namespace bsf
 		
 		auto gradient = CreateGradient(16, {
 			{ 0.0f, options.BaseColor0 },
-			{ 1.0f, options.BaseColor1 },
+			{ 0.3f, options.BaseColor0 },
+			{ 0.45f, glm::mix(options.BaseColor0, glm::vec3(1.0f, 1.0f, 0.0f), 0.5f) },
+			{ 0.6f, glm::mix(options.BaseColor1, glm::vec3(1.0f, 0.0f, 1.0f), 0.5f) },
+			{ 0.75f, options.BaseColor1 },
+			{ 1.0f, options.BaseColor1 }
+
+
 		});
 
 		// Generate stars
@@ -87,7 +93,7 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glDisable(GL_DEPTH_TEST);
 			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 

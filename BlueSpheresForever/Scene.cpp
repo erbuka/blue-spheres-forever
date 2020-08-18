@@ -63,6 +63,11 @@ namespace bsf
 
 	void SceneTask::CallUpdateFn(const Time& time)
 	{
+		if (!m_IsStarted)
+		{
+			m_IsStarted = true;
+			m_StartTime = time;
+		}
 		m_UpdateFn != nullptr ? m_UpdateFn(*this, time) : SetDone();
 	}
 

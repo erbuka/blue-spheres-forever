@@ -75,6 +75,23 @@ namespace bsf
 
 	#pragma endregion
 
+	#pragma region Game Data Structures
+
+	enum class GameMode
+	{
+		BlueSpheres, CustomStage
+	};
+
+	struct GameInfo
+	{
+		GameMode Mode;
+		uint64_t Score;
+		uint32_t CurrentStage;
+	};
+
+	#pragma endregion
+
+
 	#pragma region Events
 
 	enum class Direction
@@ -251,6 +268,37 @@ namespace bsf
 		return std::string(buffer);
 	}
 
+
+	template<typename T>
+	struct InterpolatedValue
+	{
+	public:
+		InterpolatedValue(): m_v0(0), m_v1(0), m_Value(0) {}
+
+		void Reset(T v0, T v1)
+		{
+			m_v0 = v0;
+			m_v1 = v1;
+			m_Value = v0;
+		}
+
+		explicit operator T() const { return m_Value; }
+
+		void operator()(float t) { m_Value = (1 - t) * m_v0 + t * m_v1; }
+
+		template<uint8_t N>
+		T Get() const;
+
+		template<>
+		T Get<0>() const { return m_v0; }
+
+		template<>
+		T Get<1>() const { return m_v1; }
+
+	private:
+		T m_Value;
+		T m_v0, m_v1;
+	};
 
 	uint32_t ToHexColor(const glm::vec3& rgb);
 	uint32_t ToHexColor(const glm::vec4& rgb);

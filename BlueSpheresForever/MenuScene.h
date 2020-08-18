@@ -7,6 +7,7 @@
 #include "Scene.h"
 #include "Common.h"
 #include "EventEmitter.h"
+#include "StageCodeHelper.h"
 
 namespace bsf
 {
@@ -92,24 +93,7 @@ namespace bsf
 	{
 	public:
 
-		class StageCode
-		{
-		public:
 
-			static constexpr uint8_t DigitCount = 12;
-
-			StageCode() : StageCode(0) {}
-			StageCode(uint64_t code);
-
-			uint8_t& operator[](uint8_t index);
-			const uint8_t& operator[](uint8_t index) const;
-
-			operator uint64_t() const;
-
-		private:
-
-			std::array<uint8_t, 12> m_Digits;
-		};
 
 		StageCodeMenuItem();
 
@@ -122,7 +106,7 @@ namespace bsf
 
 	private:
 		uint32_t m_CursorPos;
-		StageCode m_CurrentCode, m_PreviousCode;
+		StageCodeHelper m_CurrentCode, m_PreviousCode;
 		bool m_Input = false;
 	};
 
@@ -181,7 +165,7 @@ namespace bsf
 		std::vector<Ref<Stage>> LoadCustomStages();
 
 
-		void PlayStage(const Ref<Stage>& stage);
+		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 
 		MenuRoot m_MenuRoot;
 		Ref<SelectMenuItem<Stage>> m_SelectStageMenuItem;

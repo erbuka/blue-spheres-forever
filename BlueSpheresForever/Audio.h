@@ -25,8 +25,13 @@ namespace bsf
 		Audio(const std::string& fileName);
 		~Audio();
 
+		void SetVolume(float volume);
+		float GetVolume() const;
+
 		void Play();
 		void Stop();
+		void FadeOut(float time);
+
 
 	private:
 		struct Impl;

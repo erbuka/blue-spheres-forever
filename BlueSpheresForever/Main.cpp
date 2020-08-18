@@ -9,6 +9,7 @@
 #include "MenuScene.h"
 #include "DisclaimerScene.h"
 #include "SplashScene.h"
+#include "StageClearScene.h"
 
 using namespace bsf;
 using namespace glm;
@@ -23,9 +24,10 @@ int main()
 	auto stage = MakeRef<Stage>();
 	stage->FromFile("assets/data/s3stage1.bss");
 	//auto scene = Ref<Scene>(new GameScene(stage));
-	//auto scene = Ref<Scene>(new DisclaimerScene());
-	auto scene = Ref<Scene>(new SplashScene());
+	auto scene = Ref<Scene>(new DisclaimerScene());
+	//auto scene = Ref<Scene>(new SplashScene());
 	//auto scene = Ref<Scene>(new MenuScene());
+	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
 	Application app;
 	app.GotoScene(std::move(scene));
 	app.Start();

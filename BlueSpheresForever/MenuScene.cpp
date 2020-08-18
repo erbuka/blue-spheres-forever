@@ -85,9 +85,10 @@ namespace bsf
 		auto backFn = [&](MenuRoot& root) { root.PopMenu(); return true; };
 		
 		playMenu->AddItem<ButtonMenuItem>("Play")->SetConfirmFunction([&](MenuRoot& root) {
+			auto& stageGenerator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
 			auto code = m_StageCodeMenuItem->GetStageCode();
-			auto stage = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator)->Generate(code);
-			PlayStage(stage);
+			auto stage = stageGenerator->Generate(code);
+			PlayStage(stage, GameInfo{ GameMode::BlueSpheres, 0, stageGenerator->GetStageFromCode(code).value() });
 			return true;
 		});
 		m_StageCodeMenuItem = playMenu->AddItem<StageCodeMenuItem>();
@@ -96,7 +97,7 @@ namespace bsf
 
 		customStagesMenu->AddItem<ButtonMenuItem>("Play")->SetConfirmFunction([&](MenuRoot& root) {
 			auto stage = m_SelectStageMenuItem->GetSelectedOption();
-			PlayStage(stage);
+			PlayStage(stage, GameInfo{ GameMode::CustomStage, 0, 0 });
 			return true;
 		});
 
@@ -196,14 +197,14 @@ namespace bsf
 		return result;
 	}
 
-	void MenuScene::PlayStage(const Ref<Stage>& stage)
+	void MenuScene::PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo)
 	{
 		auto fadeTask = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
 
 		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->Stop();
 
-		fadeTask->SetDoneFunction([&, stage](SceneTask& self) {
-			GetApplication().GotoScene(MakeRef<GameScene>(stage));
+		fadeTask->SetDoneFunction([&, stage, gameInfo](SceneTask& self) {
+			GetApplication().GotoScene(MakeRef<GameScene>(stage, gameInfo));
 		});
 
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeTask);
@@ -401,7 +402,7 @@ namespace bsf
 				m_CursorPos = m_CursorPos > 0 ? m_CursorPos - 1 : m_CursorPos;
 				break;
 			case bsf::Direction::Right:
-				m_CursorPos = m_CursorPos < StageCode::DigitCount - 1 ? m_CursorPos + 1 : m_CursorPos;
+				m_CursorPos = m_CursorPos < StageCodeHelper::DigitCount - 1 ? m_CursorPos + 1 : m_CursorPos;
 				break;
 			case bsf::Direction::Up:
 				m_CurrentCode[m_CursorPos] = m_CurrentCode[m_CursorPos] < 9 ? m_CurrentCode[m_CursorPos] + 1 : 0;
@@ -424,7 +425,7 @@ namespace bsf
 		if (m_Input && keyCode >= '0' && keyCode <= '9')
 		{
 			m_CurrentCode[m_CursorPos] = keyCode - '0';
-			m_CursorPos = std::min(m_CursorPos + 1u, StageCode::DigitCount - 1u);
+			m_CursorPos = std::min(m_CursorPos + 1u, StageCodeHelper::DigitCount - 1u);
 			return true;
 		}
 
@@ -433,7 +434,6 @@ namespace bsf
 
 	void StageCodeMenuItem::Render(MenuRoot& root, Renderer2D& renderer)
 	{
-		static const std::string codeStrFormat = "%d%d%d%d-%d%d%d%d-%d%d%d%d";
 		auto color = Selected ? s_SelectedMenuColor : s_MenuColor;
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		
@@ -467,37 +467,7 @@ namespace bsf
 	}
 
 
-	StageCodeMenuItem::StageCode::StageCode(uint64_t code)
-	{
-		uint64_t divider = std::pow(10, DigitCount - 1);
-		for (uint8_t i = 0; i < DigitCount; i++)
-		{
-			m_Digits[i] = code / divider;
-			assert(m_Digits[i] < 10);
-			code %= divider;
-			divider /= 10;
-		}
-	}
 
-	uint8_t& StageCodeMenuItem::StageCode::operator[](uint8_t index)
-	{
-		assert(index < DigitCount);
-		return m_Digits[index];
-	}
-
-	const uint8_t& StageCodeMenuItem::StageCode::operator[](uint8_t index) const
-	{
-		assert(index < DigitCount);
-		return m_Digits[index];
-	}
-
-	StageCodeMenuItem::StageCode::operator uint64_t() const
-	{
-		uint64_t result = 0;
-		for (uint8_t i = 0; i < DigitCount; i++)
-			result += std::pow(10, DigitCount - 1 - i) * m_Digits[i];
-		return result;
-	}
 
 
 }

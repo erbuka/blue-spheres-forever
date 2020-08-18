@@ -19,7 +19,7 @@
 #include "SkyGenerator.h"
 #include "SplashScene.h"
 #include "BlurFilter.h"
-
+#include "StageClearScene.h"
 
 
 #pragma region Shaders
@@ -231,8 +231,9 @@ namespace bsf
 		float Size;
 	};
 
-	GameScene::GameScene(const Ref<Stage>& stage) :
-		m_Stage(stage)
+	GameScene::GameScene(const Ref<Stage>& stage, const GameInfo& gameInfo) :
+		m_Stage(stage),
+		m_GameInfo(gameInfo)
 	{
 
 	}
@@ -283,7 +284,6 @@ namespace bsf
 			m_txGroundMap->SetAnisotropy(16.0f);
 		} 
 
-
 		// Skybox
 		auto& skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);
 		m_Sky = skyGenerator->Generate({ 1024, m_Stage->SkyColors[0], m_Stage->SkyColors[1] });
@@ -324,6 +324,11 @@ namespace bsf
 
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 0.5f);
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
+
+		// Play music
+		auto music = assets.Get<Audio>(AssetName::SfxMusic);
+		music->SetVolume(1.0f);
+		music->Play();
 
 	}
 	
@@ -1019,11 +1024,25 @@ namespace bsf
 
 			assets.Get<Audio>(AssetName::SfxGameOver)->Play();
 
+			assets.Get<Audio>(AssetName::SfxMusic)->FadeOut(2.0f);
+
 			animator->SetRunning(false);
 
 			task->SetDoneFunction([&](SceneTask& self) {
-				auto scene = MakeRef<SplashScene>();
-				GetApplication().GotoScene(scene);
+
+				if (m_Stage->Count(EStageObject::BlueSphere) == 0)
+				{
+					// Victory
+					auto scene = MakeRef<StageClearScene>(m_GameInfo, m_Stage->GetCollectedRings(), m_Stage->IsPerfect());
+					GetApplication().GotoScene(scene);
+				}
+				else
+				{
+					// Loss
+					auto scene = MakeRef<SplashScene>();
+					GetApplication().GotoScene(scene);
+				}
+
 			});
 
 			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, task);
@@ -1032,8 +1051,11 @@ namespace bsf
 		if (evt.Current == EGameState::Emerald)
 		{
 
+			assets.Get<Audio>(AssetName::SfxMusic)->SetVolume(0.5f);
+
+
 			auto liftObjectsTask = MakeRef<SceneTask>();
-			liftObjectsTask->SetUpdateFunction([this](SceneTask& self, const Time& time) {
+			liftObjectsTask->SetUpdateFunction([&](SceneTask& self, const Time& time) {
 				m_GameOverObjectsHeight += time.Delta * 10.0f;				
 			});
 

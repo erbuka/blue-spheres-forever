@@ -23,15 +23,19 @@ namespace bsf
 		using DoneFn = std::function<void(SceneTask&)>;
 		using UpdateFn = std::function<void(SceneTask&, const Time&)>;
 
-		SceneTask() : m_DoneFn(nullptr), m_UpdateFn(nullptr), m_IsDone(false), m_Application(nullptr) {}
+		SceneTask() : m_DoneFn(nullptr), m_UpdateFn(nullptr), m_Application(nullptr), 
+			m_IsDone(false), m_IsStarted(false)  {}
 		virtual ~SceneTask() {}
 
 		void SetUpdateFunction(UpdateFn fn) { m_UpdateFn = fn; }
 		void SetDoneFunction(DoneFn fn) { m_DoneFn = fn; }
 
+		const Time& GetStartTime() const { return m_StartTime; }
 
 		void SetDone() { m_IsDone = true; }
+		bool IsStarted() const { return m_IsStarted; }
 		bool IsDone() const { return m_IsDone; }
+		
 		Application& GetApplication();
 
 	private:
@@ -43,6 +47,8 @@ namespace bsf
 		Application* m_Application = nullptr;
 		DoneFn m_DoneFn;
 		UpdateFn m_UpdateFn;
+		Time m_StartTime;
+		bool m_IsStarted;
 		bool m_IsDone;
 	};
 
@@ -66,6 +72,9 @@ namespace bsf
 	class Scene
 	{
 	public:
+		Scene() = default;
+		Scene(Scene&&) = delete;
+
 		virtual ~Scene();
 		virtual void OnAttach();
 		virtual void OnRender(const Time& time);
@@ -74,7 +83,8 @@ namespace bsf
 		Application& GetApplication();
 
 		template<typename T>
-		void ScheduleTask(ESceneTaskEvent evt, const Ref<std::enable_if_t<std::is_base_of_v<SceneTask, T>, T>>& task) {
+		void ScheduleTask(ESceneTaskEvent evt, const Ref<T>& task) {
+			static_assert(std::is_base_of_v<SceneTask, T>);
 			m_ScheduledTasks[evt].push_back(task);
 		}
 

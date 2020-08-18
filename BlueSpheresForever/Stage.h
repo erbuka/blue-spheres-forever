@@ -60,6 +60,7 @@ namespace bsf
 		
 		glm::ivec2 StartPoint, StartDirection;
 
+		uint32_t MaxRings = 0;
 		uint32_t Rings = 0;
 
 		std::string Texture, NormalMap;
@@ -74,6 +75,8 @@ namespace bsf
 
 		Stage() = default;
 
+
+		uint32_t GetCollectedRings() const { return MaxRings - Rings; }
 		void CollectRing(const glm::ivec2& position);
 
 		EStageObject GetValueAt(int32_t x, int32_t y) const;

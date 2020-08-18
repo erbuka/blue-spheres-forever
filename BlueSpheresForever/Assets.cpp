@@ -107,6 +107,9 @@ namespace bsf
 		m_Assets[AssetName::SfxIntro] = MakeRef<Audio>("assets/sound/intro.mp3");
 		m_Assets[AssetName::SfxCodeOk] = MakeRef<Audio>("assets/sound/ok.wav");
 		m_Assets[AssetName::SfxCodeWrong] = MakeRef<Audio>("assets/sound/wrong.wav");
+		m_Assets[AssetName::SfxTally] = MakeRef<Audio>("assets/sound/tally.mp3");
+		m_Assets[AssetName::SfxStageClear] = MakeRef<Audio>("assets/sound/stage-clear.mp3");
+		m_Assets[AssetName::SfxMusic] = MakeRef<Audio>("assets/sound/music_techno.mp3");
 
 		// Models
 		m_Assets[AssetName::ModSphere] = CreateModel(WavefrontLoader().Load("assets/models/sphere.obj"))->GetMesh(0);

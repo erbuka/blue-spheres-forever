@@ -41,7 +41,7 @@ namespace bsf
 	{
 	public:
 			
-		GameScene(const Ref<Stage>& stage);
+		GameScene(const Ref<Stage>& stage, const GameInfo& gameInfo);
 		
 		void OnAttach() override;
 		void OnRender(const Time& time) override;
@@ -72,6 +72,7 @@ namespace bsf
 
 		std::list<GameMessage> m_GameMessages;
 
+		const GameInfo m_GameInfo;
 
 		void RenderShadowMap(const Time& time);
 

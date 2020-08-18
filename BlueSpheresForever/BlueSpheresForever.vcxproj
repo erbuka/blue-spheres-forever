@@ -130,6 +130,8 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="SkyGenerator.h" />
     <ClInclude Include="SplashScene.h" />
     <ClInclude Include="Stage.h" />
+    <ClInclude Include="StageClearScene.h" />
+    <ClInclude Include="StageCodeHelper.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VertexArray.h" />
     <ClInclude Include="WafefrontLoader.h" />
@@ -162,6 +164,8 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="SkyGenerator.cpp" />
     <ClCompile Include="SplashScene.cpp" />
     <ClCompile Include="Stage.cpp" />
+    <ClCompile Include="StageClearScene.cpp" />
+    <ClCompile Include="StageCodeHelper.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VertexArray.cpp" />
     <ClCompile Include="WafefrontLoader.cpp" />

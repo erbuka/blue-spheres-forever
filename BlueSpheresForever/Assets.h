@@ -61,6 +61,9 @@ namespace bsf
 		SfxIntro,
 		SfxCodeOk,
 		SfxCodeWrong,
+		SfxTally,
+		SfxStageClear,
+		SfxMusic,
 
 		StageGenerator,
 		SkyGenerator

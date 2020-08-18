@@ -59,7 +59,8 @@ namespace bsf
 		is.ReadSome(2, SkyColors.data()); // 2 * vec3
 		is.ReadSome(2, StarColors.data()); // 2 * vec3
 
-		is.Read(Rings); // uint32
+		is.Read(MaxRings); // uint32
+		Rings = MaxRings;
 
 		m_Data.resize(m_Width * m_Height);
 		m_AvoidSearch.resize(m_Width * m_Height);
@@ -75,8 +76,8 @@ namespace bsf
 	{
 		m_Width = (int32_t)width;
 		m_Height = (int32_t)height;
-		m_Data.resize(m_Width * m_Height);
-		m_AvoidSearch.resize(m_Width * m_Height);
+		m_Data.resize((size_t)m_Width * m_Height);
+		m_AvoidSearch.resize((size_t)m_Width * m_Height);
 		std::fill(m_Data.begin(), m_Data.end(), EStageObject::None);
 		std::fill(m_AvoidSearch.begin(), m_AvoidSearch.end(), EAvoidSearch::No);
 	}
@@ -292,7 +293,7 @@ namespace bsf
 			{
 				auto& s = sections[sy * 2 + sx];
 
-				result->Rings += s.Rings;
+				result->MaxRings += s.Rings;
 				
 				for (uint32_t y = 0; y < s_SectionSize; y++)
 				{
@@ -312,6 +313,8 @@ namespace bsf
 
 			}
 		}
+
+		result->Rings = result->MaxRings;
 
 
 		result->FloorRenderingMode = EFloorRenderingMode::CheckerBoard;
