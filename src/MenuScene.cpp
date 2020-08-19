@@ -11,6 +11,7 @@
 #include "Stage.h"
 #include "GameScene.h"
 #include "Audio.h"
+#include "StageEditorScene.h"
 
 namespace bsf
 {
@@ -117,7 +118,14 @@ namespace bsf
 
 		mainMenu->AddItem<LinkMenuItem>("Play", playMenu);
 		mainMenu->AddItem<LinkMenuItem>("Custom Stages", customStagesMenu);
-		mainMenu->AddItem<ButtonMenuItem>("Exit")->SetConfirmFunction([&](MenuRoot& root) { GetApplication().Exit(); return true; });
+		mainMenu->AddItem<ButtonMenuItem>("Stage Editor")->SetConfirmFunction([&](MenuRoot&) {
+			GetApplication().GotoScene(MakeRef<StageEditorScene>());
+			return true;
+		});
+		mainMenu->AddItem<ButtonMenuItem>("Exit")->SetConfirmFunction([&](MenuRoot&) { 
+			GetApplication().Exit(); 
+			return true; 
+		});
 
 		m_MenuRoot.PushMenu(mainMenu);
 

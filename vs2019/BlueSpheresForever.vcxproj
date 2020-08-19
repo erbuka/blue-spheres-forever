@@ -132,6 +132,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\Stage.h" />
     <ClInclude Include="..\src\StageClearScene.h" />
     <ClInclude Include="..\src\StageCodeHelper.h" />
+    <ClInclude Include="..\src\StageEditorScene.h" />
     <ClInclude Include="..\src\Texture.h" />
     <ClInclude Include="..\src\VertexArray.h" />
     <ClInclude Include="..\src\WafefrontLoader.h" />
@@ -166,6 +167,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\Stage.cpp" />
     <ClCompile Include="..\src\StageClearScene.cpp" />
     <ClCompile Include="..\src\StageCodeHelper.cpp" />
+    <ClCompile Include="..\src\StageEditorScene.cpp" />
     <ClCompile Include="..\src\Texture.cpp" />
     <ClCompile Include="..\src\VertexArray.cpp" />
     <ClCompile Include="..\src\WafefrontLoader.cpp" />

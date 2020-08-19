@@ -22,6 +22,7 @@ namespace bsf {
 		EventEmitter<MouseEvent> MousePressed;
 		EventEmitter<MouseEvent> MouseReleased;
 		EventEmitter<MouseEvent> MouseMoved;
+		EventEmitter<WheelEvent> Wheel;
 
 		EventEmitter<WindowResizedEvent> WindowResized;
 

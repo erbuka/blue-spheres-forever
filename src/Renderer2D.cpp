@@ -171,7 +171,7 @@ namespace bsf
 
 	}
 
-	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size)
+	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec2& tiling)
 	{
 		const auto& pivot = m_State.top().Pivot;
 		std::array<glm::vec2, 4> positions = {
@@ -182,11 +182,11 @@ namespace bsf
 		};
 
 
-		std::array<glm::vec2, 4> uvs = {
+		const std::array<glm::vec2, 4> uvs = {
 			glm::vec2{ 0.0f, 0.0f },
-			glm::vec2{ 1.0f, 0.0f },
-			glm::vec2{ 1.0f, 1.0f },
-			glm::vec2{ 0.0f, 1.0f }
+			glm::vec2{ tiling.x, 0.0f },
+			glm::vec2{ tiling.x, tiling.y },
+			glm::vec2{ 0.0f, tiling.y }
 		};
 
 		DrawTriangleInternal({ positions[0], positions[1], positions[2] }, { uvs[0], uvs[1], uvs[2] });

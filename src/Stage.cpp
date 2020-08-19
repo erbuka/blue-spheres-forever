@@ -80,6 +80,17 @@ namespace bsf
 		m_AvoidSearch.resize((size_t)m_Width * m_Height);
 		std::fill(m_Data.begin(), m_Data.end(), EStageObject::None);
 		std::fill(m_AvoidSearch.begin(), m_AvoidSearch.end(), EAvoidSearch::No);
+		
+		CheckerColors = { glm::vec3{ 1.0f, 0.0f, 0.0f }, glm::vec3{ 1.0f, 1.0f, 1.0f } };
+	}
+
+	Stage::Stage() : Stage(32, 32)
+	{
+	}
+
+	Stage::Stage(uint32_t width, uint32_t height)
+	{
+		Initialize(width, height);
 	}
 
 	void Stage::CollectRing(const glm::ivec2& position)

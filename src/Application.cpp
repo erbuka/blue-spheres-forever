@@ -20,6 +20,10 @@ namespace bsf
 
 #define BD_APP(x) (static_cast<::bsf::Application*>(glfwGetWindowUserPointer(x)))
 
+    static void GLFW_Scroll(GLFWwindow* window, double xoffset, double yoffset)
+    {
+        BD_APP(window)->Wheel.Emit({ (float)xoffset, (float)yoffset });
+    }
 
     static void GLFW_Key(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
@@ -129,6 +133,7 @@ namespace bsf
         glfwSetCursorPosCallback(m_Window, &GLFW_CursorPos);
         glfwSetMouseButtonCallback(m_Window, &GLFW_MouseButton);
         glfwSetWindowSizeCallback(m_Window, &GLFW_WindowSize);
+        glfwSetScrollCallback(m_Window, &GLFW_Scroll);
         glfwSetKeyCallback(m_Window, &GLFW_Key);
 
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -157,6 +162,7 @@ namespace bsf
 
             if (m_NextScene != nullptr)
             {
+                m_CurrentScene->ClearSubscriptions();
                 m_CurrentScene->OnDetach();
                 m_CurrentScene = std::move(m_NextScene); // m_NextScene = nullptr implicit
                 m_CurrentScene->m_App = this;

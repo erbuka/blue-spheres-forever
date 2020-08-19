@@ -1,11 +1,15 @@
 #pragma once
 
 #include <functional>
-
+#include <list>
+#include "Log.h"
 
 namespace bsf
 {
 	using Unsubscribe = std::function<void()>;
+
+
+	
 
 	template<typename Event>
 	class EventEmitter
@@ -53,4 +57,31 @@ namespace bsf
 	protected:
 		std::list<HandlerFn> m_Handlers;
 	};
+
+	class Subscriber
+	{
+	public:
+		virtual ~Subscriber() { 
+			if (!m_Subscriptions.empty())
+				BSF_ERROR("Subscriber has been destroyed but still has subscriptions");
+		}
+
+		void ClearSubscriptions() {
+			for (auto& unsub : m_Subscriptions)
+				unsub();
+			m_Subscriptions.clear();
+		}
+
+		template<typename Event>
+		void AddSubscription(EventEmitter<Event>& evt, const typename EventEmitter<Event>::HandlerFn& handler) { 
+			m_Subscriptions.push_back(evt.Subscribe(handler));
+		}
+
+	private:
+		std::list<Unsubscribe> m_Subscriptions;
+
+	};
+
+
+
 }

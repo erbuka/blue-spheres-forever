@@ -110,6 +110,11 @@ namespace bsf
 		MouseButton Button;
 	};
 
+	struct WheelEvent
+	{
+		float DeltaX, DeltaY;
+	};
+
 	struct WindowResizedEvent
 	{
 		float Width, Height;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "EventEmitter.h"
 
 #include <list>
 #include <unordered_map>
@@ -69,7 +70,7 @@ namespace bsf
 		float m_Duration, m_Time;
 	};
 
-	class Scene
+	class Scene : public Subscriber
 	{
 	public:
 		Scene() = default;

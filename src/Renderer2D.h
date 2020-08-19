@@ -91,7 +91,7 @@ namespace bsf
 
 		void Begin(const glm::mat4& projection);
 
-		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f });
+		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f }, const glm::vec2& tiling = { 1.0f, 1.0f });
 		void DrawString(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		void DrawStringShadow(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		

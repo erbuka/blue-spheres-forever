@@ -73,8 +73,8 @@ namespace bsf
 		bool FromFile(const std::string& filename);
 		void Initialize(uint32_t width, uint32_t height);
 
-		Stage() = default;
-
+		Stage();
+		Stage(uint32_t width, uint32_t height);
 
 		uint32_t GetCollectedRings() const { return MaxRings - Rings; }
 		void CollectRing(const glm::ivec2& position);
