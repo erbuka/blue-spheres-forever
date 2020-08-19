@@ -29,15 +29,19 @@ namespace bsf
 	namespace UIDefaultStyle
 	{
 		constexpr glm::vec4 IconButtonShadowColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 IconButtonDefaultTint = { 0.5f, 0.5f, 0.5f, 1.0f };
+		constexpr glm::vec4 IconButtonDefaultTint = { 0.25f, 0.25f, 0.25f, 1.0f };
 		constexpr glm::vec4 PanelBackground = { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
 
-	struct UIRect
+	enum class StageEditorTool
 	{
-		glm::vec2 Position, Size;
-		bool Contains(const glm::vec2& pos) const; 
+		BlueSphere,
+		RedSphere,
+		YellowSphere,
+		Bumper,
+		Ring
 	};
+
 
 	class UIElement : public Subscriber
 	{
@@ -47,14 +51,14 @@ namespace bsf
 		UIElement(UIElement&&) = delete;
 		virtual ~UIElement() {}
 
-		UIRect Bounds;
+		Rect Bounds;
 		glm::vec2 Position = { 0.0f, 0.0f };
 		glm::vec2 PreferredSize = { 0.0f, 0.0f };
 		glm::vec2 MinSize = { 0.0f, 0.0f };
 		glm::vec2 MaxSize = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
 		bool Hovered = false;
 
-		EventEmitter<MouseEvent> MouseMoved, MouseDragged, Click;
+		EventEmitter<MouseEvent> MouseDragged, MouseMoved, Click;
 		EventEmitter<WheelEvent> Wheel;
 
 		virtual void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) = 0;
@@ -97,6 +101,7 @@ namespace bsf
 		struct {
 			Ref<UIElement> HoverTarget = nullptr;
 			Ref<UIElement> DragTarget = nullptr;
+			MouseButton DragButton;
 			glm::vec2 Position, PrevPosition;
 		} m_MouseState;
 
@@ -113,6 +118,7 @@ namespace bsf
 		UIIconButton() = default;
 		Ref<Texture2D> Icon = nullptr;
 		glm::vec4 Tint = { 1.0f, 1.0f, 1.0f, 1.0f };
+		bool Selected = false;
 
 		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
 		void Render(Renderer2D& renderer, const Time& time) override;
@@ -153,6 +159,8 @@ namespace bsf
 	{
 	public:
 
+		StageEditorTool ActiveTool = StageEditorTool::BlueSphere;
+
 		UIStageEditorArea();
 
 		void Render(Renderer2D& renderer, const Time& time) override;
@@ -163,6 +171,11 @@ namespace bsf
 
 	private:
 
+		// StageObject: { Texture, Tint }
+		std::unordered_map<EStageObject, std::tuple<Ref<Texture2D>, glm::vec4>> m_StageObjRendering;
+
+		std::optional<glm::ivec2> GetStageCoordinates(const glm::vec2 pos) const;
+
 		float m_MinZoom = 0.0f, m_MaxZoom = std::numeric_limits<float>::max();
 
 		glm::vec2 m_ViewOrigin = { 0.0f, 0.0f };
@@ -171,6 +184,8 @@ namespace bsf
 		Ref<Stage> m_Stage = nullptr;
 		Ref<Texture2D> m_Pattern = nullptr;
 	};
+
+
 
 
 	class StageEditorScene : public Scene
@@ -183,7 +198,9 @@ namespace bsf
 	private:
 		Ref<Stage> m_CurrentStage;
 		Ref<UIRoot> m_uiRoot;
-		Ref<UIStageEditorArea> m_EditorArea;
+		Ref<UIStageEditorArea> m_uiEditorArea;
+
+		std::vector<Ref<UIIconButton>> m_ToolButtons;
 
 		void InitializeUI();
 

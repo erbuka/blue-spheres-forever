@@ -52,14 +52,10 @@ namespace bsf
 
 	void StageEditorScene::InitializeUI()
 	{
-		static auto createToolBarButton = []() -> auto {
-			auto btn = MakeRef<UIIconButton>();
-			btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-			btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-			return btn;
-		};
-
 		auto& assets = Assets::GetInstance();
+
+
+
 		m_uiRoot = MakeRef<UIRoot>();
 		m_uiRoot->Attach(GetApplication());
 
@@ -72,47 +68,34 @@ namespace bsf
 		topBar->Layout = UIPanelLayout::Horizontal;
 		topBar->PreferredSize = { 0.0f, s_uiTopBarHeight };
 
-		// Blue sphere button
+		auto tools = {
+			std::make_tuple(StageEditorTool::BlueSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::BlueSphere),
+			std::make_tuple(StageEditorTool::RedSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::RedSphere),
+			std::make_tuple(StageEditorTool::YellowSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::YellowSphere),
+			std::make_tuple(StageEditorTool::Bumper, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::White),
+			std::make_tuple(StageEditorTool::Ring, assets.Get<Texture2D>(AssetName::TexRingUI), Colors::Ring),
+		};
+
+		for (const auto& toolSpec : tools)
 		{
-			auto btn = createToolBarButton();
-			btn->Icon = assets.Get<Texture2D>(AssetName::TexSphereUI);
-			btn->Tint = Colors::BlueSphere;
+			auto btn = MakeRef<UIIconButton>();
+			
+			btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+			btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+			btn->Icon = std::get<1>(toolSpec);
+			btn->Tint = std::get<2>(toolSpec);
+			auto tool = std::get<0>(toolSpec);
+			
+			AddSubscription(btn->Click, [&, btn, tool](const MouseEvent& evt) {
+				for (auto& b : m_ToolButtons)
+					b->Selected = false;
+				m_uiEditorArea->ActiveTool = tool;
+				btn->Selected = true;
+			});
+
+			m_ToolButtons.push_back(btn);
 			topBar->AddChild(btn);
 		}
-
-		// Red sphere button
-		{
-			auto btn = createToolBarButton();
-			btn->Icon = assets.Get<Texture2D>(AssetName::TexSphereUI);
-			btn->Tint = Colors::RedSphere;
-			topBar->AddChild(btn);
-		}
-
-
-		// Yellow sphere button
-		{
-			auto btn = createToolBarButton();
-			btn->Icon = assets.Get<Texture2D>(AssetName::TexSphereUI);
-			btn->Tint = Colors::YellowSphere;
-			topBar->AddChild(btn);
-		}
-
-		// Bumper
-		{
-			auto btn = createToolBarButton();
-			btn->Icon = assets.Get<Texture2D>(AssetName::TexSphereUI);
-			btn->Tint = Colors::White;
-			topBar->AddChild(btn);
-		}
-
-		// Ring
-		{
-			auto btn = createToolBarButton();
-			btn->Icon = assets.Get<Texture2D>(AssetName::TexRingUI);
-			btn->Tint = Colors::Ring;
-			topBar->AddChild(btn);
-		}
-
 
 		auto middle = MakeRef<UIPanel>();
 		middle->Layout = UIPanelLayout::Horizontal;
@@ -122,11 +105,11 @@ namespace bsf
 		properties->BackgroundColor = { 0.0f, 1.0f, 0.0f, 1.0f };
 		properties->PreferredSize = { s_uiPropertiesWidth, 0.0f };
 
-		m_EditorArea = MakeRef<UIStageEditorArea>();
-		m_EditorArea->PreferredSize = { -s_uiPropertiesWidth, 0.0f };
-		m_EditorArea->SetStage(m_CurrentStage);
+		m_uiEditorArea = MakeRef<UIStageEditorArea>();
+		m_uiEditorArea->PreferredSize = { -s_uiPropertiesWidth, 0.0f };
+		m_uiEditorArea->SetStage(m_CurrentStage);
 
-		middle->AddChild(m_EditorArea);
+		middle->AddChild(m_uiEditorArea);
 		middle->AddChild(properties);
 
 		main->AddChild(middle);
@@ -276,13 +259,13 @@ namespace bsf
 				m_MouseState.HoverTarget = intersection;
 
 				intersection->Hovered = true;
-				intersection->MouseMoved.Emit({ pos.x, pos.y, MouseButton::None });
+				intersection->MouseMoved.Emit({ pos.x, pos.y, 0, 0, MouseButton::None });
 
 				auto& leftButtonState = m_MouseButtonState[MouseButton::Left];
-				if (leftButtonState.Pressed && intersection == m_MouseState.DragTarget)
+				if (intersection == m_MouseState.DragTarget)
 				{
 					auto delta = m_MouseState.Position - m_MouseState.PrevPosition;
-					intersection->MouseDragged.Emit({ delta.x, delta.y, MouseButton::None });
+					intersection->MouseDragged.Emit({ pos.x, pos.y, delta.x, delta.y, m_MouseState.DragButton });
 				}
 
 			}
@@ -310,6 +293,7 @@ namespace bsf
 				buttonState.Pressed = true;
 				buttonState.TimePressed = std::chrono::system_clock::now();
 				m_MouseState.DragTarget = intersection;
+				m_MouseState.DragButton = evt.Button;
 				//intersection->MousePressed.Emit({ pos.x, pos.y, evt.Button });
 			}
 			else
@@ -338,7 +322,7 @@ namespace bsf
 
 				if (std::chrono::system_clock::now() - buttonState.TimePressed < std::chrono::milliseconds(500))
 				{
-					intersection->Click.Emit({ pos.x, pos.y, evt.Button });
+					intersection->Click.Emit({ pos.x, pos.y, 0, 0, evt.Button });
 				}
 			}
 		});
@@ -407,27 +391,61 @@ namespace bsf
 		}
 		r2.Pop();
 
-		r2.Color(Hovered ? Tint : UIDefaultStyle::IconButtonDefaultTint * Tint);
+		r2.Color((Hovered || Selected) ? Tint : UIDefaultStyle::IconButtonDefaultTint * Tint);
 		r2.DrawQuad(Bounds.Position, Bounds.Size);
 		r2.Pop();
 	}
 
 
-	bool UIRect::Contains(const glm::vec2& pos) const
-	{
-		const auto& min = Position;
-		auto max = Position + Size;
-		return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y;
-	}
-
-
 	UIStageEditorArea::UIStageEditorArea()
 	{
+		auto& assets = Assets::GetInstance();
+
+		static const std::unordered_map<StageEditorTool, EStageObject> s_toolMap = {
+			{ StageEditorTool::BlueSphere, EStageObject::BlueSphere },
+			{ StageEditorTool::RedSphere, EStageObject::RedSphere },
+			{ StageEditorTool::YellowSphere, EStageObject::YellowSphere },
+			{ StageEditorTool::Bumper, EStageObject::Bumper },
+			{ StageEditorTool::Ring, EStageObject::Ring }
+		};
+
+		m_StageObjRendering = {
+			{ EStageObject::BlueSphere,		{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::BlueSphere }},
+			{ EStageObject::RedSphere,		{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::RedSphere }},
+			{ EStageObject::YellowSphere,	{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::YellowSphere }},
+			{ EStageObject::Bumper,			{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::White }},
+			{ EStageObject::Ring,			{ assets.Get<Texture2D>(AssetName::TexRingUI),		Colors::Ring }}
+		};
+
 		m_Pattern = CreateCheckerBoard({ 0, 0 });
 
+		auto editCallback = [&](const MouseEvent& evt) {
+
+			if (auto stageCoordsOpt = GetStageCoordinates({ evt.X, evt.Y }); stageCoordsOpt.has_value())
+			{
+				const auto& stageCoords = stageCoordsOpt.value();
+
+				if (evt.Button == MouseButton::Left)
+				{
+					if (auto obj = s_toolMap.find(ActiveTool); obj != s_toolMap.end())
+						m_Stage->SetValueAt(stageCoords.x, stageCoords.y, obj->second);
+				}
+
+				if (evt.Button == MouseButton::Right)
+				{
+					m_Stage->SetValueAt(stageCoords.x, stageCoords.y, EStageObject::None);
+					m_Stage->SetAvoidSearchAt(stageCoords.x, stageCoords.y, EAvoidSearch::No);
+				}
+			}
+		};
+
+		AddSubscription(Click, editCallback);
+		AddSubscription(MouseDragged, editCallback);
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
-			m_ViewOrigin -= glm::vec2(evt.X, evt.Y);
+			if (evt.Button == MouseButton::Middle)
+				m_ViewOrigin -= glm::vec2(evt.DeltaX, evt.DeltaY);
 		});
+
 
 		AddSubscription(Wheel, [&](const WheelEvent& evt) {
 			m_Zoom = std::clamp(m_Zoom + evt.DeltaY * 0.2f, m_MinZoom, m_MaxZoom);
@@ -439,18 +457,34 @@ namespace bsf
 	{
 		if (m_Stage)
 		{
+
 			auto size = glm::vec2(m_Stage->GetWidth(), m_Stage->GetHeight()) * m_Zoom;
 			auto tiling = glm::vec2(m_Stage->GetWidth(), m_Stage->GetHeight()) / 2.0f;
-
 
 			r2.Push();
 			
 			r2.Color({ 0.0f, 0.0f, 0.0f, 0.25f });
 			r2.DrawQuad(Bounds.Position, Bounds.Size);
 
+			r2.Clip(Bounds);
+
 			r2.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 			r2.Texture(m_Pattern);
-			r2.DrawQuad(Bounds.Position - m_ViewOrigin, size, tiling);
+			r2.DrawQuad(Bounds.Position - m_ViewOrigin, size, tiling, { -0.25f, -0.25f });
+
+			r2.Translate(Bounds.Position - m_ViewOrigin);
+			for (uint32_t x = 0; x < m_Stage->GetWidth(); ++x)
+			{
+				for (uint32_t y = 0; y < m_Stage->GetHeight(); ++y)
+				{
+					if (auto obj = m_StageObjRendering.find(m_Stage->GetValueAt(x, y)); obj != m_StageObjRendering.end())
+					{
+						r2.Texture(std::get<0>(obj->second));
+						r2.Color(std::get<1>(obj->second));
+						r2.DrawQuad(glm::vec2(x, y) * m_Zoom, { m_Zoom,m_Zoom });
+					}
+				}
+			}
 			
 			r2.Pop();
 		}
@@ -470,6 +504,18 @@ namespace bsf
 				ToHexColor(m_Stage->CheckerColors[1])
 				});
 		}
+
+	}
+
+	std::optional<glm::ivec2> UIStageEditorArea::GetStageCoordinates(const glm::vec2 pos) const
+	{
+		glm::ivec2 localPos = glm::floor(((pos - Bounds.Position) + m_ViewOrigin) / m_Zoom);
+
+		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetWidth() 
+			&& localPos.y >= 0 && localPos.y < m_Stage->GetHeight())
+			return localPos;
+		else
+			return std::nullopt;
 
 	}
 

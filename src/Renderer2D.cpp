@@ -1,5 +1,8 @@
 #include "BsfPch.h"
 
+
+#include <glm/gtx/perpendicular.hpp>
+
 #include "Renderer2D.h"
 #include "VertexArray.h"
 #include "ShaderProgram.h"
@@ -53,8 +56,11 @@ static const std::string s_FragmentSource = R"FRAGMENT(
 	out vec4 oColor;
 
 	void main() {
+		#ifdef DEBUG
+		oColor = vec4(0.0, 0.0, 0.0, 1.0);
+		#else
 		oColor = fColor * texture(uTextures[fTexture], fUv);
-		//oColor = vec4(fUv, 0.0, 1.0);
+		#endif
 	}	
 
 )FRAGMENT";
@@ -122,8 +128,6 @@ namespace bsf
 
 		const auto& state = m_State.top();
 
-		if (m_CurTriangleIndex == s_MaxTriangleVertices)
-			End();
 
 		uint32_t textureIndex = 0;
 
@@ -153,7 +157,7 @@ namespace bsf
 		}
 
 
-		std::array<Vertex2D, 3> transformed = { };
+		Triangle2D transformed = { };
 
 		for (size_t i = 0; i < positions.size(); i++)
 		{
@@ -165,13 +169,137 @@ namespace bsf
 			transformed[i].TextureID = textureIndex;
 		}
 
-		std::memcpy((void*)&m_TriangleVertices[m_CurTriangleIndex], (void*)transformed.data(), transformed.size() * sizeof(Vertex2D));
+		std::vector<Triangle2D> triangles;
 
-		m_CurTriangleIndex += transformed.size();
+		if (state.Clip.has_value())
+			triangles = ClipTriangle(transformed);
+		else
+			triangles.push_back(transformed);
+
+
+		for (const auto& triangle : triangles)
+		{
+			std::memcpy((void*)&m_TriangleVertices[m_CurTriangleIndex], (void*)triangle.data(), triangle.size() * sizeof(Vertex2D));
+			m_CurTriangleIndex += triangle.size();
+
+			if (m_CurTriangleIndex == s_MaxTriangleVertices)
+				End();
+
+		}
+
 
 	}
 
-	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec2& tiling)
+	std::pair<float, float> Renderer2D::IntersectLines(const std::array<glm::vec2, 2>& l0, const std::array<glm::vec2, 2>& l1)
+	{
+		const auto& a = l0[0];
+		const auto& b = l0[1];
+		const auto& c = l1[0];
+		const auto& d = l1[1];
+
+		glm::mat2 A = {
+			b.x - a.x, b.y - a.y,
+			c.x - d.x, c.y - d.y
+		};
+
+		glm::vec2 B = { c.x - a.x, c.y - a.y };
+
+		auto st = glm::inverse(A) * B;
+
+		return { st.x, st.y };
+
+	}
+
+	std::vector<Renderer2D::Triangle2D> Renderer2D::ClipTriangle(const Triangle2D& input)
+	{
+		const auto& clipRect = m_State.top().Clip.value();
+
+		// Create the points that defines the clipping planes (ccw order)
+		const std::array<glm::vec2, 4> points = {
+			glm::vec2(clipRect.Left(), clipRect.Bottom()),
+			glm::vec2(clipRect.Right(), clipRect.Bottom()),
+			glm::vec2(clipRect.Right(), clipRect.Top()),
+			glm::vec2(clipRect.Left(), clipRect.Top()),
+		};
+
+		std::vector<Triangle2D> triangles; // final result
+		std::vector<Triangle2D> tris2; // assembled triangles
+
+		// Start with the initial triangle
+		triangles.push_back(input);
+
+		std::array<std::pair<float, float>, 3> intersections;
+
+		std::array<Vertex2D, 4> assembleList;
+
+		// We consider one plane at time
+		for (size_t i = 0; i < points.size(); i++)
+		{
+
+			// Define the 2 point that give us the clipping plane
+			const std::array<glm::vec2, 2> plane = { points[i], points[(i + 1) % points.size()] };
+			glm::vec2 dir = glm::normalize(plane[1] - plane[0]);
+			// Get the normal direction (that's why the ccw ordering is important)
+			glm::vec2 norm = { -dir.y, dir.x };
+
+			// We clip each triangle in the current list and generate new triangles is necessary
+			for (auto& triangle : triangles)
+			{
+
+				// For each edge, find the intersections with the current clipping plane
+				intersections[0] = IntersectLines({ triangle[0].Postion, triangle[1].Postion }, plane);
+				intersections[1] = IntersectLines({ triangle[1].Postion, triangle[2].Postion }, plane);
+				intersections[2] = IntersectLines({ triangle[2].Postion, triangle[0].Postion }, plane);
+
+				int32_t count = 0;
+
+				// Based on the intersections and on the original points we create a list of new points
+				// that are used to assemble new triangles. Note that the number of new points can be
+				// eighter 0, 3 or 4
+				for (size_t j = 0; j < intersections.size(); ++j)
+				{
+
+					const auto& t = intersections[j].first;
+
+					// If the starting point of the edge is "inside" the plane, add it to the list
+					if (glm::dot(triangle[j].Postion - plane[0], norm) > 0.0f)
+						assembleList[count++] = triangle[j];
+					
+					
+					if (t >= 0.0f && t <= 1.0f)
+					{ // If there's an intersection, add the new intersetion point to the list						
+						assembleList[count] = triangle[j];
+						assembleList[count].Postion = glm::lerp(triangle[j].Postion, triangle[(j + 1) % triangle.size()].Postion, t);
+						assembleList[count].UV = glm::lerp(triangle[j].UV, triangle[(j + 1) % triangle.size()].UV, t);
+						count++;
+					}
+
+				}
+
+				// With the assemble list we generate a triangle fan (can be eighter 0,1 or 2 triangles
+				// depending on the number of points)
+				for (int32_t i = 1; i < count - 1; i++)
+					tris2.push_back({ assembleList[0], assembleList[i], assembleList[i + 1] });
+
+
+			}
+
+			// We put the new triangles (tris2) in our final list (triangles). At the next cycle the triangles
+			// are going to be tested against another clipping plane. At the end this list is going
+			// to contain triangles that are inside all the clipping planes
+
+			triangles = std::move(tris2); // std::move guarantees that the moved container is empty after the operation
+
+
+		}
+
+
+
+		return triangles;
+
+	}
+
+	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvSize, const glm::vec2& uvOffset)
 	{
 		const auto& pivot = m_State.top().Pivot;
 		std::array<glm::vec2, 4> positions = {
@@ -183,10 +311,10 @@ namespace bsf
 
 
 		const std::array<glm::vec2, 4> uvs = {
-			glm::vec2{ 0.0f, 0.0f },
-			glm::vec2{ tiling.x, 0.0f },
-			glm::vec2{ tiling.x, tiling.y },
-			glm::vec2{ 0.0f, tiling.y }
+			glm::vec2{ uvOffset.x + 0.0f,		uvOffset.y + 0.0f		},
+			glm::vec2{ uvOffset.x + uvSize.x,	uvOffset.y + 0.0f		},
+			glm::vec2{ uvOffset.x + uvSize.x,	uvOffset.y + uvSize.y	},
+			glm::vec2{ uvOffset.x + 0.0f,		uvOffset.y + uvSize.y	}
 		};
 
 		DrawTriangleInternal({ positions[0], positions[1], positions[2] }, { uvs[0], uvs[1], uvs[2] });
@@ -326,6 +454,18 @@ namespace bsf
 		m_State.top().TextShadowOffset = offset;
 	}
 
+	void Renderer2D::Clip(const Rect& clip)
+	{
+		m_State.top().Clip = clip;
+	}
+
+	void Renderer2D::NoClip()
+	{
+		m_State.top().Clip = std::nullopt;
+	}
+
+
+
 
 	void Renderer2D::Push()
 	{
@@ -350,6 +490,7 @@ namespace bsf
 			glDisable(GL_CULL_FACE);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
 			m_TriangleProgram->Use();
@@ -369,6 +510,9 @@ namespace bsf
 			m_Triangles->Draw(GL_TRIANGLES, m_CurTriangleIndex);
 
 			m_CurTriangleIndex = 0;
+
+			//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 		}
 
 		// Reset Textures

@@ -38,7 +38,7 @@ namespace bsf
     }
     static void GLFW_CursorPos(GLFWwindow* window, double x, double y)
     {
-        BD_APP(window)->MouseMoved.Emit({ float(x), float(y), MouseButton::None });
+        BD_APP(window)->MouseMoved.Emit({ float(x), float(y), 0, 0, MouseButton::None });
     }
 
     static void GLFW_MouseButton(GLFWwindow* window, int button, int action, int mods)
@@ -50,17 +50,18 @@ namespace bsf
 
         switch (button)
         {
-        case GLFW_MOUSE_BUTTON_1: appButton = MouseButton::Left; break;
-        case GLFW_MOUSE_BUTTON_2: appButton = MouseButton::Right; break;
+        case GLFW_MOUSE_BUTTON_LEFT: appButton = MouseButton::Left; break;
+        case GLFW_MOUSE_BUTTON_RIGHT: appButton = MouseButton::Right; break;
+        case GLFW_MOUSE_BUTTON_MIDDLE: appButton = MouseButton::Middle; break;
         }
 
         if (action == GLFW_PRESS)
         {
-            BD_APP(window)->MousePressed.Emit({ float(x), float(y), appButton });
+            BD_APP(window)->MousePressed.Emit({ float(x), float(y), 0, 0, appButton });
         }
         else if (action == GLFW_RELEASE)
         {
-            BD_APP(window)->MouseReleased.Emit({ float(x), float(y), appButton });
+            BD_APP(window)->MouseReleased.Emit({ float(x), float(y), 0, 0, appButton });
         }
 
     }
@@ -211,6 +212,7 @@ namespace bsf
             glfwPollEvents();
         }
 
+        m_CurrentScene->ClearSubscriptions();
         m_CurrentScene->OnDetach();
 
         m_CurrentScene = nullptr;

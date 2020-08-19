@@ -42,6 +42,7 @@ namespace bsf
 		glm::vec4 TextShadowColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glm::vec2 TextShadowOffset = { 0.1f, 0.1f };
 		glm::vec2 Pivot = { 0, 0 };
+		std::optional<Rect> Clip;
 	};
 
 
@@ -91,7 +92,7 @@ namespace bsf
 
 		void Begin(const glm::mat4& projection);
 
-		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f }, const glm::vec2& tiling = { 1.0f, 1.0f });
+		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f }, const glm::vec2& uv = { 1.0f, 1.0f }, const glm::vec2& ovOffset = { 0.0f, 0.0f });
 		void DrawString(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		void DrawStringShadow(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		
@@ -110,6 +111,9 @@ namespace bsf
 		void TextShadowColor(const glm::vec4& color);
 		void TextShadowOffset(const glm::vec2& offset);
 
+		void Clip(const Rect& clip);
+		void NoClip();
+
 		void Push();
 		void Pop();
 
@@ -124,7 +128,14 @@ namespace bsf
 			uint32_t TextureID;
 		};
 
+		using Triangle2D = std::array<Vertex2D, 3>;
+
+
 		void DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs);
+
+		std::pair<float, float> IntersectLines(const std::array<glm::vec2, 2>& l0, const std::array<glm::vec2, 2>& l1);
+
+		std::vector<Triangle2D> ClipTriangle(const Triangle2D& input);
 
 		std::vector<uint32_t> m_Textures;
 		std::vector<int32_t> m_TextureUnits;

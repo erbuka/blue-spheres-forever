@@ -113,15 +113,18 @@ namespace bsf
 				m_SelectStageMenuItem->AddOption(ss.str(), stage);
 			}
 		}
+
+		customStagesMenu->AddItem<ButtonMenuItem>("Stage Editor")->SetConfirmFunction([&](MenuRoot&) {
+			GetApplication().GotoScene(MakeRef<StageEditorScene>());
+			return true;
+		});
+
 		customStagesMenu->AddItem<ButtonMenuItem>("Back")->SetConfirmFunction(backFn);
 
 
 		mainMenu->AddItem<LinkMenuItem>("Play", playMenu);
 		mainMenu->AddItem<LinkMenuItem>("Custom Stages", customStagesMenu);
-		mainMenu->AddItem<ButtonMenuItem>("Stage Editor")->SetConfirmFunction([&](MenuRoot&) {
-			GetApplication().GotoScene(MakeRef<StageEditorScene>());
-			return true;
-		});
+
 		mainMenu->AddItem<ButtonMenuItem>("Exit")->SetConfirmFunction([&](MenuRoot&) { 
 			GetApplication().Exit(); 
 			return true; 

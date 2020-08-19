@@ -10,6 +10,13 @@
 namespace bsf
 {
 
+	bool Rect::Contains(const glm::vec2& pos) const
+	{
+		const auto& min = Position;
+		auto max = Position + Size;
+		return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y;
+	}
+
 
 	uint32_t ToHexColor(const glm::vec3& rgb)
 	{

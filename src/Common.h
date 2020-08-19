@@ -101,12 +101,12 @@ namespace bsf
 
 	enum class MouseButton : int
 	{
-		None, Left, Right
+		None, Left, Right, Middle
 	};
 
 	struct MouseEvent
 	{
-		float X, Y;
+		float X, Y, DeltaX, DeltaY;
 		MouseButton Button;
 	};
 
@@ -164,6 +164,18 @@ namespace bsf
 
 
 	#pragma region Utilities
+
+	struct Rect
+	{
+		glm::vec2 Position, Size;
+		bool Contains(const glm::vec2& pos) const;
+
+		float Left() const { return Position.x; }
+		float Right() const { return Position.x + Size.x; }
+		float Bottom() const { return Position.y; }
+		float Top() const { return Position.y + Size.y; }
+
+	};
 
 	enum class ByteOrder
 	{
