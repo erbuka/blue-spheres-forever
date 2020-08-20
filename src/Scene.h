@@ -70,7 +70,7 @@ namespace bsf
 		float m_Duration, m_Time;
 	};
 
-	class Scene : public Subscriber
+	class Scene : public EventReceiver
 	{
 	public:
 		Scene() = default;

@@ -8,9 +8,6 @@ namespace bsf
 {
 	using Unsubscribe = std::function<void()>;
 
-
-	
-
 	template<typename Event>
 	class EventEmitter
 	{
@@ -29,15 +26,13 @@ namespace bsf
 
 		inline Unsubscribe Subscribe(HandlerFnPtr fnPtr)
 		{
-			auto x = [fnPtr](const Event& evt) { fnPtr(evt); };
-
-			return Subscribe(std::bind(fnPtr, std::placeholders::_1));
+			return Subscribe([fnPtr](const Event& evt) { fnPtr(evt); });
 		}
 
 		template<typename T>
 		inline Unsubscribe Subscribe(T* instance, MemberHandlerFnPtr<T> fnPtr)
 		{
-			return Subscribe(std::bind(fnPtr, instance, std::placeholders::_1));
+			return Subscribe([instance, fnPtr](const Event& evt) { (instance->*fnPtr)(evt); });
 		}
 
 		Unsubscribe Subscribe(const HandlerFn& handler)
@@ -49,19 +44,17 @@ namespace bsf
 		void Emit(const Event& evt)
 		{
 			for (auto& handler : m_Handlers)
-			{
 				handler(evt);
-			}
 		}
 
 	protected:
 		std::list<HandlerFn> m_Handlers;
 	};
 
-	class Subscriber
+	class EventReceiver
 	{
 	public:
-		virtual ~Subscriber() { 
+		virtual ~EventReceiver() { 
 			if (!m_Subscriptions.empty())
 				BSF_ERROR("Subscriber has been destroyed but still has subscriptions");
 		}

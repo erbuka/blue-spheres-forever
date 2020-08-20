@@ -53,7 +53,6 @@ namespace bsf
 			BSF_ERROR("There were some errors while compiling the shader: {0}", infoLog.data());
 			BSF_ERROR("**** Code ****\n{0}**** End Code ****", shaderSource);
 
-			// In this simple program, we'll just leave
 			return 0;
 		}
 
@@ -111,7 +110,6 @@ namespace bsf
 
 	Ref<ShaderProgram> ShaderProgram::FromFile(const std::string& vertex, const std::string& fragment, const std::initializer_list<std::string>& defines)
 	{
-
 
 		auto vsSource = ReadTextFile(vertex);
 		auto fsSource = ReadTextFile(fragment);

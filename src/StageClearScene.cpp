@@ -134,8 +134,6 @@ namespace bsf
 
 			char buffer[32];
 
-			sprintf(buffer, "%d", count);
-
 			r2.Push();
 
 			r2.Translate({ width / 4.0f, 0.0f });
@@ -144,7 +142,7 @@ namespace bsf
 			
 			r2.Translate({ width / 2.0f, 0.0f });
 			r2.Pivot(EPivot::TopRight);
-			r2.DrawStringShadow(font, buffer);
+			r2.DrawStringShadow(font, std::to_string(count));
 
 			r2.Pop();
 		};

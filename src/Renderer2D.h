@@ -92,7 +92,7 @@ namespace bsf
 
 		void Begin(const glm::mat4& projection);
 
-		void DrawQuad(const glm::vec2& position, const glm::vec2& size = { 1.0f, 1.0f }, const glm::vec2& uv = { 1.0f, 1.0f }, const glm::vec2& ovOffset = { 0.0f, 0.0f });
+		void DrawQuad(const glm::vec2& position = { 0.0f, 0.0f }, const glm::vec2& size = { 1.0f, 1.0f }, const glm::vec2& uv = { 1.0f, 1.0f }, const glm::vec2& ovOffset = { 0.0f, 0.0f });
 		void DrawString(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		void DrawStringShadow(const Ref<Font>& font, const FormattedString& str, const glm::vec2& position = { 0.0f, 0.0f });
 		
@@ -142,10 +142,10 @@ namespace bsf
 		std::stack<Renderer2DState> m_State;
 		glm::mat4 m_Projection;
 		Vertex2D* m_TriangleVertices;
-		uint32_t m_CurTriangleIndex;
+		size_t m_CurTriangleIndex;
 		Ref<VertexArray> m_Triangles;
 
-		Ref<ShaderProgram> m_TriangleProgram;
+		Ref<ShaderProgram> m_pTriangleProgram, m_pLineProgram;
 
 	};
 

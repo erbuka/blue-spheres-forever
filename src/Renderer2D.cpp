@@ -101,7 +101,8 @@ namespace bsf
 
 		// Init Shaders
 
-		m_TriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
+		m_pTriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
+		//m_pLineProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource, { "DEBUG" });
 
 		m_Textures.resize(s_MaxTextureUnits);
 
@@ -170,11 +171,12 @@ namespace bsf
 		}
 
 		std::vector<Triangle2D> triangles;
-
+		/*
 		if (state.Clip.has_value())
 			triangles = ClipTriangle(transformed);
 		else
-			triangles.push_back(transformed);
+		*/
+		triangles.push_back(transformed);
 
 
 		for (const auto& triangle : triangles)
@@ -223,7 +225,7 @@ namespace bsf
 		};
 
 		std::vector<Triangle2D> triangles; // final result
-		std::vector<Triangle2D> tris2; // assembled triangles
+		std::vector<Triangle2D> newTriangles; // assembled triangles
 
 		// Start with the initial triangle
 		triangles.push_back(input);
@@ -245,13 +247,12 @@ namespace bsf
 			// We clip each triangle in the current list and generate new triangles is necessary
 			for (auto& triangle : triangles)
 			{
-
 				// For each edge, find the intersections with the current clipping plane
 				intersections[0] = IntersectLines({ triangle[0].Postion, triangle[1].Postion }, plane);
 				intersections[1] = IntersectLines({ triangle[1].Postion, triangle[2].Postion }, plane);
 				intersections[2] = IntersectLines({ triangle[2].Postion, triangle[0].Postion }, plane);
 
-				int32_t count = 0;
+				size_t count = 0;
 
 				// Based on the intersections and on the original points we create a list of new points
 				// that are used to assemble new triangles. Note that the number of new points can be
@@ -262,11 +263,11 @@ namespace bsf
 					const auto& t = intersections[j].first;
 
 					// If the starting point of the edge is "inside" the plane, add it to the list
-					if (glm::dot(triangle[j].Postion - plane[0], norm) > 0.0f)
+					if (glm::dot(triangle[j].Postion - plane[0], norm) >= 0.0f)
 						assembleList[count++] = triangle[j];
 					
 					
-					if (t >= 0.0f && t <= 1.0f)
+					if (!std::isnan(t) && t > 0.0f && t < 1.0f)
 					{ // If there's an intersection, add the new intersetion point to the list						
 						assembleList[count] = triangle[j];
 						assembleList[count].Postion = glm::lerp(triangle[j].Postion, triangle[(j + 1) % triangle.size()].Postion, t);
@@ -278,17 +279,19 @@ namespace bsf
 
 				// With the assemble list we generate a triangle fan (can be eighter 0,1 or 2 triangles
 				// depending on the number of points)
-				for (int32_t i = 1; i < count - 1; i++)
-					tris2.push_back({ assembleList[0], assembleList[i], assembleList[i + 1] });
-
+				if (count >= 3)
+				{
+					for (size_t i = 1; i < count - 1; i++)
+						newTriangles.push_back({ assembleList[0], assembleList[i], assembleList[i + 1] });
+				}
 
 			}
 
-			// We put the new triangles (tris2) in our final list (triangles). At the next cycle the triangles
+			// We put the new triangles (newTriangles) in our final list (triangles). At the next cycle the triangles
 			// are going to be tested against another clipping plane. At the end this list is going
 			// to contain triangles that are inside all the clipping planes
 
-			triangles = std::move(tris2); // std::move guarantees that the moved container is empty after the operation
+			triangles = std::move(newTriangles); // std::move guarantees that the moved container is empty after the operation
 
 
 		}
@@ -302,7 +305,7 @@ namespace bsf
 	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvSize, const glm::vec2& uvOffset)
 	{
 		const auto& pivot = m_State.top().Pivot;
-		std::array<glm::vec2, 4> positions = {
+		const std::array<glm::vec2, 4> positions = {
 			position - pivot * size,
 			position - pivot * size + glm::vec2(size.x, 0.0f),
 			position - pivot * size + glm::vec2(size.x, size.y),
@@ -493,9 +496,9 @@ namespace bsf
 			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
-			m_TriangleProgram->Use();
+			m_pTriangleProgram->Use();
 
-			m_TriangleProgram->UniformMatrix4f("uProjection", m_Projection);
+			m_pTriangleProgram->UniformMatrix4f("uProjection", m_Projection);
 			
 			for (uint32_t i = 0; i < m_Textures.size(); i++)
 			{
@@ -503,7 +506,7 @@ namespace bsf
 				BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Textures[i]));
 			}
 			
-			m_TriangleProgram->Uniform1iv("uTextures[0]", m_Textures.size(), m_TextureUnits.data());
+			m_pTriangleProgram->Uniform1iv("uTextures[0]", (uint32_t)m_Textures.size(), m_TextureUnits.data());
 			
 			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurTriangleIndex);
 

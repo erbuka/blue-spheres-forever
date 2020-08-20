@@ -19,7 +19,11 @@ namespace bsf
 
 	void StageEditorScene::OnAttach()
 	{
-		m_CurrentStage = MakeRef<Stage>();
+		m_CurrentStage = MakeRef<Stage>(256, 256);
+
+		for (uint32_t x = 0; x < m_CurrentStage->GetWidth(); x++)
+			for (uint32_t y = 0; y < m_CurrentStage->GetHeight(); y++)
+				m_CurrentStage->SetValueAt(x, y, EStageObject::BlueSphere);
 
 		InitializeUI();
 	}
@@ -86,7 +90,7 @@ namespace bsf
 			btn->Tint = std::get<2>(toolSpec);
 			auto tool = std::get<0>(toolSpec);
 			
-			AddSubscription(btn->Click, [&, btn, tool](const MouseEvent& evt) {
+			AddSubscription(btn->MouseClicked, [&, btn, tool](const MouseEvent& evt) {
 				for (auto& b : m_ToolButtons)
 					b->Selected = false;
 				m_uiEditorArea->ActiveTool = tool;
@@ -224,7 +228,7 @@ namespace bsf
 
 	const std::vector<Ref<UIElement>>& UIElement::Children()
 	{
-		static std::vector<Ref<UIElement>> s_Empty;
+		static const std::vector<Ref<UIElement>> s_Empty;
 		return s_Empty;
 	}
 
@@ -322,7 +326,7 @@ namespace bsf
 
 				if (std::chrono::system_clock::now() - buttonState.TimePressed < std::chrono::milliseconds(500))
 				{
-					intersection->Click.Emit({ pos.x, pos.y, 0, 0, evt.Button });
+					intersection->MouseClicked.Emit({ pos.x, pos.y, 0, 0, evt.Button });
 				}
 			}
 		});
@@ -386,7 +390,7 @@ namespace bsf
 		r2.Push();
 		{
 			r2.Translate({ s_ShadowOffset, -s_ShadowOffset });
-			r2.Color(UIDefaultStyle::IconButtonShadowColor);
+			r2.Color(UIDefaultStyle::ShadowColor);
 			r2.DrawQuad(Bounds.Position, Bounds.Size);
 		}
 		r2.Pop();
@@ -439,7 +443,7 @@ namespace bsf
 			}
 		};
 
-		AddSubscription(Click, editCallback);
+		AddSubscription(MouseClicked, editCallback);
 		AddSubscription(MouseDragged, editCallback);
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
 			if (evt.Button == MouseButton::Middle)
@@ -455,6 +459,7 @@ namespace bsf
 
 	void UIStageEditorArea::Render(Renderer2D& r2, const Time& time)
 	{
+
 		if (m_Stage)
 		{
 
@@ -473,6 +478,8 @@ namespace bsf
 			r2.DrawQuad(Bounds.Position - m_ViewOrigin, size, tiling, { -0.25f, -0.25f });
 
 			r2.Translate(Bounds.Position - m_ViewOrigin);
+			r2.Scale({ m_Zoom, m_Zoom });
+
 			for (uint32_t x = 0; x < m_Stage->GetWidth(); ++x)
 			{
 				for (uint32_t y = 0; y < m_Stage->GetHeight(); ++y)
@@ -480,8 +487,12 @@ namespace bsf
 					if (auto obj = m_StageObjRendering.find(m_Stage->GetValueAt(x, y)); obj != m_StageObjRendering.end())
 					{
 						r2.Texture(std::get<0>(obj->second));
+
+						r2.Color(UIDefaultStyle::ShadowColor);
+						r2.DrawQuad({ x + 0.1f, y - 0.1f });
+						
 						r2.Color(std::get<1>(obj->second));
-						r2.DrawQuad(glm::vec2(x, y) * m_Zoom, { m_Zoom,m_Zoom });
+						r2.DrawQuad({ x, y });
 					}
 				}
 			}
@@ -519,7 +530,21 @@ namespace bsf
 
 	}
 
+	void UITextInput::UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize)
+	{
+		Bounds = { origin, computedSize };
+	}
+
+	void UITextInput::Render(Renderer2D& r2, const Time& time)
+	{
+		r2.Push();
+
+		r2.Pop();
+	}
+
 	#pragma endregion
+
+
 
 
 

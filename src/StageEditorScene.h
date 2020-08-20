@@ -28,7 +28,7 @@ namespace bsf
 
 	namespace UIDefaultStyle
 	{
-		constexpr glm::vec4 IconButtonShadowColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 ShadowColor = { 0.0f, 0.0f, 0.0f, 0.5f };
 		constexpr glm::vec4 IconButtonDefaultTint = { 0.25f, 0.25f, 0.25f, 1.0f };
 		constexpr glm::vec4 PanelBackground = { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
@@ -43,7 +43,7 @@ namespace bsf
 	};
 
 
-	class UIElement : public Subscriber
+	class UIElement : public EventReceiver
 	{
 	public:
 		UIElement();
@@ -58,7 +58,7 @@ namespace bsf
 		glm::vec2 MaxSize = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
 		bool Hovered = false;
 
-		EventEmitter<MouseEvent> MouseDragged, MouseMoved, Click;
+		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked;
 		EventEmitter<WheelEvent> Wheel;
 
 		virtual void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) = 0;
@@ -74,7 +74,7 @@ namespace bsf
 		uint32_t m_Id;
 	};
 
-	class UIRoot : public Subscriber
+	class UIRoot : public EventReceiver
 	{
 	public:
 
@@ -101,8 +101,8 @@ namespace bsf
 		struct {
 			Ref<UIElement> HoverTarget = nullptr;
 			Ref<UIElement> DragTarget = nullptr;
-			MouseButton DragButton;
-			glm::vec2 Position, PrevPosition;
+			MouseButton DragButton = MouseButton::None;
+			glm::vec2 Position = { 0.0f, 0.0f }, PrevPosition = { 0.0f, 0.0f };
 		} m_MouseState;
 
 		std::unordered_map<MouseButton, MouseButtonState> m_MouseButtonState;
@@ -185,7 +185,19 @@ namespace bsf
 		Ref<Texture2D> m_Pattern = nullptr;
 	};
 
+	class UITextInput : public UIElement
+	{
+	public:
+		
+		EventEmitter<std::string> ValueChanged;
+		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Render(Renderer2D& renderer, const Time& time) override;
+		void SetValue(const std::string& value) { m_Value = value; }
+		const std::string& GetValue() const { return m_Value; }
 
+	private:
+		std::string m_Value;
+	};
 
 
 	class StageEditorScene : public Scene

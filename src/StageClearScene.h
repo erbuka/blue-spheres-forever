@@ -4,8 +4,8 @@
 
 #include "EventEmitter.h"
 #include "Scene.h"
-#include "Common.h";
-#include "StageCodeHelper.h";
+#include "Common.h"
+#include "StageCodeHelper.h"
 
 namespace bsf
 {
