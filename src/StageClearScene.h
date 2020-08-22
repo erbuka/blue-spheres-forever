@@ -28,6 +28,8 @@ namespace bsf
 		void OnDetach() override;
 	private:
 
+		bool m_InputEnabled = false;
+
 		std::list<Unsubscribe> m_Subscriptions;
 
 		GameInfo m_GameInfo;

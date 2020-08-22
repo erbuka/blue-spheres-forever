@@ -57,6 +57,8 @@ namespace bsf
 	public:
 
 		uint32_t Version;
+
+		std::string Name;
 		
 		glm::ivec2 StartPoint, StartDirection;
 

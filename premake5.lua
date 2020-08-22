@@ -2,16 +2,21 @@ _BSF_LOCATION = _ACTION
 
 workspace "BlueSpheresForever"
     architecture "x86_64"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Release", "Distribution" }
     startproject "BlueSpheresForever"
     location(_ACTION)
 
     filter "configurations:Debug"
         symbols "On"
         optimize "Off"
-        defines "DEBUG"
+        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC_TOOL" }
 
     filter "configurations:Release"
+        defines { "BSF_ENABLE_DIAGNOSTIC_TOOL" }
+        symbols "Off"
+        optimize "On"
+    
+    filter "configurations:Distribution"
         symbols "Off"
         optimize "On"
         

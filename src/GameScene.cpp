@@ -22,6 +22,7 @@
 #include "SplashScene.h"
 #include "BlurFilter.h"
 #include "StageClearScene.h"
+#include "Profiler.h"
 
 
 #pragma region Shaders
@@ -336,6 +337,8 @@ namespace bsf
 	
 	void GameScene::OnRender(const Time& time)
 	{
+		BSF_DIAGNOSTIC_FUNC();
+
 		auto windowSize = GetApplication().GetWindowSize();
 		float aspect = windowSize.x / windowSize.y;
 		auto& assets = Assets::GetInstance();
@@ -955,10 +958,10 @@ namespace bsf
 
 				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexSphereUI));
 				
-				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.Color(Colors::Black);
 				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });
 
-				renderer2d.Color({ 0.0f, 0.0f, 1.0f, 1.0f });
+				renderer2d.Color(Colors::BlueSphere);
 				renderer2d.DrawQuad({ 0.0f, 0.0f });
 	
 				renderer2d.Translate({ 1.0f + padding / 2.0f, textOffset });
@@ -980,10 +983,10 @@ namespace bsf
 
 				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexRingUI));
 
-				renderer2d.Color({ 0.0f, 0.0f, 0.0f, 1.0f });
+				renderer2d.Color(Colors::Black);
 				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });
 
-				renderer2d.Color({ 1.0f, 1.0f, 0.0f, 1.0f });
+				renderer2d.Color(Colors::Ring);
 				renderer2d.DrawQuad({ 0.0f, 0.0f });
 
 				renderer2d.Translate({ -1.0f - padding / 2.0f, textOffset });

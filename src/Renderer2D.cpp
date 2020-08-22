@@ -1,7 +1,6 @@
 #include "BsfPch.h"
 
 
-#include <glm/gtx/perpendicular.hpp>
 
 #include "Renderer2D.h"
 #include "VertexArray.h"
@@ -10,11 +9,12 @@
 #include "Assets.h"
 #include "Log.h"
 #include "Font.h"
+#include "Profiler.h"
 
 
 
 
-static constexpr uint32_t s_MaxTriangleVertices = 30000;
+static constexpr uint32_t s_MaxTriangleVertices = 30000 * 3;
 static constexpr uint32_t s_MaxTextureUnits = 32;
 
 #pragma region Shaders Code
@@ -29,16 +29,24 @@ static const std::string s_VertexSource = R"VERTEX(
 	layout(location = 1) in vec2 aUv;
 	layout(location = 2) in vec4 aColor;
 	layout(location = 3) in uint aTexture;
-
+	layout(location = 4) in uint aClip;
+	layout(location = 5) in vec4 aClipPlanes;
+	
+	out vec2 fPosition;
 	out vec2 fUv;
 	out vec4 fColor;
 	flat out uint fTexture;
+	flat out uint fClip;
+	flat out vec4 fClipPlanes;
 
 	void main() {
 		gl_Position = uProjection * vec4(aPosition, 0.0, 1.0);
+		fPosition = aPosition;
 		fUv = aUv;
 		fColor = aColor;
-		fTexture = aTexture;
+		fTexture = aTexture;		
+		fClip = aClip;
+		fClipPlanes = aClipPlanes;
 	}	
 
 )VERTEX";
@@ -49,18 +57,26 @@ static const std::string s_FragmentSource = R"FRAGMENT(
 
 	uniform sampler2D uTextures[32];
 
+	in vec2 fPosition;
 	in vec2 fUv;
 	in vec4 fColor;
 	flat in uint fTexture;
+	flat in uint fClip;
+	flat in vec4 fClipPlanes;
 
 	out vec4 oColor;
 
 	void main() {
-		#ifdef DEBUG
-		oColor = vec4(0.0, 0.0, 0.0, 1.0);
-		#else
-		oColor = fColor * texture(uTextures[fTexture], fUv);
-		#endif
+		
+		if(fClip > 0u && (fPosition.x < fClipPlanes.x || fPosition.x > fClipPlanes.y || fPosition.y < fClipPlanes.z || fPosition.y > fClipPlanes.w))
+			discard;
+		else {
+			#ifdef DEBUG
+			oColor = vec4(0.0, 0.0, 0.0, 1.0);
+			#else
+			oColor = fColor * texture(uTextures[fTexture], fUv);
+			#endif
+		}
 	}	
 
 )FRAGMENT";
@@ -71,7 +87,7 @@ namespace bsf
 
 	Renderer2D::Renderer2D() :
 		m_TriangleVertices(nullptr),
-		m_CurTriangleIndex(0),
+		m_CurVertexIndex(0),
 		m_Projection(glm::identity<glm::mat4>())
 	{
 		Initialize();
@@ -95,6 +111,8 @@ namespace bsf
 			{ "aUv", AttributeType::Float2  },
 			{ "aColor", AttributeType::Float4  },
 			{ "aTexture", AttributeType::UInt  },
+			{ "aClip", AttributeType::UInt },
+			{ "aClipPlanes", AttributeType::Float4},
 		}, nullptr, s_MaxTriangleVertices, GL_DYNAMIC_DRAW));
 
 		m_Triangles = Ref<VertexArray>(new VertexArray(s_MaxTriangleVertices, { trianglesVb }));
@@ -126,6 +144,7 @@ namespace bsf
 
 	void Renderer2D::DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs)
 	{
+		BSF_DIAGNOSTIC_FUNC();
 
 		const auto& state = m_State.top();
 
@@ -158,7 +177,7 @@ namespace bsf
 		}
 
 
-		Triangle2D transformed = { };
+		Triangle2D transformed;
 
 		for (size_t i = 0; i < positions.size(); i++)
 		{
@@ -168,27 +187,25 @@ namespace bsf
 			transformed[i].UV = uvs[i];
 			transformed[i].Color = m_State.top().Color;
 			transformed[i].TextureID = textureIndex;
-		}
 
-		std::vector<Triangle2D> triangles;
-		/*
-		if (state.Clip.has_value())
-			triangles = ClipTriangle(transformed);
-		else
-		*/
-		triangles.push_back(transformed);
+			if (state.Clip.has_value())
+			{
+				transformed[i].Clip = true;
+				transformed[i].ClipPlanes = (glm::vec4)state.Clip.value();
+			}
+			else
+			{
+				transformed[i].Clip = false;
+			}
 
-
-		for (const auto& triangle : triangles)
-		{
-			std::memcpy((void*)&m_TriangleVertices[m_CurTriangleIndex], (void*)triangle.data(), triangle.size() * sizeof(Vertex2D));
-			m_CurTriangleIndex += triangle.size();
-
-			if (m_CurTriangleIndex == s_MaxTriangleVertices)
-				End();
 
 		}
 
+		std::memcpy((void*)&m_TriangleVertices[m_CurVertexIndex], (void*)transformed.data(), transformed.size() * sizeof(Vertex2D));
+		m_CurVertexIndex += transformed.size();
+
+		if (m_CurVertexIndex == s_MaxTriangleVertices)
+			End();
 
 	}
 
@@ -304,6 +321,8 @@ namespace bsf
 
 	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec2& uvSize, const glm::vec2& uvOffset)
 	{
+		BSF_DIAGNOSTIC_FUNC();
+
 		const auto& pivot = m_State.top().Pivot;
 		const std::array<glm::vec2, 4> positions = {
 			position - pivot * size,
@@ -485,8 +504,10 @@ namespace bsf
 	{
 
 		// Flush Triangles
-		if (m_CurTriangleIndex > 0)
+		if (m_CurVertexIndex > 0)
 		{
+			BSF_DIAGNOSTIC_FUNC();
+
 			GLEnableScope scope({ GL_CULL_FACE, GL_DEPTH_TEST, GL_BLEND });
 
 			glDisable(GL_DEPTH_TEST);
@@ -508,11 +529,11 @@ namespace bsf
 			
 			m_pTriangleProgram->Uniform1iv("uTextures[0]", (uint32_t)m_Textures.size(), m_TextureUnits.data());
 			
-			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurTriangleIndex);
+			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurVertexIndex);
 
-			m_Triangles->Draw(GL_TRIANGLES, m_CurTriangleIndex);
+			m_Triangles->Draw(GL_TRIANGLES, m_CurVertexIndex);
 
-			m_CurTriangleIndex = 0;
+			m_CurVertexIndex = 0;
 
 			//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

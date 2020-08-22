@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Renderer2D.h"
 
 #include <array>
 #include <memory>
@@ -126,6 +127,8 @@ namespace bsf
 			glm::vec2 UV;
 			glm::vec4 Color;
 			uint32_t TextureID;
+			uint32_t Clip;
+			glm::vec4 ClipPlanes;
 		};
 
 		using Triangle2D = std::array<Vertex2D, 3>;
@@ -142,7 +145,7 @@ namespace bsf
 		std::stack<Renderer2DState> m_State;
 		glm::mat4 m_Projection;
 		Vertex2D* m_TriangleVertices;
-		size_t m_CurTriangleIndex;
+		size_t m_CurVertexIndex;
 		Ref<VertexArray> m_Triangles;
 
 		Ref<ShaderProgram> m_pTriangleProgram, m_pLineProgram;

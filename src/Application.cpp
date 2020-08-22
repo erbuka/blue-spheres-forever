@@ -9,6 +9,7 @@
 #include "Assets.h"
 #include "Renderer2D.h"
 #include "Audio.h"
+#include "Profiler.h"
 
 
 namespace bsf
@@ -160,51 +161,93 @@ namespace bsf
 
         while (!glfwWindowShouldClose(m_Window) && m_Running)
         {
+            BSF_DIAGNOSTIC_BEGIN();
 
-            if (m_NextScene != nullptr)
             {
-                m_CurrentScene->ClearSubscriptions();
-                m_CurrentScene->OnDetach();
-                m_CurrentScene = std::move(m_NextScene); // m_NextScene = nullptr implicit
-                m_CurrentScene->m_App = this;
-                m_CurrentScene->OnAttach();
+                BSF_DIAGNOSTIC_FUNC();
 
-                // Reset time on scene change
-                startTime = std::chrono::high_resolution_clock::now();
-                prevTime = std::chrono::high_resolution_clock::now();
+                if (m_NextScene != nullptr)
+                {
+                    m_CurrentScene->ClearSubscriptions();
+                    m_CurrentScene->OnDetach();
+                    m_CurrentScene = std::move(m_NextScene); // m_NextScene = nullptr implicit
+                    m_CurrentScene->m_App = this;
+                    m_CurrentScene->OnAttach();
+
+                    // Reset time on scene change
+                    startTime = std::chrono::high_resolution_clock::now();
+                    prevTime = std::chrono::high_resolution_clock::now();
+                }
+
+                auto now = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<float> delta = now - prevTime;
+                std::chrono::duration<float> elapsed = now - startTime;
+                prevTime = now;
+                const Time time = { delta.count(), elapsed.count() };
+
+
+                /* FPS counter */
+                char buffer[0x80];
+                sprintf_s(buffer, "Period: %f, FPS: %f", delta.count(), 1.0f / delta.count());
+                glfwSetWindowTitle(m_Window, buffer);
+                /* FPS counter */
+
+                RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PreRender);
+                m_CurrentScene->OnRender(time);
+                RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PostRender);
             }
 
-            auto now = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<float> delta = now - prevTime;
-            std::chrono::duration<float> elapsed = now - startTime;
-            prevTime = now;
-            const Time time = { delta.count(), elapsed.count() };
+            BSF_DIAGNOSTIC_END();
 
-
-            /* FPS counter */
-            char buffer[0x80];
-            sprintf_s(buffer, "Period: %f, FPS: %f", delta.count(), 1.0f / delta.count());
-            glfwSetWindowTitle(m_Window, buffer);
-            /* FPS counter */
-
-            if (m_CurrentScene->m_ImGui)
+#ifdef BSF_ENABLE_DIAGNOSTIC_TOOL
             {
+                auto windowSize = GetWindowSize();
+                bool show = true;
+
                 ImGui_ImplOpenGL3_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
                 ImGui::NewFrame();
-            }
-            
-            RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PreRender);
-            m_CurrentScene->OnRender(time);
-            RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PostRender);
 
-            if (m_CurrentScene->m_ImGui)
-            {
-                auto windowSize = GetWindowSize();
+
+                ImGui::Begin("Diagnostic Tool");
+                if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::Columns(3);
+                    ImGui::SetColumnWidth(0, 400.0f);
+                    ImGui::SetColumnWidth(1, 100.0f);
+                    ImGui::SetColumnWidth(2, 100.0f);
+
+                    ImGui::Text("Function/Scope");
+                    ImGui::NextColumn();
+                    ImGui::Text("Avg Time");
+                    ImGui::NextColumn();
+                    ImGui::Text("Calls");
+                    ImGui::NextColumn();
+
+                    ImGui::Separator();
+
+                    for (const auto& [name, stats] : DiagnosticTool::Get().GetStats())
+                    {;
+                        ImGui::Text(name);
+                        ImGui::NextColumn();
+                        ImGui::Text("%.3f ms", stats.MeanExecutionTime);
+                        ImGui::NextColumn();
+                        ImGui::Text("%d", stats.Calls);
+                        ImGui::NextColumn();
+                    }
+
+                    ImGui::Separator();
+
+                }
+                ImGui::End();
+
+                //ImGui::ShowDemoWindow(&show);
+
                 glViewport(0, 0, windowSize.x, windowSize.y);
                 ImGui::Render();
                 ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             }
+#endif
 
 
             glfwSwapBuffers(m_Window);
@@ -246,14 +289,9 @@ namespace bsf
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-        // Setup Dear ImGui style
         ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
 
-        // Setup Platform/Renderer bindings
         ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
         ImGui_ImplOpenGL3_Init("#version 130");
         

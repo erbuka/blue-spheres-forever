@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <string>
 #include <fstream>
 #include <memory>
@@ -32,15 +31,7 @@ namespace bsf
 
 	#pragma endregion
 
-	namespace Colors
-	{
-		constexpr glm::vec4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
-		constexpr glm::vec4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 BlueSphere = { 0.0f, 0.0f, 1.0f, 1.0f };
-		constexpr glm::vec4 RedSphere = { 1.0f, 0.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 YellowSphere = { 1.0f, 1.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f), 1.0f };
-	}
+
 
 
 	#pragma region PBR
@@ -175,6 +166,10 @@ namespace bsf
 		float Bottom() const { return Position.y; }
 		float Top() const { return Position.y + Size.y; }
 
+		explicit operator glm::vec4() const {
+			return { Left(), Right(), Bottom(), Top() };
+		}
+
 	};
 
 	enum class ByteOrder
@@ -270,10 +265,29 @@ namespace bsf
 		return (T(0) < x) - (x < T(0));
 	}
 
-	template<typename InputIt, typename BinOp, typename R, typename T>
-	R Reduce(InputIt first, InputIt last, R init, BinOp op)
+	template<typename Enum>
+	constexpr std::underlying_type_t<Enum> MakeFlags(Enum f)
 	{
-		return R(0);
+		return static_cast<std::underlying_type_t<Enum>>(f);
+	}
+
+	template<typename Enum, typename... Args>
+	constexpr std::underlying_type_t<Enum> MakeFlags(Enum f, Args... args)
+	{
+		static_assert(std::is_enum_v<Enum> && std::is_integral_v<std::underlying_type_t<Enum>>);
+		return static_cast<std::underlying_type_t<Enum>>(f) | MakeFlags(args...);
+	}
+
+
+	template<typename T, typename K>
+	T MoveTowards(const T& from, const T& target, K k)
+	{
+		using T0 = std::enable_if_t<std::is_arithmetic_v<T>, T>;
+		using K0 = std::enable_if_t<std::is_arithmetic_v<K>, K>;
+
+		T distance = target - from;
+		T dir = distance >= 0.0f ? 1.0f : -1.0f;
+		return  k < std::abs(distance) ? from + k * dir : target;
 	}
 
 	template<typename ...Args>
@@ -316,15 +330,41 @@ namespace bsf
 		T m_Value;
 		T m_v0, m_v1;
 	};
+	
+	
+	constexpr glm::vec4 ToColor(uint32_t rgba)
+	{
+		return {
+			((rgba & 0x000000ff) >> 0) / 255.0f,
+			((rgba & 0x0000ff00) >> 8) / 255.0f,
+			((rgba & 0x00ff0000) >> 16) / 255.0f,
+			((rgba & 0xff000000) >> 24) / 255.0f,
+		};
+	}
 
 	uint32_t ToHexColor(const glm::vec3& rgb);
-	uint32_t ToHexColor(const glm::vec4& rgb);
+	uint32_t ToHexColor(const glm::vec4& rgba);
 
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
 	Ref<Texture2D> CreateGray(float value);
 	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps);
 
 	std::string ReadTextFile(const std::string& file);
+
+	namespace Colors
+	{
+		constexpr glm::vec4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
+		constexpr glm::vec4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 Yellow = { 1.0f, 1.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 Blue = ToColor(0xfff04820);
+		constexpr glm::vec4 Red = ToColor(0xff0000f0);
+		constexpr glm::vec4 Transparent = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+		constexpr glm::vec4 BlueSphere = Blue;
+		constexpr glm::vec4 RedSphere = Red;
+		constexpr glm::vec4 YellowSphere = { 1.0f, 1.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f), 1.0f };
+	}
 
 	#pragma endregion
 

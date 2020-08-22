@@ -74,6 +74,7 @@ namespace bsf
 
 	void Stage::Initialize(uint32_t width, uint32_t height)
 	{
+
 		m_Width = (int32_t)width;
 		m_Height = (int32_t)height;
 		m_Data.resize((size_t)m_Width * m_Height);
@@ -81,6 +82,7 @@ namespace bsf
 		std::fill(m_Data.begin(), m_Data.end(), EStageObject::None);
 		std::fill(m_AvoidSearch.begin(), m_AvoidSearch.end(), EAvoidSearch::No);
 		
+		Name = "Untitled";
 		CheckerColors = { glm::vec3{ 1.0f, 0.0f, 0.0f }, glm::vec3{ 1.0f, 1.0f, 1.0f } };
 	}
 

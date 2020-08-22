@@ -26,6 +26,7 @@ namespace bsf
 		m_PerfectBonus.Reset(perfect * s_PerfectBonus, 0.0f);
 		m_Score.Reset(gameInfo.Score, gameInfo.Score + (uint32_t)m_RingBonus + (uint32_t)m_PerfectBonus);
 	}
+
 	void StageClearScene::OnAttach()
 	{
 		auto& app = GetApplication();
@@ -36,8 +37,9 @@ namespace bsf
 		// Play sound
 		Assets::GetInstance().Get<Audio>(AssetName::SfxStageClear)->Play();
 
-		// Tasks
+		// Some call backs
 
+		// Tasks
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f);
 		ScheduleTask(ESceneTaskEvent::PostRender, fadeIn);
 
@@ -51,7 +53,6 @@ namespace bsf
 
 				float delta = std::min(1.0f, (time.Elapsed - self.GetStartTime().Elapsed) / duration);
 
-
 				m_RingBonus(delta);
 				m_PerfectBonus(delta);
 				m_Score(delta);
@@ -59,6 +60,7 @@ namespace bsf
 				if (delta == 1.0f)
 				{
 					Assets::GetInstance().Get<Audio>(AssetName::SfxTally)->Play();
+					m_InputEnabled = true;
 					self.SetDone();
 				}
 
@@ -71,7 +73,7 @@ namespace bsf
 		// Input
 		m_Subscriptions.push_back(app.KeyReleased.Subscribe([&](const KeyReleasedEvent& evt) {
 			
-			if (evt.KeyCode == GLFW_KEY_ENTER)
+			if (m_InputEnabled && evt.KeyCode == GLFW_KEY_ENTER)
 			{
 				auto fadeOut = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
 

@@ -3,6 +3,7 @@
 #include "GameLogic.h"
 #include "Stage.h"
 #include "Log.h"
+#include "Profiler.h"
 
 namespace bsf
 {
@@ -87,6 +88,7 @@ namespace bsf
 
 		std::vector<TransformRingState> GenerateChildren()
 		{
+
 
 			std::vector<TransformRingState> result;
 			result.reserve(s_Directions.size());
@@ -182,6 +184,7 @@ namespace bsf
 
 		float Score() const
 		{
+			// TODO: Maybe this can be calculated once
 
 			float h = CurrentPath.size();
 
@@ -224,8 +227,11 @@ namespace bsf
 
 		void Calculate()
 		{
+			BSF_DIAGNOSTIC_FUNC();
+
 
 			// Find a closed red spheres path with no sharp turns(no u turn or 2x2 turns)
+			// TODO: We have closed set but we're not using it. Why?
 
 			bool pathFound = false;
 			std::vector<glm::ivec2> path;
@@ -409,11 +415,11 @@ namespace bsf
 		m_CurrentPace = s_MinPace;
 
 		m_StateMap = {
-			{ EGameState::None, std::bind(&GameLogic::StateFnNone, this, std::placeholders::_1)},
-			{ EGameState::Starting, std::bind(&GameLogic::StateFnStarting, this, std::placeholders::_1)},
-			{ EGameState::Playing, std::bind(&GameLogic::StateFnPlaying, this, std::placeholders::_1)},
-			{ EGameState::GameOver, std::bind(&GameLogic::StateFnGameOver, this, std::placeholders::_1)},
-			{ EGameState::Emerald, std::bind(&GameLogic::StateFnEmerald, this, std::placeholders::_1)}
+			{ EGameState::None,		&GameLogic::StateFnNone		},
+			{ EGameState::Starting, &GameLogic::StateFnStarting },
+			{ EGameState::Playing,	&GameLogic::StateFnPlaying	},
+			{ EGameState::GameOver, &GameLogic::StateFnGameOver	},
+			{ EGameState::Emerald,	&GameLogic::StateFnEmerald	}
 		};
 
 	}
@@ -437,8 +443,7 @@ namespace bsf
 
 	void GameLogic::Advance(const Time& time)
 	{
-		m_StateMap[m_State](time);
-
+		(this->*m_StateMap[m_State])(time);
 		// Wrap position inside boundary
 		m_Position = WrapPosition(m_Position);
 	}

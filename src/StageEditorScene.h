@@ -6,6 +6,7 @@
 #include <functional>
 #include <chrono>
 #include <unordered_map>
+#include <sstream>
 
 #include "Scene.h"
 #include "Stage.h"
@@ -20,19 +21,8 @@ namespace bsf
 	class UIPanel;
 	class UIElement;
 	class UIPanel;
-
-	enum class UIPanelLayout
-	{
-		Horizontal, Vertical, Fill, Free
-	};
-
-	namespace UIDefaultStyle
-	{
-		constexpr glm::vec4 ShadowColor = { 0.0f, 0.0f, 0.0f, 0.5f };
-		constexpr glm::vec4 IconButtonDefaultTint = { 0.25f, 0.25f, 0.25f, 1.0f };
-		constexpr glm::vec4 PanelBackground = { 0.0f, 0.0f, 0.0f, 0.0f };
-	}
-
+	class UIRoot;
+	
 	enum class StageEditorTool
 	{
 		BlueSphere,
@@ -42,14 +32,73 @@ namespace bsf
 		Ring
 	};
 
+	enum class UIPanelLayout
+	{
+		Horizontal, Vertical, Fill, Free
+	};
+
+
+
+	struct UIPalette
+	{
+		glm::vec4 Foreground = Colors::White;
+		glm::vec4 Background = ToColor(0xff121212);
+
+		glm::vec4 Primary = Colors::Blue;
+		glm::vec4 PrimaryContrast = Colors::White;
+
+		glm::vec4 Secondary = Colors::Yellow;
+		glm::vec4 SecondaryContrast = Colors::Black;
+
+	};
+
+	struct UIStyle
+	{
+
+		UIStyle() { Recompute(); }
+		// Sizes
+		float GlobalScale = 20.0f;
+		
+		float MarginUnit = 0.0f;
+		
+		float IconButtonShadowOffset = 0.0f;
+
+		float StageAreaShadowOffset = 0.075f;
+		float StageAreaCrosshairSize = 0.3f;
+		float StageAreaCrosshairThickness = 0.1f;
+
+		float TextInputShadowOffset = 0.025f;
+		float TextInputLabelFontScale = 0.5f;
+		float TextInputMargin = 1.0f;
+
+		float TextMargin = 1.0f;
+
+		// Colors
+		glm::vec4 ShadowColor = { 0.0f, 0.0f, 0.0f, 0.5f };
+		glm::vec4 IconButtonDefaultTint = { 0.5f, 0.5f, 0.5f, 1.0f };
+
+		UIPalette Palette;
+
+		float ComputeMargin(float units) const { return units * MarginUnit; }
+		void Recompute();
+	};
+
+
+	enum class UIElementFlags : uint32_t
+	{
+		None = 0x0,
+		ReceiveHover = 0x1,
+		ReceiveFocus = 0x2
+	};
 
 	class UIElement : public EventReceiver
 	{
 	public:
 		UIElement();
+		UIElement(std::underlying_type_t<UIElementFlags> flags);
 		UIElement(UIElement&) = delete;
 		UIElement(UIElement&&) = delete;
-		virtual ~UIElement() {}
+		virtual ~UIElement() = default;
 
 		Rect Bounds;
 		glm::vec2 Position = { 0.0f, 0.0f };
@@ -57,26 +106,46 @@ namespace bsf
 		glm::vec2 MinSize = { 0.0f, 0.0f };
 		glm::vec2 MaxSize = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
 		bool Hovered = false;
+		bool Focused = false;
+		std::optional<glm::vec4> BackgroundColor = std::nullopt;
+		std::optional<glm::vec4> ForegroundColor = std::nullopt;
 
+		EventEmitter<KeyPressedEvent> KeyPressed;
+		EventEmitter<KeyReleasedEvent> KeyReleased;
 		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked;
 		EventEmitter<WheelEvent> Wheel;
 
+		virtual void Update(const Time& time) {}
 		virtual void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) = 0;
 		virtual void Render(Renderer2D& renderer, const Time& time) = 0;
+
 		uint32_t GetId() const { return m_Id; }
+
+		bool GetFlag(UIElementFlags flag) const;
 
 		virtual const std::vector<Ref<UIElement>>& Children();
 
 		void Traverse(const std::function<void(UIElement&)>& action);
+
+		const glm::vec4 GetBackgroundColor() const { return BackgroundColor.has_value() ? BackgroundColor.value() : GetStyle().Palette.Background; }
+		const glm::vec4 GetForegroundColor() const { return ForegroundColor.has_value() ? ForegroundColor.value() : GetStyle().Palette.Foreground; }
+
+		const UIStyle& GetStyle() const { return *m_Style; }
 		
 	private:
+		friend class UIRoot;
 		static uint32_t m_NextId;
+		
+		std::underlying_type_t<UIElementFlags> m_Flags;
+		UIStyle* m_Style = nullptr;
 		uint32_t m_Id;
 	};
 
 	class UIRoot : public EventReceiver
 	{
 	public:
+
+		void SetStyle(const UIStyle& style);
 
 		void Attach(Application& app);
 		void Detach(Application& app);
@@ -85,6 +154,9 @@ namespace bsf
 		void PushLayer(const Ref<UIPanel>& layer) { m_Layers.push_back(layer); }
 		void PopLayer() { m_Layers.pop_back(); }
 	private:
+
+		UIStyle m_Style;
+
 		glm::vec2 m_Viewport, m_WindowSize;
 		glm::mat4 m_Projection, m_InverseProjection;
 		std::list<Ref<UIPanel>> m_Layers;
@@ -105,6 +177,8 @@ namespace bsf
 			glm::vec2 Position = { 0.0f, 0.0f }, PrevPosition = { 0.0f, 0.0f };
 		} m_MouseState;
 
+		Ref<UIElement> m_FocusedControl;
+
 		std::unordered_map<MouseButton, MouseButtonState> m_MouseButtonState;
 
 		glm::vec2 GetMousePosition(const glm::vec2& windowMousePos) const;
@@ -112,10 +186,11 @@ namespace bsf
 
 	};
 
+
 	class UIIconButton : public UIElement
 	{
 	public:
-		UIIconButton() = default;
+		UIIconButton(): UIElement(MakeFlags(UIElementFlags::ReceiveHover)) {}
 		Ref<Texture2D> Icon = nullptr;
 		glm::vec4 Tint = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool Selected = false;
@@ -132,7 +207,6 @@ namespace bsf
 
 		UIPanel() = default;
 		UIPanelLayout Layout = UIPanelLayout::Vertical;
-		glm::vec4 BackgroundColor = UIDefaultStyle::PanelBackground;
 
 		struct {
 			float Left = 0.0f;
@@ -163,6 +237,7 @@ namespace bsf
 
 		UIStageEditorArea();
 
+		void Update(const Time& time) override;
 		void Render(Renderer2D& renderer, const Time& time) override;
 		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
 
@@ -171,32 +246,63 @@ namespace bsf
 
 	private:
 
+		void DrawCursor(Renderer2D& r2);
+
+		glm::vec2 GetRawStageCoordinates(const glm::vec2 pos) const;
+		std::optional<glm::ivec2> GetStageCoordinates(const glm::vec2 pos) const;
+
 		// StageObject: { Texture, Tint }
 		std::unordered_map<EStageObject, std::tuple<Ref<Texture2D>, glm::vec4>> m_StageObjRendering;
 
-		std::optional<glm::ivec2> GetStageCoordinates(const glm::vec2 pos) const;
-
-		float m_MinZoom = 0.0f, m_MaxZoom = std::numeric_limits<float>::max();
+		float m_MinZoom = 1.0f, m_MaxZoom = std::numeric_limits<float>::max();
 
 		glm::vec2 m_ViewOrigin = { 0.0f, 0.0f };
-		float m_Zoom = 1.0f;
+		float m_Zoom = 1.0f, m_TargetZoom = 1.0f;
+
+		std::optional<glm::ivec2> m_CursorPos;
 
 		Ref<Stage> m_Stage = nullptr;
-		Ref<Texture2D> m_Pattern = nullptr;
+		Ref<Texture2D> m_Pattern = nullptr, m_BgPattern;
 	};
-
+	
 	class UITextInput : public UIElement
 	{
 	public:
-		
-		EventEmitter<std::string> ValueChanged;
+		std::string Label;
+
+		using PushFn = std::function<bool(const std::string&)>;
+		using PullFn = std::function<std::string(void)>;
+
+		UITextInput();
+
+		void BindPush(const PushFn& push) { m_Push = push; }
+		void BindPull(const PullFn& pull) { m_Pull = pull; }
+
+		void Update(const Time& time) override;
 		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
 		void Render(Renderer2D& renderer, const Time& time) override;
-		void SetValue(const std::string& value) { m_Value = value; }
+
 		const std::string& GetValue() const { return m_Value; }
 
 	private:
+
+		PushFn m_Push = [&](const std::string& val) { m_Value = val; return true; };
+		PullFn m_Pull = [&] { return m_Value; };
+
 		std::string m_Value;
+	};
+
+	class UIText : public UIElement
+	{
+	public:
+		std::string Text;
+
+		void Update(const Time& time) override;
+		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Render(Renderer2D& renderer, const Time& time) override;
+
+	private:
+
 	};
 
 

@@ -1,30 +1,33 @@
 #include "BsfPch.h"
 #include "StageEditorScene.h"
 
+#include <regex>
+
 #include "Assets.h"
 #include "Texture.h"
 #include "Renderer2D.h"
 #include "Application.h"
 #include "MenuScene.h"
+#include "Font.h"
 
 #include <imgui.h>
 
 namespace bsf
 {
-	static constexpr float s_uiScale = 50.0f;
-	static constexpr float s_uiPanelMargin = 1.0f;
-	static constexpr float s_uiTopBarHeight = 5.0f;
-	static constexpr float s_uiPropertiesWidth = 20.0f;
-	static constexpr float s_uiToolbarButtonSize = 4.0f;
+	static constexpr float s_uiScale = 15.0f;
+	static constexpr float s_uiPanelMargin = s_uiScale / 100.0f;
+	static constexpr float s_uiTopBarHeight = s_uiScale / 10.0f;
+	static constexpr float s_uiPropertiesWidth = s_uiScale / 3.0f;
+	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiPanelMargin;
 
 	void StageEditorScene::OnAttach()
 	{
-		m_CurrentStage = MakeRef<Stage>(256, 256);
-
+		m_CurrentStage = MakeRef<Stage>();
+		/*
 		for (uint32_t x = 0; x < m_CurrentStage->GetWidth(); x++)
 			for (uint32_t y = 0; y < m_CurrentStage->GetHeight(); y++)
 				m_CurrentStage->SetValueAt(x, y, EStageObject::BlueSphere);
-
+		*/
 		InitializeUI();
 	}
 	
@@ -58,19 +61,24 @@ namespace bsf
 	{
 		auto& assets = Assets::GetInstance();
 
-
+		UIStyle style;
+		style.GlobalScale = s_uiScale;
 
 		m_uiRoot = MakeRef<UIRoot>();
 		m_uiRoot->Attach(GetApplication());
+		m_uiRoot->SetStyle(style);
 
-		auto main = MakeRef<UIPanel>();
-		main->SetMargin(s_uiPanelMargin);
-		main->Layout = UIPanelLayout::Vertical;
-		main->BackgroundColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
+
+
+		// Top Bar
 		auto topBar = MakeRef<UIPanel>();
 		topBar->Layout = UIPanelLayout::Horizontal;
 		topBar->PreferredSize = { 0.0f, s_uiTopBarHeight };
+
+		auto title = MakeRef<UIText>();
+		title->Text = "Stage Editor";
+		topBar->AddChild(title);
 
 		auto tools = {
 			std::make_tuple(StageEditorTool::BlueSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::BlueSphere),
@@ -101,24 +109,61 @@ namespace bsf
 			topBar->AddChild(btn);
 		}
 
-		auto middle = MakeRef<UIPanel>();
-		middle->Layout = UIPanelLayout::Horizontal;
-		middle->PreferredSize = { 0.0f, -s_uiTopBarHeight };
-
+		// Properties
 		auto properties = MakeRef<UIPanel>();
-		properties->BackgroundColor = { 0.0f, 1.0f, 0.0f, 1.0f };
+		properties->Layout = UIPanelLayout::Vertical;
 		properties->PreferredSize = { s_uiPropertiesWidth, 0.0f };
 
+		// Max Rings input
+		{ 
+			auto maxRingsInput = MakeRef<UITextInput>();
+			maxRingsInput->Label = "Max Rings";
+			maxRingsInput->BindPush([&, check = std::regex("^[0-9]+$")](const std::string& val) {
+
+				BSF_INFO("{0}", val);
+
+				if (std::regex_match(val, check))
+				{
+					m_CurrentStage->MaxRings = std::atoi(val.c_str());
+					return true;
+				}
+				else if (val.empty())
+				{
+					m_CurrentStage->MaxRings = 0;
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			});
+
+			maxRingsInput->BindPull([&] {return std::to_string(m_CurrentStage->MaxRings); });
+
+			properties->AddChild(maxRingsInput);
+		}
+
+
+		// Editor area
 		m_uiEditorArea = MakeRef<UIStageEditorArea>();
 		m_uiEditorArea->PreferredSize = { -s_uiPropertiesWidth, 0.0f };
 		m_uiEditorArea->SetStage(m_CurrentStage);
 
+		// Middle section
+		auto middle = MakeRef<UIPanel>();
+		middle->Layout = UIPanelLayout::Horizontal;
+		middle->PreferredSize = { 0.0f, -s_uiTopBarHeight };
+
 		middle->AddChild(m_uiEditorArea);
 		middle->AddChild(properties);
 
-		main->AddChild(middle);
-		main->AddChild(topBar);
+		// Main panel
+		auto main = MakeRef<UIPanel>();
+		main->SetMargin(s_uiPanelMargin);
+		main->Layout = UIPanelLayout::Vertical;
 
+		main->AddChild(topBar);
+		main->AddChild(middle);
 
 		m_uiRoot->PushLayer(main);
 	}
@@ -146,7 +191,7 @@ namespace bsf
 	{
 
 		r2.Push();
-		r2.Color(BackgroundColor);
+		r2.Color(GetBackgroundColor());
 		r2.DrawQuad(Bounds.Position + glm::vec2(Margin.Left, Margin.Bottom), Bounds.Size - glm::vec2(Margin.Left + Margin.Right, Margin.Top + Margin.Bottom));
 		r2.Pop();
 
@@ -163,31 +208,34 @@ namespace bsf
 
 		if (m_Children.size() > 0)
 		{
-			glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
 
 			if (Layout == UIPanelLayout::Vertical)
 			{
+				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Bottom } + glm::vec2(0.0f, contentSize.y);
+
 				// Resize children
 				for (auto& child : m_Children)
 				{
 					glm::vec2 computedSize = {
-						std::max(child->MinSize.x, contentSize.x),
+						std::clamp(contentSize.x, child->MinSize.x, child->MaxSize.x),
 						child->PreferredSize.y > 0 ? child->PreferredSize.y : contentSize.y + child->PreferredSize.y
 					};
+					
+					origin.y -= computedSize.y;
+
 					child->UpdateBounds(origin, computedSize);
 
-					origin.y += computedSize.y;
 
 				}
 			}
 			else if (Layout == UIPanelLayout::Horizontal)
 			{
+				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
 
 				for (auto& child : m_Children)
 				{
 					glm::vec2 computedSize = {
 						child->PreferredSize.x > 0 ? child->PreferredSize.x : contentSize.x + child->PreferredSize.x,
-						//std::max(child->MinSize.y, contentSize.y)
 						std::clamp(contentSize.y, child->MinSize.y, child->MaxSize.y)
 					};
 
@@ -197,6 +245,8 @@ namespace bsf
 			}
 			else if (Layout == UIPanelLayout::Fill)
 			{
+				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
+
 				auto& child = m_Children.front();
 				
 				glm::vec2 computedSize = {
@@ -208,6 +258,9 @@ namespace bsf
 			}
 			else
 			{
+
+				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
+
 
 				for (auto& child : m_Children)
 				{
@@ -221,9 +274,19 @@ namespace bsf
 
 	uint32_t UIElement::m_NextId = 1;
 
-	UIElement::UIElement()
+	UIElement::UIElement() : UIElement(MakeFlags(UIElementFlags::None))
 	{
-		m_Id = m_NextId++;
+	}
+
+	UIElement::UIElement(std::underlying_type_t<UIElementFlags> flags) :
+		m_Flags(flags),
+		m_Id(m_NextId++)
+	{
+	}
+
+	bool UIElement::GetFlag(UIElementFlags flag) const
+	{
+		return m_Flags && static_cast<std::underlying_type_t<UIElementFlags>>(flag);
 	}
 
 	const std::vector<Ref<UIElement>>& UIElement::Children()
@@ -242,8 +305,24 @@ namespace bsf
 	}
 
 
+	void UIRoot::SetStyle(const UIStyle& style)
+	{
+		m_Style = style;
+		m_Style.Recompute();
+	}
+
 	void UIRoot::Attach(Application& app)
 	{
+		AddSubscription(app.KeyPressed, [&](const KeyPressedEvent& evt) {
+			if (m_FocusedControl)
+				m_FocusedControl->KeyPressed.Emit(evt);
+		});
+
+		AddSubscription(app.KeyReleased, [&](const KeyReleasedEvent& evt) {
+			if (m_FocusedControl)
+				m_FocusedControl->KeyReleased.Emit(evt);
+		});
+
 		AddSubscription(app.MouseMoved, [&](const MouseEvent& evt) {
 			if (m_Layers.empty())
 				return;
@@ -260,12 +339,15 @@ namespace bsf
 			if (intersection)
 			{
 
+				intersection->MouseMoved.Emit({ pos.x, pos.y, 0, 0, MouseButton::None });
+				
 				m_MouseState.HoverTarget = intersection;
 
-				intersection->Hovered = true;
-				intersection->MouseMoved.Emit({ pos.x, pos.y, 0, 0, MouseButton::None });
+				if (intersection->GetFlag(UIElementFlags::ReceiveHover))
+					intersection->Hovered = true;
 
-				auto& leftButtonState = m_MouseButtonState[MouseButton::Left];
+	
+
 				if (intersection == m_MouseState.DragTarget)
 				{
 					auto delta = m_MouseState.Position - m_MouseState.PrevPosition;
@@ -290,15 +372,26 @@ namespace bsf
 			m_MouseState.Position = pos;
 			m_MouseState.PrevPosition = pos;
 
+			auto& buttonState = m_MouseButtonState[evt.Button];
+			buttonState.Pressed = true;
+			buttonState.TimePressed = std::chrono::system_clock::now();
+
 			auto intersection = Intersect(m_Layers.back(), pos);
+
+			m_Layers.back()->Traverse([](UIElement& el) {el.Focused = false; });
+			m_FocusedControl = nullptr;
+
 			if (intersection)
 			{
-				auto& buttonState = m_MouseButtonState[evt.Button];
-				buttonState.Pressed = true;
-				buttonState.TimePressed = std::chrono::system_clock::now();
 				m_MouseState.DragTarget = intersection;
 				m_MouseState.DragButton = evt.Button;
-				//intersection->MousePressed.Emit({ pos.x, pos.y, evt.Button });
+
+				if (intersection->GetFlag(UIElementFlags::ReceiveFocus))
+				{
+					intersection->Focused = true;
+					m_FocusedControl = intersection;
+				}
+
 			}
 			else
 			{
@@ -317,12 +410,12 @@ namespace bsf
 			m_MouseState.PrevPosition = pos;
 
 			auto intersection = Intersect(m_Layers.back(), pos);
+			auto& buttonState = m_MouseButtonState[evt.Button];
+			buttonState.Pressed = false;
 
 
 			if (intersection)
 			{
-				auto& buttonState = m_MouseButtonState[evt.Button];
-				buttonState.Pressed = false;
 
 				if (std::chrono::system_clock::now() - buttonState.TimePressed < std::chrono::milliseconds(500))
 				{
@@ -348,6 +441,7 @@ namespace bsf
 		r2.Begin(m_Projection);
 		for (auto& l = m_Layers.rbegin(); l != m_Layers.rend(); l++)
 		{
+			(*l)->Traverse([&](UIElement& el) { el.m_Style = &m_Style; el.Update(time); });
 			(*l)->UpdateBounds({ 0.0f, 0.0f }, viewport);
 			(*l)->Render(r2, time);
 		}
@@ -383,25 +477,25 @@ namespace bsf
 
 	void UIIconButton::Render(Renderer2D& r2, const Time& time)
 	{
-		static constexpr float s_ShadowOffset = 0.2f;
+
 		r2.Push();
 		r2.Texture(Icon);
 
 		r2.Push();
 		{
-			r2.Translate({ s_ShadowOffset, -s_ShadowOffset });
-			r2.Color(UIDefaultStyle::ShadowColor);
+			r2.Translate({ GetStyle().IconButtonShadowOffset, -GetStyle().IconButtonShadowOffset });
+			r2.Color(GetStyle().ShadowColor);
 			r2.DrawQuad(Bounds.Position, Bounds.Size);
 		}
 		r2.Pop();
 
-		r2.Color((Hovered || Selected) ? Tint : UIDefaultStyle::IconButtonDefaultTint * Tint);
+		r2.Color((Hovered || Selected) ? Tint : GetStyle().IconButtonDefaultTint * Tint);
 		r2.DrawQuad(Bounds.Position, Bounds.Size);
 		r2.Pop();
 	}
 
 
-	UIStageEditorArea::UIStageEditorArea()
+	UIStageEditorArea::UIStageEditorArea() : UIElement(MakeFlags(UIElementFlags::ReceiveHover))
 	{
 		auto& assets = Assets::GetInstance();
 
@@ -422,6 +516,7 @@ namespace bsf
 		};
 
 		m_Pattern = CreateCheckerBoard({ 0, 0 });
+		m_BgPattern = CreateCheckerBoard({ 0xffffffff, 0xffcccccc });
 
 		auto editCallback = [&](const MouseEvent& evt) {
 
@@ -443,6 +538,9 @@ namespace bsf
 			}
 		};
 
+		AddSubscription(MouseMoved, [&](const MouseEvent& evt) {
+			m_CursorPos = GetStageCoordinates({ evt.X,evt.Y });
+		});
 		AddSubscription(MouseClicked, editCallback);
 		AddSubscription(MouseDragged, editCallback);
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
@@ -452,9 +550,17 @@ namespace bsf
 
 
 		AddSubscription(Wheel, [&](const WheelEvent& evt) {
-			m_Zoom = std::clamp(m_Zoom + evt.DeltaY * 0.2f, m_MinZoom, m_MaxZoom);
+			const float m = evt.DeltaY > 0 ? 1.5f : (1.0f / 1.5f);
+			m_TargetZoom = std::clamp(m_TargetZoom * m, m_MinZoom, m_MaxZoom);
 		});
 
+
+	}
+
+	void UIStageEditorArea::Update(const Time& time)
+	{
+		float zoomSpeed = std::max(0.5f, std::abs(m_Zoom - m_TargetZoom)) * 4.0f;
+		m_Zoom = MoveTowards(m_Zoom, m_TargetZoom, time.Delta * zoomSpeed);
 	}
 
 	void UIStageEditorArea::Render(Renderer2D& r2, const Time& time)
@@ -468,10 +574,13 @@ namespace bsf
 
 			r2.Push();
 			
-			r2.Color({ 0.0f, 0.0f, 0.0f, 0.25f });
+			r2.Color(GetBackgroundColor());
 			r2.DrawQuad(Bounds.Position, Bounds.Size);
 
 			r2.Clip(Bounds);
+			
+			r2.Texture(m_BgPattern);
+			r2.DrawQuad(Bounds.Position, Bounds.Size, Bounds.Size / (m_Zoom * 2.0f) , m_ViewOrigin / (m_Zoom * 2.0f) + glm::vec2(0.25f, 0.25f));
 
 			r2.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 			r2.Texture(m_Pattern);
@@ -480,22 +589,29 @@ namespace bsf
 			r2.Translate(Bounds.Position - m_ViewOrigin);
 			r2.Scale({ m_Zoom, m_Zoom });
 
-			for (uint32_t x = 0; x < m_Stage->GetWidth(); ++x)
+			glm::uvec2 bl = glm::clamp(glm::floor(GetRawStageCoordinates(Bounds.Position)), 0.0f, (float)m_Stage->GetWidth());
+			glm::uvec2 tr = glm::clamp(glm::ceil(GetRawStageCoordinates(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetHeight());
+
+			for (uint32_t x = bl.x; x < tr.x; ++x)
 			{
-				for (uint32_t y = 0; y < m_Stage->GetHeight(); ++y)
+				for (uint32_t y = bl.y; y < tr.y; ++y)
 				{
+
 					if (auto obj = m_StageObjRendering.find(m_Stage->GetValueAt(x, y)); obj != m_StageObjRendering.end())
 					{
 						r2.Texture(std::get<0>(obj->second));
 
-						r2.Color(UIDefaultStyle::ShadowColor);
-						r2.DrawQuad({ x + 0.1f, y - 0.1f });
+						r2.Color(GetStyle().ShadowColor);
+						r2.DrawQuad({ x + GetStyle().StageAreaShadowOffset, y - GetStyle().StageAreaShadowOffset });
 						
 						r2.Color(std::get<1>(obj->second));
 						r2.DrawQuad({ x, y });
 					}
 				}
 			}
+
+			DrawCursor(r2);
+
 			
 			r2.Pop();
 		}
@@ -518,9 +634,51 @@ namespace bsf
 
 	}
 
+	void UIStageEditorArea::DrawCursor(Renderer2D& r2)
+	{
+		static const float lw = GetStyle().StageAreaCrosshairSize; // line width
+		static const float lt = GetStyle().StageAreaCrosshairThickness; // thickness
+		static const std::array<std::pair<glm::vec2, glm::vec2>, 8> quads = {
+			std::make_pair(glm::vec2(0, 0), glm::vec2(lw, lt)),
+			std::make_pair(glm::vec2(0, 0), glm::vec2(lt, lw)),
+			std::make_pair(glm::vec2(1.0f - lw, 0), glm::vec2(lw, lt)),
+			std::make_pair(glm::vec2(1.0f - lt, 0), glm::vec2(lt, lw)),
+			std::make_pair(glm::vec2(1.0f - lw, 1.0f - lt), glm::vec2(lw, lt)),
+			std::make_pair(glm::vec2(1.0f - lt, 1.0f - lw), glm::vec2(lt, lw)),
+			std::make_pair(glm::vec2(0, 1.0f - lt), glm::vec2(lw, lt)),
+			std::make_pair(glm::vec2(0, 1.0f - lw), glm::vec2(lt, lw)),
+		};
+
+		if (Hovered && m_CursorPos != std::nullopt)
+		{
+			r2.Push();
+			r2.Translate(m_CursorPos.value());
+			r2.NoTexture();
+			{ // Shadow
+				r2.Push();
+				r2.Translate({ GetStyle().StageAreaShadowOffset, -GetStyle().StageAreaShadowOffset });
+				r2.Color(Colors::Black);
+				for (const auto& [pos, size] : quads)
+					r2.DrawQuad(pos, size);
+				r2.Pop();
+			}
+
+			r2.Color(GetStyle().Palette.Secondary);
+			for (const auto& [pos, size] : quads)
+				r2.DrawQuad(pos, size);
+
+			r2.Pop();
+		}
+	}
+
+	glm::vec2 UIStageEditorArea::GetRawStageCoordinates(const glm::vec2 pos) const
+	{
+		return  (pos - Bounds.Position + m_ViewOrigin) / m_Zoom;
+	}
+
 	std::optional<glm::ivec2> UIStageEditorArea::GetStageCoordinates(const glm::vec2 pos) const
 	{
-		glm::ivec2 localPos = glm::floor(((pos - Bounds.Position) + m_ViewOrigin) / m_Zoom);
+		glm::ivec2 localPos = glm::floor(GetRawStageCoordinates(pos));
 
 		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetWidth() 
 			&& localPos.y >= 0 && localPos.y < m_Stage->GetHeight())
@@ -530,6 +688,31 @@ namespace bsf
 
 	}
 
+	UITextInput::UITextInput() : UIElement(MakeFlags(UIElementFlags::ReceiveFocus))
+	{
+		MinSize = { 0.0f, 1.5f };
+		PreferredSize = { 0.0f, 1.5f };
+
+		AddSubscription(KeyPressed, [&](const KeyPressedEvent& evt) {
+			if ((evt.KeyCode >= GLFW_KEY_A && evt.KeyCode <= GLFW_KEY_Z) ||
+				(evt.KeyCode >= GLFW_KEY_0 && evt.KeyCode <= GLFW_KEY_9))
+			{
+				m_Push(m_Value + (char)evt.KeyCode);
+			}
+			else if (evt.KeyCode == GLFW_KEY_BACKSPACE && !m_Value.empty())
+			{
+				m_Push(m_Value.substr(0, m_Value.size() - 1));
+			}
+		});
+
+	}
+
+	void UITextInput::Update(const Time& time)
+	{
+		// Update the current value
+		m_Value = std::move(m_Pull());
+	}
+
 	void UITextInput::UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize)
 	{
 		Bounds = { origin, computedSize };
@@ -537,7 +720,53 @@ namespace bsf
 
 	void UITextInput::Render(Renderer2D& r2, const Time& time)
 	{
+
+		const float margin = GetStyle().ComputeMargin(GetStyle().TextInputMargin);
+		Rect innerBounds = Bounds;
+		glm::vec2 shadowOffset = { GetStyle().TextInputShadowOffset, -GetStyle().TextInputShadowOffset };
+
+		innerBounds.Position += glm::vec2(margin);
+		innerBounds.Size -= glm::vec2(margin *  2.0f);
+
+
 		r2.Push();
+
+		r2.Color(GetBackgroundColor());
+		r2.DrawQuad(innerBounds.Position, innerBounds.Size);
+
+		r2.TextShadowColor(GetStyle().ShadowColor);
+		r2.TextShadowOffset(shadowOffset);
+
+		r2.Translate(innerBounds.Position);
+
+		r2.Color(Focused ? GetStyle().Palette.Secondary : GetForegroundColor());
+
+		// Text
+		{
+			r2.Push();
+
+			r2.Pivot(EPivot::Center);
+
+			r2.Translate(innerBounds.Size / 2.0f);
+			r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), m_Value);
+
+			r2.Pop();
+		}
+
+		// Label
+
+		{
+			r2.Push();
+
+			r2.Pivot(EPivot::BottomLeft);
+
+			r2.Translate({ margin, 0.8f });
+			r2.Scale({ GetStyle().TextInputLabelFontScale, GetStyle().TextInputLabelFontScale });
+			r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), Label);
+			
+			r2.Pop();
+		}
+
 
 		r2.Pop();
 	}
@@ -546,8 +775,38 @@ namespace bsf
 
 
 
+	void UIStyle::Recompute()
+	{
+		MarginUnit = GlobalScale / 100.0f;
+		IconButtonShadowOffset = GlobalScale / 200.0f;
+	}
 
+	void UIText::Update(const Time& time)
+	{
+		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
+		const float margin = GetStyle().ComputeMargin(GetStyle().TextMargin);
+		float width = font->GetStringWidth(Text);
+		PreferredSize = MinSize = { width + 2.0f * margin, 1.0f };
+	}
 
+	void UIText::UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize)
+	{
+		Bounds = { origin, computedSize };
+	}
 
+	void UIText::Render(Renderer2D& r2, const Time& time)
+	{
+		const float margin = GetStyle().ComputeMargin(GetStyle().TextMargin);
+		auto contentBounds = Bounds;
+		contentBounds.Position += glm::vec2(margin);
+		contentBounds.Size -= 2.0f * glm::vec2(margin);
+
+		r2.Push();
+		r2.Translate(contentBounds.Position);
+		r2.TextShadowColor(GetStyle().ShadowColor);
+		r2.Color(GetForegroundColor());
+		r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), Text);
+		r2.Pop();
+	}
 
 }

@@ -8,4 +8,8 @@
     <LocalDebuggerWorkingDirectory>..\bin\Release\$(ProjectName)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">
+    <LocalDebuggerWorkingDirectory>..\bin\Distribution\$(ProjectName)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

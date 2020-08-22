@@ -100,6 +100,7 @@ namespace bsf
 	private:
 
 		using StateFn = std::function<void(const Time&)>;
+		using StateFnPtr = void(GameLogic::*)(const Time&);
 
 
 		Time m_SpeedUpTimer;
@@ -136,7 +137,7 @@ namespace bsf
 		EGameState m_State;
 		Stage& m_Stage;
 
-		std::unordered_map<EGameState, StateFn> m_StateMap;
+		std::unordered_map<EGameState, StateFnPtr> m_StateMap;
 
 		bool PullRotateCommand();
 		void DoRotation(const Time& time);

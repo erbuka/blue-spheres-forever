@@ -90,13 +90,11 @@ namespace bsf
 		}
 
 	protected:
-		void SetImGui(bool enabled) { m_ImGui = true; }
 
 	private:
 		friend class Application;
 		std::unordered_map<ESceneTaskEvent, std::list<Ref<SceneTask>>> m_ScheduledTasks;
 		Application* m_App;
-		bool m_ImGui = false;
 	};
 
 }
