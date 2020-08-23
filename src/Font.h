@@ -19,8 +19,7 @@ namespace bsf
 	{
 	public:
 		Font(const std::string& fileName, float fontSize);
-		const float GetStringWidth(const std::string& str);
-		const GlyphInfo& GetGlyphInfo(char c) const;
+		const GlyphInfo& GetGlyphInfo(uint32_t c) const;
 		const Ref<Texture2D>& GetTexture() const;
 		float GetStringWidth(const std::string& s) const;
 
@@ -28,4 +27,7 @@ namespace bsf
 		struct Impl;
 		Ref<Impl> m_Impl;
 	};
+
+
+
 }

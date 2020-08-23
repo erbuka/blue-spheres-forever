@@ -112,17 +112,18 @@ namespace bsf
 		m_Assets[AssetName::SfxMusic] = MakeRef<Audio>("assets/sound/music_techno.mp3");
 
 		// Models
+		
 		m_Assets[AssetName::ModSphere] = CreateModel(WavefrontLoader().Load("assets/models/sphere.obj"))->GetMesh(0);
 		m_Assets[AssetName::ModGround] = CreateGround(-10, 10, -10, 10, 10);
 		m_Assets[AssetName::ModClipSpaceQuad] = CreateClipSpaceQuad();
 		m_Assets[AssetName::ModSkyBox] = CreateCube();
-
+		
 		m_Assets[AssetName::ModRing] = 
 			CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 
 		m_Assets[AssetName::ModChaosEmerald] = 
 			CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
-		
+		/*
 		{ 
 			std::array<std::string, 14> files = {
 				"assets/models/sonic0.obj",
@@ -154,8 +155,9 @@ namespace bsf
 			sonicAnimator->RegisterAnimation("jump", { 13, 13 });
 
 			m_Assets[AssetName::ModSonic] = sonicAnimator;
-
+			
 		}
+		*/
 		
 
 	}

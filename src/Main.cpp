@@ -17,7 +17,6 @@ using namespace glm;
 
 static void LoadSectionsBinary();
 
-
 int main() 
 {
 
@@ -30,9 +29,11 @@ int main()
 	//auto scene = Ref<Scene>(new SplashScene());
 	auto scene = Ref<Scene>(new MenuScene());
 	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
+	
 	Application app;
 	app.GotoScene(std::move(scene));
 	app.Start();
+
 }
 
 

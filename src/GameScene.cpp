@@ -941,7 +941,6 @@ namespace bsf
 
 		// Counters (spheres and rings)
 		{
-			constexpr float textOffset = 0.2f;
 			constexpr float shadowOffset = 0.03f;
 			constexpr float padding = 0.5f;
 			constexpr float sw = 25.0f;
@@ -964,7 +963,7 @@ namespace bsf
 				renderer2d.Color(Colors::BlueSphere);
 				renderer2d.DrawQuad({ 0.0f, 0.0f });
 	
-				renderer2d.Translate({ 1.0f + padding / 2.0f, textOffset });
+				renderer2d.Translate({ 1.0f + padding / 2.0f, 0.0f });
 
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 				renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });
@@ -989,7 +988,7 @@ namespace bsf
 				renderer2d.Color(Colors::Ring);
 				renderer2d.DrawQuad({ 0.0f, 0.0f });
 
-				renderer2d.Translate({ -1.0f - padding / 2.0f, textOffset });
+				renderer2d.Translate({ -1.0f - padding / 2.0f, 0.0f });
 
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 				renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });

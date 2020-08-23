@@ -172,7 +172,6 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\MenuScene.h" />
     <ClInclude Include="..\src\Model.h" />
     <ClInclude Include="..\src\Profiler.h" />
-    <ClInclude Include="..\src\RTXTestScene.h" />
     <ClInclude Include="..\src\Renderer2D.h" />
     <ClInclude Include="..\src\Scene.h" />
     <ClInclude Include="..\src\ShaderProgram.h" />
@@ -209,7 +208,6 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\MenuScene.cpp" />
     <ClCompile Include="..\src\Model.cpp" />
     <ClCompile Include="..\src\Profiler.cpp" />
-    <ClCompile Include="..\src\RTXTestScene.cpp" />
     <ClCompile Include="..\src\Renderer2D.cpp" />
     <ClCompile Include="..\src\Scene.cpp" />
     <ClCompile Include="..\src\ShaderProgram.cpp" />

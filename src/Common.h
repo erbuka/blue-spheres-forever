@@ -166,9 +166,15 @@ namespace bsf
 		float Bottom() const { return Position.y; }
 		float Top() const { return Position.y + Size.y; }
 
+		float Width() const { return Size.x; }
+		float Height() const { return Size.y; }
+
 		explicit operator glm::vec4() const {
 			return { Left(), Right(), Bottom(), Top() };
 		}
+
+		void Rect::Shrink(float x, float y);
+		void Shrink(float amount);
 
 	};
 
@@ -331,6 +337,15 @@ namespace bsf
 		T m_v0, m_v1;
 	};
 	
+	constexpr glm::vec4 Lighten(const glm::vec4 color, float factor)
+	{
+		return {
+			color.r + (1.0f - color.r) * factor,
+			color.g + (1.0f - color.g) * factor,
+			color.b + (1.0f - color.b) * factor,
+			color.a
+		};
+	}
 	
 	constexpr glm::vec4 ToColor(uint32_t rgba)
 	{
@@ -356,8 +371,9 @@ namespace bsf
 		constexpr glm::vec4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
 		constexpr glm::vec4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
 		constexpr glm::vec4 Yellow = { 1.0f, 1.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Blue = ToColor(0xfff04820);
 		constexpr glm::vec4 Red = ToColor(0xff0000f0);
+		constexpr glm::vec4 Blue = ToColor(0xfff04820);
+		constexpr glm::vec4 Green = ToColor(0xff48f020);
 		constexpr glm::vec4 Transparent = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		constexpr glm::vec4 BlueSphere = Blue;

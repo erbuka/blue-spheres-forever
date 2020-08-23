@@ -42,7 +42,9 @@ namespace bsf
 	struct UIPalette
 	{
 		glm::vec4 Foreground = Colors::White;
+
 		glm::vec4 Background = ToColor(0xff121212);
+		glm::vec4 BackgroundVariant = Lighten(Background, 0.25f);
 
 		glm::vec4 Primary = Colors::Blue;
 		glm::vec4 PrimaryContrast = Colors::White;
@@ -56,28 +58,34 @@ namespace bsf
 	{
 
 		UIStyle() { Recompute(); }
+		
+
 		// Sizes
 		float GlobalScale = 20.0f;
 		
-		float MarginUnit = 0.0f;
+		float ContentMargin = 1.0f;
+		float MarginUnit = -1.0f;
 		
-		float IconButtonShadowOffset = 0.0f;
+		float ShadowOffset = -1.0f;
 
-		float StageAreaShadowOffset = 0.075f;
 		float StageAreaCrosshairSize = 0.3f;
 		float StageAreaCrosshairThickness = 0.1f;
 
-		float TextInputShadowOffset = 0.025f;
-		float TextInputLabelFontScale = 0.5f;
-		float TextInputMargin = 1.0f;
+		float TextShadowOffset = 0.025f;
+		float LabelFontScale = 0.5f;
 
-		float TextMargin = 1.0f;
+		float SliderTrackThickness = -1.0f;
 
 		// Colors
 		glm::vec4 ShadowColor = { 0.0f, 0.0f, 0.0f, 0.5f };
 		glm::vec4 IconButtonDefaultTint = { 0.5f, 0.5f, 0.5f, 1.0f };
 
 		UIPalette Palette;
+
+		const glm::vec4& DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const;
+
+		const glm::vec4 GetBackgroundColor(const UIElement& element, const glm::vec4& default) const;
+		const glm::vec4 GetForegroundColor(const UIElement& element, const glm::vec4& default) const;
 
 		float ComputeMargin(float units) const { return units * MarginUnit; }
 		void Recompute();
@@ -107,17 +115,18 @@ namespace bsf
 		glm::vec2 MaxSize = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
 		bool Hovered = false;
 		bool Focused = false;
+
 		std::optional<glm::vec4> BackgroundColor = std::nullopt;
 		std::optional<glm::vec4> ForegroundColor = std::nullopt;
 
 		EventEmitter<KeyPressedEvent> KeyPressed;
 		EventEmitter<KeyReleasedEvent> KeyReleased;
-		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked;
+		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked, MousePressed;
 		EventEmitter<WheelEvent> Wheel;
 
-		virtual void Update(const Time& time) {}
-		virtual void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) = 0;
-		virtual void Render(Renderer2D& renderer, const Time& time) = 0;
+		virtual void Update(const UIRoot& root, const Time& time) {}
+		virtual void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) = 0;
+		virtual void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) = 0;
 
 		uint32_t GetId() const { return m_Id; }
 
@@ -127,11 +136,8 @@ namespace bsf
 
 		void Traverse(const std::function<void(UIElement&)>& action);
 
-		const glm::vec4 GetBackgroundColor() const { return BackgroundColor.has_value() ? BackgroundColor.value() : GetStyle().Palette.Background; }
-		const glm::vec4 GetForegroundColor() const { return ForegroundColor.has_value() ? ForegroundColor.value() : GetStyle().Palette.Foreground; }
-
 		const UIStyle& GetStyle() const { return *m_Style; }
-		
+
 	private:
 		friend class UIRoot;
 		static uint32_t m_NextId;
@@ -146,6 +152,7 @@ namespace bsf
 	public:
 
 		void SetStyle(const UIStyle& style);
+		//const UIStyle& GetStyle() const { return m_Style; }
 
 		void Attach(Application& app);
 		void Detach(Application& app);
@@ -186,7 +193,6 @@ namespace bsf
 
 	};
 
-
 	class UIIconButton : public UIElement
 	{
 	public:
@@ -195,9 +201,8 @@ namespace bsf
 		glm::vec4 Tint = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool Selected = false;
 
-		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
-		void Render(Renderer2D& renderer, const Time& time) override;
-	private:
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
 	};
 
@@ -220,8 +225,9 @@ namespace bsf
 		void AddChild(const Ref<UIElement>& child);
 		void RemoveChild(const Ref<UIElement>& child);
 
-		void Render(Renderer2D& renderer, const Time& time) override;
-		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Update(const UIRoot& root, const Time& time) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 
 		const std::vector<Ref<UIElement>>& Children() override { return m_Children; }
 
@@ -237,16 +243,16 @@ namespace bsf
 
 		UIStageEditorArea();
 
-		void Update(const Time& time) override;
-		void Render(Renderer2D& renderer, const Time& time) override;
-		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Update(const UIRoot& root, const Time& time) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 
 		void SetStage(const Ref<Stage>& stage) { m_Stage = stage; UpdatePattern(); }
 		void UpdatePattern();
 
 	private:
 
-		void DrawCursor(Renderer2D& r2);
+		void DrawCursor(Renderer2D& r2, const UIStyle& style);
 
 		glm::vec2 GetRawStageCoordinates(const glm::vec2 pos) const;
 		std::optional<glm::ivec2> GetStageCoordinates(const glm::vec2 pos) const;
@@ -278,9 +284,9 @@ namespace bsf
 		void BindPush(const PushFn& push) { m_Push = push; }
 		void BindPull(const PullFn& pull) { m_Pull = pull; }
 
-		void Update(const Time& time) override;
-		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
-		void Render(Renderer2D& renderer, const Time& time) override;
+		void Update(const UIRoot& root, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
 		const std::string& GetValue() const { return m_Value; }
 
@@ -295,16 +301,58 @@ namespace bsf
 	class UIText : public UIElement
 	{
 	public:
+		float Scale = 1.0f;
 		std::string Text;
 
-		void Update(const Time& time) override;
-		void UpdateBounds(const glm::vec2& origin, const glm::vec2& computedSize) override;
-		void Render(Renderer2D& renderer, const Time& time) override;
-
-	private:
+		void Update(const UIRoot& root, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
 	};
 
+	
+	class UISlider : public UIElement
+	{
+	public:
+		using BindFn = std::function<float&(void)>;
+
+		std::string Label = "Color Picker";
+		float Min = 0.0f, Max = 1.0f;
+
+		UISlider();
+
+		void Bind(const BindFn& fn);
+		void Update(const UIRoot& root, const Time& time) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
+
+	private:
+
+		Rect GetContentBounds() const;
+
+		bool IntersectHandle(const glm::vec2& pos) const;
+		float GetDelta() const;
+
+		float m_FallbackValue = 0.0f;
+		BindFn m_GetValue = [&] () -> float& { return m_FallbackValue; };
+	};
+
+	class UIColorPicker : public UIPanel
+	{
+	public:
+
+		std::string Label = "Color Picker";
+
+		UIColorPicker();
+
+		void Update(const UIRoot& root, const Time& time);
+
+	private:
+		std::array<Ref<UISlider>, 3> m_RGB;
+		Ref<UIPanel> m_Preview;
+		Ref<UIText> m_Label;
+	};
+	
 
 	class StageEditorScene : public Scene
 	{

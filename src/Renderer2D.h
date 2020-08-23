@@ -89,6 +89,9 @@ namespace bsf
 		Renderer2D();
 		~Renderer2D();
 
+		Renderer2D(Renderer2D&) = delete;
+		Renderer2D(Renderer2D&&) = delete;
+
 		void Initialize();
 
 		void Begin(const glm::mat4& projection);
@@ -99,6 +102,7 @@ namespace bsf
 		
 		void LoadIdentity();
 		void Scale(const glm::vec2& scale);
+		void Scale(float scale) { Scale({ scale, scale }); }
 		void Translate(const glm::vec2& translate);
 		void Rotate(float angle);
 

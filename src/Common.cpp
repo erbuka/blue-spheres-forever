@@ -17,6 +17,18 @@ namespace bsf
 		return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y;
 	}
 
+	void Rect::Shrink(float x, float y)
+	{
+		Position += glm::vec2(x, y);
+		Size -= 2.0f * glm::vec2(x, y);
+	}
+
+	void Rect::Shrink(float amount)
+	{
+		Position += glm::vec2(amount);
+		Size -= 2.0f * glm::vec2(amount);
+	}
+
 
 	uint32_t ToHexColor(const glm::vec3& rgb)
 	{
