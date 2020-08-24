@@ -2,37 +2,20 @@
 
 #include <string>
 #include <fstream>
-#include <memory>
 #include <vector>
 #include <array>
 #include <unordered_map>
 #include <glm/glm.hpp>
-#include <algorithm>
 #include <glad/glad.h>
 
 #include "Log.h"
+#include "Ref.h"
 
 namespace bsf
 {
 	class Texture2D;
 	class VertexArray;
 	
-	#pragma region Ref
-
-	template<typename T>
-	using Ref = std::shared_ptr<T>;
-
-
-	template<typename T, typename... Args>
-	Ref<T> MakeRef(Args&&... args)
-	{
-		return std::make_shared<T>(std::forward<Args>(args)...);
-	}
-
-	#pragma endregion
-
-
-
 
 	#pragma region PBR
 
@@ -81,47 +64,9 @@ namespace bsf
 	};
 
 	#pragma endregion
-
-
-	#pragma region Events
-
-	enum class Direction
-	{
-		Left, Right, Up, Down
-	};
-
-	enum class MouseButton : int
-	{
-		None, Left, Right, Middle
-	};
-
-	struct MouseEvent
-	{
-		float X, Y, DeltaX, DeltaY;
-		MouseButton Button;
-	};
-
-	struct WheelEvent
-	{
-		float DeltaX, DeltaY;
-	};
-
-	struct WindowResizedEvent
-	{
-		float Width, Height;
-	};
-
-	struct KeyPressedEvent
-	{
-		int32_t KeyCode;
-		bool Repeat;
-	};
-
-	struct KeyReleasedEvent
-	{
-		int32_t KeyCode;
-	};
 	
+	#pragma region Utilities
+
 	struct GLEnableScope
 	{
 	public:
@@ -132,29 +77,6 @@ namespace bsf
 	};
 
 
-
-	#pragma endregion
-
-	#pragma region Time
-
-	struct Time
-	{
-		float Delta = 0.0f, Elapsed = 0.0f;
-
-		inline Time& operator+=(const Time& other) { return operator+=(other.Delta); }
-		inline Time& operator+=(float t) { Elapsed += t; return *this; }
-
-		Time& operator-=(const Time& other) { return operator-=(other.Delta); }
-		Time& operator-=(float t) { Elapsed -= t; return *this; }
-
-	};
-
-
-	#pragma endregion
-
-
-
-	#pragma region Utilities
 
 	struct Rect
 	{
@@ -173,7 +95,7 @@ namespace bsf
 			return { Left(), Right(), Bottom(), Top() };
 		}
 
-		void Rect::Shrink(float x, float y);
+		void Shrink(float x, float y);
 		void Shrink(float amount);
 
 	};
@@ -261,7 +183,8 @@ namespace bsf
 
 	template <typename T>
 	typename std::enable_if<std::is_unsigned<T>::value, int>::type
-		inline constexpr Sign(T const x) {
+		inline constexpr Sign(T const x) 
+	{
 		return T(0) < x;
 	}
 
@@ -337,50 +260,15 @@ namespace bsf
 		T m_v0, m_v1;
 	};
 	
-	constexpr glm::vec4 Lighten(const glm::vec4 color, float factor)
-	{
-		return {
-			color.r + (1.0f - color.r) * factor,
-			color.g + (1.0f - color.g) * factor,
-			color.b + (1.0f - color.b) * factor,
-			color.a
-		};
-	}
-	
-	constexpr glm::vec4 ToColor(uint32_t rgba)
-	{
-		return {
-			((rgba & 0x000000ff) >> 0) / 255.0f,
-			((rgba & 0x0000ff00) >> 8) / 255.0f,
-			((rgba & 0x00ff0000) >> 16) / 255.0f,
-			((rgba & 0xff000000) >> 24) / 255.0f,
-		};
-	}
 
-	uint32_t ToHexColor(const glm::vec3& rgb);
-	uint32_t ToHexColor(const glm::vec4& rgba);
 
-	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors);
+
+	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors, Ref<Texture2D> target = nullptr);
 	Ref<Texture2D> CreateGray(float value);
 	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps);
 
 	std::string ReadTextFile(const std::string& file);
 
-	namespace Colors
-	{
-		constexpr glm::vec4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
-		constexpr glm::vec4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Yellow = { 1.0f, 1.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Red = ToColor(0xff0000f0);
-		constexpr glm::vec4 Blue = ToColor(0xfff04820);
-		constexpr glm::vec4 Green = ToColor(0xff48f020);
-		constexpr glm::vec4 Transparent = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-		constexpr glm::vec4 BlueSphere = Blue;
-		constexpr glm::vec4 RedSphere = Red;
-		constexpr glm::vec4 YellowSphere = { 1.0f, 1.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f), 1.0f };
-	}
 
 	#pragma endregion
 

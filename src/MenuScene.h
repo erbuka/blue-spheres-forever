@@ -4,8 +4,9 @@
 #include <vector>
 #include <list>
 
-#include "Scene.h"
+#include "Ref.h"
 #include "Common.h"
+#include "Scene.h"
 #include "EventEmitter.h"
 #include "StageCodeHelper.h"
 
@@ -163,7 +164,6 @@ namespace bsf
 	private:
 
 		std::vector<Ref<Stage>> LoadCustomStages();
-
 
 		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 

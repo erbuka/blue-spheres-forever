@@ -1,6 +1,6 @@
 #include "BsfPch.h"
 
-#ifdef BSF_ENABLE_DIAGNOSTIC_TOOL
+#ifdef BSF_ENABLE_DIAGNOSTIC
 
 #include "Profiler.h"
 #include "Log.h"

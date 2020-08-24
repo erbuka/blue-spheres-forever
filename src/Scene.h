@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Common.h"
+#include "Ref.h"
+#include "Time.h"
 #include "EventEmitter.h"
 
 #include <list>
@@ -83,18 +84,20 @@ namespace bsf
 
 		Application& GetApplication();
 
-		template<typename T>
-		void ScheduleTask(ESceneTaskEvent evt, const Ref<T>& task) {
-			static_assert(std::is_base_of_v<SceneTask, T>);
-			m_ScheduledTasks[evt].push_back(task);
-		}
+		void ScheduleTask(ESceneTaskEvent evt, const Ref<SceneTask>& task);
 
-	protected:
+		template<typename T, typename ... Args>
+		Ref<std::enable_if_t<std::is_base_of_v<SceneTask, T>>> ScheduleTask(ESceneTaskEvent evt, Args&&... args)
+		{
+			auto task = MakeRef<T>(std::forward<Args>(args)...);
+			ScheduleTask(evt, task);
+			return task;
+		}
 
 	private:
 		friend class Application;
 		std::unordered_map<ESceneTaskEvent, std::list<Ref<SceneTask>>> m_ScheduledTasks;
-		Application* m_App;
+		Application* m_App = nullptr;
 	};
 
 }

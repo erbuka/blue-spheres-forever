@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef BSF_ENABLE_DIAGNOSTIC_TOOL
+#ifdef BSF_ENABLE_DIAGNOSTIC
 
 #include <string>
 #include <map>

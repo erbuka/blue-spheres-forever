@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "Common.h"
+#include "Color.h"
 #include "Log.h"
 #include "Texture.h";
 #include "VertexArray.h"
@@ -29,21 +30,6 @@ namespace bsf
 		Size -= 2.0f * glm::vec2(amount);
 	}
 
-
-	uint32_t ToHexColor(const glm::vec3& rgb)
-	{
-		return ToHexColor({ rgb, 1.0f });
-	}
-
-	uint32_t ToHexColor(const glm::vec4& rgba)
-	{
-		uint8_t r = uint8_t(rgba.r * 255.0f);
-		uint8_t g = uint8_t(rgba.g * 255.0f);
-		uint8_t b = uint8_t(rgba.b * 255.0f);
-		uint8_t a = uint8_t(rgba.a * 255.0f);
-
-		return  (a << 24) | (b << 16) | (g << 8) | (r << 0);
-	}
 
 	Ref<Texture2D> CreateGray(float value) {
 		return MakeRef<Texture2D>(ToHexColor({ value, value, value, 1.0 }));
@@ -99,18 +85,19 @@ namespace bsf
 
 	}
 
-	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors)
+	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors, Ref<Texture2D> target)
 	{
 		std::array<uint32_t, 4> data = {
 			colors[0], colors[1],
 			colors[1], colors[0]
 		};
 
+		if (target == nullptr)
+			target = MakeRef<Texture2D>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 
-		auto result = MakeRef<Texture2D>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-		result->SetPixels(data.data(), 2, 2);
-		result->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
-		return result;
+		target->SetPixels(data.data(), 2, 2);
+		target->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+		return target;
 
 	}
 

@@ -320,17 +320,17 @@ namespace bsf
 			}
 			else if (evt.KeyCode == GLFW_KEY_A)
 			{
+				// TODO Get rid if this thing
 				m_GameMessages.emplace_back("Message Test");
 			}
 
 		}));
 
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 0.5f);
-		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
+		ScheduleTask(ESceneTaskEvent::PostRender, fadeIn);
 
 		// Play music
 		auto music = assets.Get<Audio>(AssetName::SfxMusic);
-		music->SetVolume(1.0f);
 		music->Play();
 
 	}
@@ -1050,7 +1050,7 @@ namespace bsf
 
 			});
 
-			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, task);
+			ScheduleTask(ESceneTaskEvent::PostRender, task);
 		}
 		
 		if (evt.Current == EGameState::Emerald)
@@ -1064,7 +1064,7 @@ namespace bsf
 				m_GameOverObjectsHeight += time.Delta * 10.0f;				
 			});
 
-			ScheduleTask<SceneTask>(ESceneTaskEvent::PreRender, liftObjectsTask);
+			ScheduleTask(ESceneTaskEvent::PreRender, liftObjectsTask);
 
 			auto playEmeraldSound = MakeRef<SceneTask>();
 
@@ -1081,7 +1081,7 @@ namespace bsf
 			});
 
 			assets.Get<Audio>(AssetName::SfxSplash)->Play();
-			ScheduleTask<SceneTask>(ESceneTaskEvent::PostRender, playEmeraldSound);
+			ScheduleTask(ESceneTaskEvent::PostRender, playEmeraldSound);
 		}
 	}
 

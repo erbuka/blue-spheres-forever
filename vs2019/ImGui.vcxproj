@@ -75,7 +75,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DEBUG;BSF_ENABLE_DIAGNOSTIC_TOOL;IMGUI_IMPL_OPENGL_LOADER_GLAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG;BSF_ENABLE_DIAGNOSTIC;IMGUI_IMPL_OPENGL_LOADER_GLAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\vendor\imgui;..\vendor\imgui\examples;..\vendor\glfw\include;..\vendor\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -89,7 +89,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>BSF_ENABLE_DIAGNOSTIC_TOOL;IMGUI_IMPL_OPENGL_LOADER_GLAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BSF_ENABLE_DIAGNOSTIC;IMGUI_IMPL_OPENGL_LOADER_GLAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\vendor\imgui;..\vendor\imgui\examples;..\vendor\glfw\include;..\vendor\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>

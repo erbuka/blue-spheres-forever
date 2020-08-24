@@ -151,7 +151,7 @@ namespace bsf
 
 
 		// Fade In
-		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, 
+		ScheduleTask(ESceneTaskEvent::PostRender, 
 			MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f));
 
 	}
@@ -184,6 +184,8 @@ namespace bsf
 
 	void MenuScene::OnDetach()
 	{
+		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->FadeOut(0.5f);
+
 		for (auto& unsubscribe : m_Subscriptions)
 			unsubscribe();
 	}
@@ -212,13 +214,12 @@ namespace bsf
 	{
 		auto fadeTask = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
 
-		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->Stop();
 
 		fadeTask->SetDoneFunction([&, stage, gameInfo](SceneTask& self) {
 			GetApplication().GotoScene(MakeRef<GameScene>(stage, gameInfo));
 		});
 
-		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeTask);
+		ScheduleTask(ESceneTaskEvent::PostRender, fadeTask);
 	}
 
 	void MenuRoot::OnConfirm()

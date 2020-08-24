@@ -10,7 +10,19 @@
 
 #include "Scene.h"
 #include "Stage.h"
+#include "Ref.h"
 #include "EventEmitter.h"
+#include "Common.h"
+
+/*
+TODO
+- Finish the stage list UI
+- Add "New" button
+- Finish tool bar icons
+- Add name of the stage to the left bar
+- Add start postion/direction buttons
+- Stage editor area background ???
+*/
 
 namespace bsf
 {
@@ -22,6 +34,7 @@ namespace bsf
 	class UIElement;
 	class UIPanel;
 	class UIRoot;
+	class UILayer;
 	
 	enum class StageEditorTool
 	{
@@ -32,7 +45,7 @@ namespace bsf
 		Ring
 	};
 
-	enum class UIPanelLayout
+	enum class UILayout
 	{
 		Horizontal, Vertical, Fill, Free
 	};
@@ -63,7 +76,6 @@ namespace bsf
 		// Sizes
 		float GlobalScale = 20.0f;
 		
-		float ContentMargin = 1.0f;
 		float MarginUnit = -1.0f;
 		
 		float ShadowOffset = -1.0f;
@@ -87,7 +99,7 @@ namespace bsf
 		const glm::vec4 GetBackgroundColor(const UIElement& element, const glm::vec4& default) const;
 		const glm::vec4 GetForegroundColor(const UIElement& element, const glm::vec4& default) const;
 
-		float ComputeMargin(float units) const { return units * MarginUnit; }
+		float GetMargin(float units = 1.0f) const { return units * MarginUnit; }
 		void Recompute();
 	};
 
@@ -109,10 +121,11 @@ namespace bsf
 		virtual ~UIElement() = default;
 
 		Rect Bounds;
+		float Margin = 0.0f;
 		glm::vec2 Position = { 0.0f, 0.0f };
 		glm::vec2 PreferredSize = { 0.0f, 0.0f };
-		glm::vec2 MinSize = { 0.0f, 0.0f };
 		glm::vec2 MaxSize = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
+		glm::vec2 MinSize = { 0.0f, 0.0f }; // TODO Maybe move as protected, don't want to mess around with it
 		bool Hovered = false;
 		bool Focused = false;
 
@@ -127,6 +140,7 @@ namespace bsf
 		virtual void Update(const UIRoot& root, const Time& time) {}
 		virtual void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) = 0;
 		virtual void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) = 0;
+		void RenderDebugInfo(const UIRoot& root, Renderer2D& renderer, const Time& time);
 
 		uint32_t GetId() const { return m_Id; }
 
@@ -158,7 +172,7 @@ namespace bsf
 		void Detach(Application& app);
 
 		void Render(const glm::vec2& windowSize, const glm::vec2& viewport, Renderer2D& renderer, const Time& time);
-		void PushLayer(const Ref<UIPanel>& layer) { m_Layers.push_back(layer); }
+		void PushLayer(const Ref<UILayer>& layer) { m_Layers.push_back(layer); }
 		void PopLayer() { m_Layers.pop_back(); }
 	private:
 
@@ -166,7 +180,7 @@ namespace bsf
 
 		glm::vec2 m_Viewport, m_WindowSize;
 		glm::mat4 m_Projection, m_InverseProjection;
-		std::list<Ref<UIPanel>> m_Layers;
+		std::list<Ref<UILayer>> m_Layers;
 
 		struct MouseButtonState
 		{
@@ -211,16 +225,9 @@ namespace bsf
 	public:
 
 		UIPanel() = default;
-		UIPanelLayout Layout = UIPanelLayout::Vertical;
-
-		struct {
-			float Left = 0.0f;
-			float Right = 0.0f;
-			float Top = 0.0f;
-			float Bottom = 0.0f;
-		} Margin;
-
-		void SetMargin(float margin);
+		UILayout Layout = UILayout::Vertical;
+		
+		bool HasShadow = false;
 
 		void AddChild(const Ref<UIElement>& child);
 		void RemoveChild(const Ref<UIElement>& child);
@@ -229,12 +236,67 @@ namespace bsf
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 
+		void Pack() { m_ShouldPack = true; }
+
 		const std::vector<Ref<UIElement>>& Children() override { return m_Children; }
 
 	private:
+		bool m_ShouldPack = false;
 		std::vector<Ref<UIElement>> m_Children;
 	};
 
+	class UILayer : public UIPanel
+	{
+	public:
+		UILayer();
+	};
+
+
+	class UIStageList : public UIElement
+	{
+	public:
+		UIStageList(uint32_t rows, uint32_t cols);
+
+		struct FileSelectedEvent
+		{
+			std::string FileName;
+		};
+
+		EventEmitter<FileSelectedEvent> FileSelected;
+
+		void SetFiles(const std::vector<std::string>& files);
+		void Update(const UIRoot& root, const Time& time) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
+
+	private:
+
+		struct FileInfo
+		{
+			bool Loaded = false;
+			bool Visible = false;
+			std::string FileName;
+			std::string Name;
+			Rect Bounds;
+		};
+
+		uint32_t m_Rows = 0;
+		uint32_t m_Columns = 0;
+		
+		float m_ItemWidth = 0.0f;
+		float m_ItemHeight = 0.0f;
+
+		uint32_t m_TopRow = 0;
+		uint32_t m_MaxTopRow = 0;
+		uint32_t m_TotalRows = 0;
+
+		std::vector<std::string> m_Files;
+		std::vector<FileInfo> m_FilesInfo;
+
+	};
+
+
+	// TODO Fix zoom relative to center or mouse position
 	class UIStageEditorArea : public UIElement
 	{
 	public:
@@ -247,7 +309,7 @@ namespace bsf
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 
-		void SetStage(const Ref<Stage>& stage) { m_Stage = stage; UpdatePattern(); }
+		void SetStage(const Ref<Stage>& stage) { m_Stage = stage; }
 		void UpdatePattern();
 
 	private:
@@ -260,7 +322,7 @@ namespace bsf
 		// StageObject: { Texture, Tint }
 		std::unordered_map<EStageObject, std::tuple<Ref<Texture2D>, glm::vec4>> m_StageObjRendering;
 
-		float m_MinZoom = 1.0f, m_MaxZoom = std::numeric_limits<float>::max();
+		float m_MinZoom = 0.5f, m_MaxZoom = std::numeric_limits<float>::max();
 
 		glm::vec2 m_ViewOrigin = { 0.0f, 0.0f };
 		float m_Zoom = 1.0f, m_TargetZoom = 1.0f;
@@ -288,7 +350,8 @@ namespace bsf
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
-		const std::string& GetValue() const { return m_Value; }
+		std::string GetValue() const { return m_Pull(); }
+		void SetValue(const std::string& value) { m_Push(value); }
 
 	private:
 
@@ -304,12 +367,27 @@ namespace bsf
 		float Scale = 1.0f;
 		std::string Text;
 
+		UIText() { Margin = 1.0f; }
+
 		void Update(const UIRoot& root, const Time& time) override;
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
 	};
 
+
+	class UIButton : public UIElement
+	{
+	public:
+		std::string Label = "Button";
+
+		UIButton();
+
+		void Update(const UIRoot& root, const Time& time) override;
+		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
+		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
+
+	};
 	
 	class UISlider : public UIElement
 	{
@@ -341,16 +419,21 @@ namespace bsf
 	{
 	public:
 
+		using BindFn = std::function<glm::vec3&()>;
+
 		std::string Label = "Color Picker";
+
+		void Bind(const BindFn& fn);
 
 		UIColorPicker();
 
 		void Update(const UIRoot& root, const Time& time);
 
 	private:
+		BindFn m_GetValue = [&]() -> glm::vec3& { return m_DefaultValue; };
 		std::array<Ref<UISlider>, 3> m_RGB;
-		Ref<UIPanel> m_Preview;
 		Ref<UIText> m_Label;
+		glm::vec3 m_DefaultValue = Colors::Black;
 	};
 	
 
@@ -360,11 +443,22 @@ namespace bsf
 		void OnAttach() override;
 		void OnRender(const Time& time) override;
 		void OnDetach() override;
+		
 
 	private:
+
+		void OnSaveButtonClick(const MouseEvent& evt);
+		void OnStageListButtonClick(const MouseEvent& evt);
+
+		void LoadStage(const std::string& fileName);
+
+		std::optional<std::string> m_CurrentStageFile;
 		Ref<Stage> m_CurrentStage;
 		Ref<UIRoot> m_uiRoot;
+		Ref<UILayer> m_uiSaveDialogLayer, m_uiStageListDialogLayer;
+		Ref<UITextInput> m_uiSaveStageName;
 		Ref<UIStageEditorArea> m_uiEditorArea;
+		Ref<UIStageList> m_uiStageList;
 
 		std::vector<Ref<UIIconButton>> m_ToolButtons;
 

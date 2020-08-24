@@ -5,13 +5,12 @@
 #include "Renderer2D.h"
 #include "Assets.h"
 #include "Font.h"
-#include "Common.h"
 #include "SplashScene.h"
 
 namespace bsf
 {
 
-	static const std::array<std::string, 11> s_DisclaimerText = {
+	static constexpr std::array<const char*, 11> s_DisclaimerText = {
 		"All the copyrights and registered  trademarks of \"Sonic The Hedgehog\" and all associated",
 		"characters, art, names, termsand music belong to SEGA.",
 		"",
@@ -31,9 +30,10 @@ namespace bsf
 
 	void DisclaimerScene::OnAttach()
 	{
-		auto fadeIn = MakeRef<FadeTask>(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 0.5f);
-		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
 		
+		auto fadeIn = ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender,
+			glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 0.5f);
+
 		auto waitFadeOut = MakeRef<WaitForTask>(5.0f);
 
 		waitFadeOut->SetDoneFunction([&](SceneTask& self) {
@@ -41,10 +41,10 @@ namespace bsf
 			fadeOut->SetDoneFunction([&](SceneTask& self) {
 				GetApplication().GotoScene(MakeRef<SplashScene>());
 			});
-			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeOut);
+			ScheduleTask(ESceneTaskEvent::PostRender, fadeOut);
 		});
 
-		ScheduleTask<WaitForTask>(ESceneTaskEvent::PostRender, waitFadeOut);
+		ScheduleTask(ESceneTaskEvent::PostRender, waitFadeOut);
 
 	}
 

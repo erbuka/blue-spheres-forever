@@ -1,6 +1,8 @@
 #include "BsfPch.h"
+
 #include "Model.h"
 #include "VertexArray.h"
+#include "Common.h"
 
 namespace bsf
 {

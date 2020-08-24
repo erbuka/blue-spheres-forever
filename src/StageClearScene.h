@@ -4,6 +4,7 @@
 
 #include "EventEmitter.h"
 #include "Scene.h"
+#include "Ref.h"
 #include "Common.h"
 #include "StageCodeHelper.h"
 

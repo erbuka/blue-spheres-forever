@@ -1,6 +1,7 @@
 #include "BsfPch.h"
 
 #include "SkyGenerator.h"
+#include "Common.h"
 #include "Texture.h"
 #include "CubeCamera.h"
 #include "ShaderProgram.h"

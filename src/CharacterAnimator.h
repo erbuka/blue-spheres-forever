@@ -4,7 +4,8 @@
 #include <list>
 #include <algorithm>
 
-#include "Common.h"
+#include "Ref.h"
+#include "Time.h"
 #include "Asset.h"
 
 namespace bsf

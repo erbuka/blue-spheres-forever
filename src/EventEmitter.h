@@ -8,6 +8,47 @@ namespace bsf
 {
 	using Unsubscribe = std::function<void()>;
 
+	#pragma region Events
+
+	enum class Direction
+	{
+		Left, Right, Up, Down
+	};
+
+	enum class MouseButton : int
+	{
+		None, Left, Right, Middle
+	};
+
+	struct MouseEvent
+	{
+		float X, Y, DeltaX, DeltaY;
+		MouseButton Button;
+	};
+
+	struct WheelEvent
+	{
+		float DeltaX, DeltaY;
+	};
+
+	struct WindowResizedEvent
+	{
+		float Width, Height;
+	};
+
+	struct KeyPressedEvent
+	{
+		int32_t KeyCode;
+		bool Repeat;
+	};
+
+	struct KeyReleasedEvent
+	{
+		int32_t KeyCode;
+	};
+	
+	#pragma endregion
+
 	template<typename Event>
 	class EventEmitter
 	{
@@ -69,6 +110,14 @@ namespace bsf
 		void AddSubscription(EventEmitter<Event>& evt, const typename EventEmitter<Event>::HandlerFn& handler) { 
 			m_Subscriptions.push_back(evt.Subscribe(handler));
 		}
+		
+		
+		template<typename Event, typename T>
+		void AddSubscription(EventEmitter<Event>& evt, T* instance, typename EventEmitter<Event>::MemberHandlerFnPtr<T> handler)
+		{
+			m_Subscriptions.push_back(evt.Subscribe(instance, handler));
+		}
+		
 
 	private:
 		std::list<Unsubscribe> m_Subscriptions;

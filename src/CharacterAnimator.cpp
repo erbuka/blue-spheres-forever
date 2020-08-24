@@ -3,6 +3,7 @@
 #include "CharacterAnimator.h"
 #include "Model.h"
 #include "VertexArray.h"
+#include "Log.h"
 
 namespace bsf
 {

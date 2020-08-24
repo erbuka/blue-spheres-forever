@@ -1,9 +1,8 @@
 #pragma once
 
-
 #include <list>
 
-#include "Common.h"
+#include "Ref.h"
 #include "Scene.h"
 #include "MatrixStack.h"
 #include "EventEmitter.h"

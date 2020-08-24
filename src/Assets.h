@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common.h"
+#include "Ref.h"
 #include <unordered_map>
 
 namespace bsf

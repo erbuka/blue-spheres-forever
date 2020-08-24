@@ -1,18 +1,162 @@
 #include "BsfPch.h"
 
 #include <bitset>
-
-#include "Stage.h"
-#include "Common.h"
-#include "Log.h";
-
+#include <regex>
 #include <json/json.hpp>
 
+#include "Stage.h"
+#include "Log.h";
+#include "Common.h"
 
+namespace glm
+{
+	using namespace nlohmann;
 
+	template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
+	void to_json(json& json, const V<N, T, Q>& v)
+	{
+		const T* ptr = glm::value_ptr<T>(v);
+		json = json::array();
+		for (size_t i = 0; i < N; i++)
+			json[i] = *(ptr + i);
+	}
+
+	template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
+	void from_json(const json& j, V<N, T, Q>& v) {
+		T* ptr = glm::value_ptr<T>(v);
+		for (size_t i = 0; i < N; i++)
+			*(ptr + i) = j[i].get<T>();
+	}
+}
 
 namespace bsf
 {
+	using namespace nlohmann;
+
+	static constexpr char* s_SortedStagesFile = "assets/data/stages.json";
+
+
+	void Stage::SaveStageFiles(const std::vector<std::string>& files)
+	{
+		std::ofstream os;
+
+		os.open(s_SortedStagesFile);
+
+		if (!os.is_open())
+		{
+			BSF_ERROR("Cannot save stages ordering");
+			return;
+		}
+
+		os << json(files).dump();
+
+		os.close();
+	}
+
+	std::vector<std::string> Stage::GetStageFiles()
+	{
+		
+		namespace fs = std::filesystem;
+
+
+		std::vector<std::string> result;
+
+		if (fs::is_regular_file(s_SortedStagesFile))
+		{
+			auto files = json::parse(ReadTextFile(s_SortedStagesFile));
+
+			for (auto& item : files)
+			{
+				std::string name = item.get<std::string>();
+
+				if (fs::is_regular_file(name))
+					result.push_back(name);
+
+			}
+
+		}
+
+
+		for (auto& entry : fs::directory_iterator("assets/data"))
+		{
+			
+			if (entry.is_regular_file() && std::find(result.begin(), result.end(), entry.path().string()) == result.end() &&
+				entry.path().extension().string() == ".bssj")
+			{
+				result.push_back(entry.path().string());
+			}
+		}
+
+		return result;
+
+	}
+
+	void Stage::Load(const std::string& fileName)
+	{
+		try
+		{
+			auto root = json::parse(ReadTextFile(fileName));
+
+			if (fileName.empty())
+			{
+				BSF_ERROR("Invalid stage file: {0}", fileName);
+				return;
+			}
+
+			Version = root.at("version").get<uint32_t>();
+			Name = root.at("name").get<std::string>();
+			m_Width = root.at("width").get<int32_t>();
+			m_Height = root.at("height").get<int32_t>();
+			StartPoint = root.at("startPoint").get<glm::vec2>();
+			StartDirection = root.at("startDirection").get<glm::vec2>();
+			Rings = MaxRings = root.at("maxRings").get<uint32_t>();
+			EmeraldColor = root.at("emeraldColor").get<glm::vec3>();
+			CheckerColors = root.at("patternColors").get<std::array<glm::vec3, 2>>();
+			SkyColors = root.at("skyColors").get<std::array<glm::vec3, 2>>();
+			m_Data = root.at("data").get<std::vector<EStageObject>>();
+			m_AvoidSearch = root.at("avoidSearch").get<std::vector<EAvoidSearch>>();
+		}
+		catch (std::runtime_error& err)
+		{
+			throw std::runtime_error("Invalid stage file: " + fileName);
+		}
+	}
+
+	void Stage::Save(const std::string& fileName)
+	{
+
+		auto root = json::object();
+
+		root = {
+			{ "version", Version },
+			{ "name", Name },
+			{ "width", m_Width },
+			{ "height", m_Height },
+			{ "startPoint", StartPoint },
+			{ "startDirection", StartDirection },
+			{ "maxRings" , MaxRings },
+			{ "emeraldColor", EmeraldColor },
+			{ "patternColors", CheckerColors },
+			{ "skyColors", SkyColors },
+			{ "data", m_Data },
+			{ "avoidSearch", m_AvoidSearch }
+		};
+
+		std::ofstream os;
+		os.open(fileName);
+
+		if (!os.is_open())
+		{
+			BSF_ERROR("Can't open the file: {0}", fileName);
+			return;
+		}
+
+		os << root.dump();
+
+		os.close();
+
+	}
+
 	bool Stage::FromFile(const std::string& filename)
 	{
 		std::ifstream stdIs;
@@ -81,9 +225,6 @@ namespace bsf
 		m_AvoidSearch.resize((size_t)m_Width * m_Height);
 		std::fill(m_Data.begin(), m_Data.end(), EStageObject::None);
 		std::fill(m_AvoidSearch.begin(), m_AvoidSearch.end(), EAvoidSearch::No);
-		
-		Name = "Untitled";
-		CheckerColors = { glm::vec3{ 1.0f, 0.0f, 0.0f }, glm::vec3{ 1.0f, 1.0f, 1.0f } };
 	}
 
 	Stage::Stage() : Stage(32, 32)
@@ -131,6 +272,8 @@ namespace bsf
 	{
 		return std::count(std::execution::par_unseq, m_Data.begin(), m_Data.end(), object);
 	}
+
+	// TODO Remove
 	void Stage::Dump()
 	{
 		for (int32_t y = 0; y < m_Height; y++)

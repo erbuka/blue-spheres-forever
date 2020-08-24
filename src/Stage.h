@@ -5,9 +5,9 @@
 #include <execution>
 #include <optional>
 
-
 #include "Asset.h"
-#include "Common.h"
+#include "Ref.h"
+#include "Color.h"
 
 namespace bsf
 {
@@ -58,9 +58,9 @@ namespace bsf
 
 		uint32_t Version;
 
-		std::string Name;
+		std::string Name = "Untitled";
 		
-		glm::ivec2 StartPoint, StartDirection;
+		glm::ivec2 StartPoint = { 0.0f, 0.0f }, StartDirection = { 0.0f, 0.0f };
 
 		uint32_t MaxRings = 0;
 		uint32_t Rings = 0;
@@ -69,9 +69,15 @@ namespace bsf
 
 		EFloorRenderingMode FloorRenderingMode;
 		bool BumpMappingEnabled;
-		glm::vec3 EmeraldColor;
-		std::array<glm::vec3, 2> CheckerColors, SkyColors, StarColors;
+		glm::vec3 EmeraldColor = Colors::Green;
+		std::array<glm::vec3, 2> CheckerColors = { Colors::Red, Colors::White }, 
+			SkyColors = { Colors::Blue, Colors::Blue }, StarColors;
 
+		static void SaveStageFiles(const std::vector<std::string>& files);
+		static std::vector<std::string> GetStageFiles();
+
+		void Load(const std::string& fileName);
+		void Save(const std::string& fileName);
 		bool FromFile(const std::string& filename);
 		void Initialize(uint32_t width, uint32_t height);
 

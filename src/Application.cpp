@@ -199,7 +199,7 @@ namespace bsf
 
             BSF_DIAGNOSTIC_END();
 
-#ifdef BSF_ENABLE_DIAGNOSTIC_TOOL
+#ifdef BSF_ENABLE_DIAGNOSTIC
             {
                 auto windowSize = GetWindowSize();
                 bool show = true;

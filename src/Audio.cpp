@@ -76,6 +76,7 @@ namespace bsf
 
 	void Audio::Play()
 	{
+		SetVolume(1.0f);
 		BASS_CHECK(BASS_ChannelPlay(m_Impl->m_Stream, true));
 	}
 

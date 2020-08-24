@@ -15,15 +15,18 @@
 using namespace bsf;
 using namespace glm;
 
+// TODO Remove conversion functions
+
 static void LoadSectionsBinary();
+
+static void ConvertStages();
+
 
 int main() 
 {
 
-	//auto stage = StageGenerator().Generate(365989603263);
-	auto stage = MakeRef<Stage>();
-	stage->FromFile("assets/data/s3stage1.bss");
-	//auto scene = Ref<Scene>(new GameScene(stage));
+	ConvertStages();
+
 	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
@@ -101,3 +104,26 @@ static void LoadSectionsBinary()
 
 }
 
+void ConvertStages()
+{
+	namespace fs = std::filesystem;
+
+	std::vector<Ref<Stage>> result;
+
+	Stage stage;
+
+	for (auto& entry : fs::directory_iterator("assets/data"))
+	{
+		auto path = entry.path();
+		if (entry.is_regular_file() && path.extension() == ".bss")
+		{
+			stage.FromFile(path.string());
+			stage.Name = path.filename().string();
+			path.replace_extension(".bssj");
+			stage.Save(path.string());
+		}
+	}
+
+}
+
+// Convert the stages to JSON

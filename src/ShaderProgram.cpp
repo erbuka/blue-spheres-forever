@@ -2,6 +2,7 @@
 
 #include "ShaderProgram.h"
 #include "Log.h"
+#include "Common.h"
 #include "Texture.h"
 
 

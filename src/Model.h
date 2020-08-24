@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "Common.h"
+#include "Ref.h"
 #include "Asset.h"
 
 namespace bsf

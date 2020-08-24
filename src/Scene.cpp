@@ -3,8 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-#include "Common.h";
-#include "Scene.h"
+#include "Scene.h" 
 #include "Application.h"
 #include "Renderer2D.h"
 
@@ -32,6 +31,11 @@ namespace bsf
 	{
 		assert(m_App != nullptr);
 		return *m_App;
+	}
+
+	void Scene::ScheduleTask(ESceneTaskEvent evt, const Ref<SceneTask>& task)
+	{
+		m_ScheduledTasks[evt].push_back(task);
 	}
 
 	FadeTask::FadeTask(glm::vec4 fromColor, glm::vec4 toColor, float duration) :

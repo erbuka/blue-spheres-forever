@@ -123,7 +123,7 @@ namespace bsf
 
 		m_Assets[AssetName::ModChaosEmerald] = 
 			CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
-		/*
+		
 		{ 
 			std::array<std::string, 14> files = {
 				"assets/models/sonic0.obj",
@@ -157,7 +157,7 @@ namespace bsf
 			m_Assets[AssetName::ModSonic] = sonicAnimator;
 			
 		}
-		*/
+		
 		
 
 	}

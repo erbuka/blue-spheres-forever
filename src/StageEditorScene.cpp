@@ -1,8 +1,8 @@
 #include "BsfPch.h"
-#include "StageEditorScene.h"
 
 #include <regex>
 
+#include "StageEditorScene.h"
 #include "Assets.h"
 #include "Texture.h"
 #include "Renderer2D.h"
@@ -10,7 +10,6 @@
 #include "MenuScene.h"
 #include "Font.h"
 
-#include <imgui.h>
 
 namespace bsf
 {
@@ -19,6 +18,8 @@ namespace bsf
 	static constexpr float s_uiTopBarHeight = s_uiScale / 10.0f;
 	static constexpr float s_uiPropertiesWidth = s_uiScale / 2.0f;
 	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiPanelMargin;
+	static constexpr float s_uiSaveDialogSize = s_uiScale / 2.0f;
+	static constexpr float s_uiStageListDialogSize = s_uiScale;
 
 	void StageEditorScene::OnAttach()
 	{
@@ -57,6 +58,33 @@ namespace bsf
 		m_uiRoot->Detach(GetApplication());
 	}
 
+	void StageEditorScene::OnSaveButtonClick(const MouseEvent& evt)
+	{
+		if (m_CurrentStageFile.has_value())
+		{
+			m_CurrentStage->Save(m_CurrentStageFile.value());
+		}
+		else
+		{
+			m_uiSaveStageName->SetValue(m_CurrentStage->Name);
+			m_uiRoot->PushLayer(m_uiSaveDialogLayer);
+		}
+	}
+
+	void StageEditorScene::OnStageListButtonClick(const MouseEvent& evt)
+	{
+		auto files = Stage::GetStageFiles();
+		m_uiStageList->SetFiles(std::move(files));
+		m_uiRoot->PushLayer(m_uiStageListDialogLayer);
+	}
+
+	void StageEditorScene::LoadStage(const std::string& fileName)
+	{
+		// TODO Add error checking maybe
+		m_CurrentStage->Load(fileName);
+		m_CurrentStageFile = fileName;
+	}
+
 	void StageEditorScene::InitializeUI()
 	{
 		auto& assets = Assets::GetInstance();
@@ -67,136 +95,250 @@ namespace bsf
 		m_uiRoot = MakeRef<UIRoot>();
 		m_uiRoot->Attach(GetApplication());
 		m_uiRoot->SetStyle(style);
-
-		// Top Bar
-		auto topBar = MakeRef<UIPanel>();
-		topBar->Layout = UIPanelLayout::Horizontal;
-		topBar->PreferredSize = { 0.0f, s_uiTopBarHeight };
-
-		auto title = MakeRef<UIText>();
-		title->Text = "Stage Editor";
-		topBar->AddChild(title);
-
-		auto tools = {
-			std::make_tuple(StageEditorTool::BlueSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::BlueSphere),
-			std::make_tuple(StageEditorTool::RedSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::RedSphere),
-			std::make_tuple(StageEditorTool::YellowSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::YellowSphere),
-			std::make_tuple(StageEditorTool::Bumper, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::White),
-			std::make_tuple(StageEditorTool::Ring, assets.Get<Texture2D>(AssetName::TexRingUI), Colors::Ring),
-		};
-
-		for (const auto& toolSpec : tools)
+		
+		// Editor layer
 		{
-			auto btn = MakeRef<UIIconButton>();
-			
-			btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-			btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-			btn->Icon = std::get<1>(toolSpec);
-			btn->Tint = std::get<2>(toolSpec);
-			auto tool = std::get<0>(toolSpec);
-			
-			AddSubscription(btn->MouseClicked, [&, btn, tool](const MouseEvent& evt) {
-				for (auto& b : m_ToolButtons)
-					b->Selected = false;
-				m_uiEditorArea->ActiveTool = tool;
-				btn->Selected = true;
+			// Top Bar
+			auto topBar = MakeRef<UIPanel>();
+			topBar->Layout = UILayout::Horizontal;
+			topBar->PreferredSize = { 0.0f, s_uiTopBarHeight };
+
+			auto title = MakeRef<UIText>();
+			title->Text = "Stage Editor";
+			topBar->AddChild(title);
+
+			auto tools = {
+				std::make_tuple(StageEditorTool::BlueSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::BlueSphere),
+				std::make_tuple(StageEditorTool::RedSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::RedSphere),
+				std::make_tuple(StageEditorTool::YellowSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::YellowSphere),
+				std::make_tuple(StageEditorTool::Bumper, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::White),
+				std::make_tuple(StageEditorTool::Ring, assets.Get<Texture2D>(AssetName::TexRingUI), Colors::Ring),
+			};
+
+			for (const auto& toolSpec : tools)
+			{
+				auto btn = MakeRef<UIIconButton>();
+
+				btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+				btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+				btn->Icon = std::get<1>(toolSpec);
+				btn->Tint = std::get<2>(toolSpec);
+				auto tool = std::get<0>(toolSpec);
+
+				AddSubscription(btn->MouseClicked, [&, btn, tool](const MouseEvent& evt) {
+					for (auto& b : m_ToolButtons)
+						b->Selected = false;
+					m_uiEditorArea->ActiveTool = tool;
+					btn->Selected = true;
+				});
+
+				m_ToolButtons.push_back(btn);
+				topBar->AddChild(btn);
+			}
+
+			// Save button
+			{
+				auto btn = MakeRef<UIIconButton>();
+				btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+				btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+				btn->Icon = assets.Get<Texture2D>(AssetName::TexWhite);
+				btn->Tint = Colors::Green;
+				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnSaveButtonClick);
+				topBar->AddChild(btn);
+			}
+
+			// Stage list button
+			{
+				auto btn = MakeRef<UIIconButton>();
+				btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+				btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+				btn->Icon = assets.Get<Texture2D>(AssetName::TexWhite);
+				btn->Tint = Colors::Yellow;
+				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnStageListButtonClick);
+				topBar->AddChild(btn);
+
+			}
+
+			// Properties
+			auto properties = MakeRef<UIPanel>();
+			properties->Layout = UILayout::Vertical;
+			properties->PreferredSize = { s_uiPropertiesWidth, 0.0f };
+
+			// Pattern Colors
+			{
+
+				auto panel = MakeRef<UIPanel>();
+				panel->Layout = UILayout::Horizontal;
+
+				auto cp1 = MakeRef<UIColorPicker>();
+				cp1->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
+				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->CheckerColors[0]; });
+				cp1->Label = "Primary";
+				panel->AddChild(cp1);
+
+				auto cp2 = MakeRef<UIColorPicker>();
+				cp2->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
+				cp2->Bind([&]() -> glm::vec3& { return m_CurrentStage->CheckerColors[1]; });
+				cp2->Label = "Secondary";
+
+				panel->AddChild(cp2);
+
+				properties->AddChild(panel);
+
+			}
+
+			// Sky Colors
+			{
+
+				auto panel = MakeRef<UIPanel>();
+				panel->Layout = UILayout::Horizontal;
+
+				auto cp1 = MakeRef<UIColorPicker>();
+				cp1->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
+				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->SkyColors[0]; });
+				cp1->Label = "Sky Primary";
+				panel->AddChild(cp1);
+
+				auto cp2 = MakeRef<UIColorPicker>();
+				cp2->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
+				cp2->Bind([&]() -> glm::vec3& { return m_CurrentStage->SkyColors[1]; });
+				cp2->Label = "Sky Secondary";
+
+				panel->AddChild(cp2);
+
+				properties->AddChild(panel);
+
+			}
+			// Emerald color
+			{
+				auto cp1 = MakeRef<UIColorPicker>();
+				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->EmeraldColor; });
+				cp1->Label = "Emerald";
+				properties->AddChild(cp1);
+			}
+
+			// Max Rings input
+			{
+				auto maxRingsInput = MakeRef<UITextInput>();
+				maxRingsInput->Label = "Max Rings";
+				maxRingsInput->BindPush([&, check = std::regex("^[0-9]+$")](const std::string& val) {
+
+					if (std::regex_match(val, check))
+					{
+						m_CurrentStage->MaxRings = std::atoi(val.c_str());
+						return true;
+					}
+					else if (val.empty())
+					{
+						m_CurrentStage->MaxRings = 0;
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				});
+
+				maxRingsInput->BindPull([&] {return std::to_string(m_CurrentStage->MaxRings); });
+
+				properties->AddChild(maxRingsInput);
+			}
+
+
+			// Editor area
+			m_uiEditorArea = MakeRef<UIStageEditorArea>();
+			m_uiEditorArea->PreferredSize = { -s_uiPropertiesWidth, 0.0f };
+			m_uiEditorArea->SetStage(m_CurrentStage);
+
+			// Middle section
+			auto middle = MakeRef<UIPanel>();
+			middle->Layout = UILayout::Horizontal;
+			middle->PreferredSize = { 0.0f, -s_uiTopBarHeight };
+
+			middle->AddChild(m_uiEditorArea);
+			middle->AddChild(properties);
+
+			// Main panel
+			auto main = MakeRef<UILayer>();
+			main->Layout = UILayout::Vertical;
+
+			main->AddChild(topBar);
+			main->AddChild(middle);
+
+			m_uiRoot->PushLayer(main);
+		}
+		
+		// Stage save dialog layer
+		{
+			m_uiSaveDialogLayer = MakeRef<UILayer>();
+			m_uiSaveDialogLayer->Layout = UILayout::Fill;
+			m_uiSaveDialogLayer->BackgroundColor = style.ShadowColor;
+			AddSubscription(m_uiSaveDialogLayer->MouseClicked, [&](auto&) { m_uiRoot->PopLayer(); });
+
+			{
+				auto dialogPanel = MakeRef<UIPanel>();
+				dialogPanel->Layout = UILayout::Vertical;
+				dialogPanel->HasShadow = true;
+				dialogPanel->PreferredSize.x = s_uiSaveDialogSize;
+				dialogPanel->Pack();
+
+				m_uiSaveStageName = MakeRef<UITextInput>();
+				m_uiSaveStageName->Label = "Stage Name";
+				dialogPanel->AddChild(m_uiSaveStageName);
+
+				auto okBtn = MakeRef<UIButton>();
+				okBtn->Label = "Save";
+
+
+				AddSubscription(okBtn->MouseClicked, [&] (const MouseEvent& evt) {
+					auto name = m_uiSaveStageName->GetValue();
+
+					BSF_INFO("Name: {0}", name);
+
+					if (!name.empty())
+					{
+						auto file = Format("assets/data/%s.jbss", name);
+						m_CurrentStage->Save(file);
+						m_CurrentStageFile = file;
+						m_uiRoot->PopLayer();
+					}
+				});
+
+				dialogPanel->AddChild(okBtn);
+
+				m_uiSaveDialogLayer->AddChild(dialogPanel);
+			}
+		}
+
+		// Stage list dialog layer
+		{
+			m_uiStageListDialogLayer = MakeRef<UILayer>();
+			m_uiStageListDialogLayer->Layout = UILayout::Fill;
+			m_uiStageListDialogLayer->BackgroundColor = style.ShadowColor;
+			AddSubscription(m_uiStageListDialogLayer->MouseClicked, [&](auto&) { m_uiRoot->PopLayer(); });
+
+			auto dialogPanel = MakeRef<UIPanel>();
+			dialogPanel->Layout = UILayout::Vertical;
+			dialogPanel->HasShadow = true;
+			dialogPanel->PreferredSize.x = s_uiStageListDialogSize;
+			dialogPanel->Pack();
+
+			m_uiStageList = MakeRef<UIStageList>(4, 3);
+			AddSubscription(m_uiStageList->FileSelected, [&](const UIStageList::FileSelectedEvent& evt) { 
+				LoadStage(evt.FileName); 
+				m_uiRoot->PopLayer();
 			});
+			dialogPanel->AddChild(m_uiStageList);
 
-			m_ToolButtons.push_back(btn);
-			topBar->AddChild(btn);
+			m_uiStageListDialogLayer->AddChild(dialogPanel);
+
 		}
 
-		// Properties
-		auto properties = MakeRef<UIPanel>();
-		properties->Layout = UIPanelLayout::Vertical;
-		properties->PreferredSize = { s_uiPropertiesWidth, 0.0f };
-		
-
-		// Stage Input
-		{
-			auto stageNameInput = MakeRef<UITextInput>();
-			stageNameInput->Label = "Max Rings";
-			stageNameInput->BindPush([&](const std::string& val) { m_CurrentStage->Name = val; return true; });
-			stageNameInput->BindPull([&]() { return m_CurrentStage->Name; });
-			properties->AddChild(stageNameInput);
-		}
-
-		// Colors
-		
-		{
-			auto panel = MakeRef<UIPanel>();
-			panel->Layout = UIPanelLayout::Horizontal;
-
-			auto cp1 = MakeRef<UIColorPicker>();
-			cp1->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
-			panel->AddChild(cp1);
-
-			auto cp2 = MakeRef<UIColorPicker>();
-			cp2->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
-			panel->AddChild(cp2);
-			
-			properties->AddChild(cp1);
-		}
-		
-		// Max Rings input
-		{ 
-			auto maxRingsInput = MakeRef<UITextInput>();
-			maxRingsInput->Label = "Max Rings";
-			maxRingsInput->BindPush([&, check = std::regex("^[0-9]+$")](const std::string& val) {
-
-				if (std::regex_match(val, check))
-				{
-					m_CurrentStage->MaxRings = std::atoi(val.c_str());
-					return true;
-				}
-				else if (val.empty())
-				{
-					m_CurrentStage->MaxRings = 0;
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			});
-
-			maxRingsInput->BindPull([&] {return std::to_string(m_CurrentStage->MaxRings); });
-
-			properties->AddChild(maxRingsInput);
-		}
-
-
-		// Editor area
-		m_uiEditorArea = MakeRef<UIStageEditorArea>();
-		m_uiEditorArea->PreferredSize = { -s_uiPropertiesWidth, 0.0f };
-		m_uiEditorArea->SetStage(m_CurrentStage);
-
-		// Middle section
-		auto middle = MakeRef<UIPanel>();
-		middle->Layout = UIPanelLayout::Horizontal;
-		middle->PreferredSize = { 0.0f, -s_uiTopBarHeight };
-
-		middle->AddChild(m_uiEditorArea);
-		middle->AddChild(properties);
-
-		// Main panel
-		auto main = MakeRef<UIPanel>();
-		main->Layout = UIPanelLayout::Vertical;
-
-		main->AddChild(topBar);
-		main->AddChild(middle);
-
-		m_uiRoot->PushLayer(main);
 	}
 
 
 	#pragma region UI Impl
 
-
-	void UIPanel::SetMargin(float margin)
-	{
-		Margin.Left = Margin.Right = Margin.Top = Margin.Bottom = margin;
-	}
 
 	void UIPanel::AddChild(const Ref<UIElement>& child)
 	{
@@ -211,17 +353,59 @@ namespace bsf
 
 	void UIPanel::Update(const UIRoot& root, const Time& time)
 	{
+
+		const float margin = GetStyle().GetMargin(Margin);
+
+		glm::vec2 minSizeChildren = { 0, 0 };
+		glm::vec2 maxMinChildSize = { 0, 0 };
+
 		for (auto& child : m_Children)
+		{
 			child->Update(root, time);
+			minSizeChildren += child->MinSize;
+			maxMinChildSize = glm::max(maxMinChildSize, child->MinSize);
+		}
+
+		switch (Layout)
+		{
+		case UILayout::Horizontal:
+			MinSize.x = minSizeChildren.x + 2.0f * margin;
+			MinSize.y = maxMinChildSize.y + 2.0f * margin;
+			break;
+		case UILayout::Vertical:
+			MinSize.x = maxMinChildSize.x + 2.0f * margin;
+			MinSize.y = minSizeChildren.y + 2.0f * margin;
+			break;
+		}
+
+		if (m_ShouldPack)
+		{
+			MaxSize = glm::max(PreferredSize, MinSize);
+			m_ShouldPack = false;
+		}
+
+		
 	}
 
 	void UIPanel::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
 		auto& style = GetStyle();
+		float margin = style.GetMargin(Margin);
+		auto contentBounds = Bounds;
+		contentBounds.Shrink(margin);
+
+		if (HasShadow)
+		{
+			r2.Push();
+			r2.Translate({ style.ShadowOffset, -style.ShadowOffset });
+			r2.Color(style.ShadowColor);
+			r2.DrawQuad(contentBounds.Position, contentBounds.Size);
+			r2.Pop();
+		}
 
 		r2.Push();
 		r2.Color(style.GetBackgroundColor(*this, style.Palette.Background));
-		r2.DrawQuad(Bounds.Position + glm::vec2(Margin.Left, Margin.Bottom), Bounds.Size - glm::vec2(Margin.Left + Margin.Right, Margin.Top + Margin.Bottom));
+		r2.DrawQuad(contentBounds.Position, contentBounds.Size);
 		r2.Pop();
 
 		for (auto& child : m_Children)
@@ -232,22 +416,24 @@ namespace bsf
 	void UIPanel::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
 	{
 		Bounds = { origin, computedSize };
-
-		auto contentSize = Bounds.Size - glm::vec2(Margin.Left + Margin.Right, Margin.Top + Margin.Bottom);
+		auto& style = GetStyle();
+		const float margin = style.GetMargin(Margin);
+		auto contentBounds = Bounds;
+		contentBounds.Shrink(margin);
 
 		if (m_Children.size() > 0)
 		{
 
-			if (Layout == UIPanelLayout::Vertical)
+			if (Layout == UILayout::Vertical)
 			{
-				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Bottom } + glm::vec2(0.0f, contentSize.y);
+				glm::vec2 origin = contentBounds.Position + glm::vec2(0.0f, contentBounds.Height());
 
 				// Resize children
 				for (auto& child : m_Children)
 				{
 					glm::vec2 computedSize = {
-						std::clamp(contentSize.x, child->MinSize.x, child->MaxSize.x),
-						std::clamp(child->PreferredSize.y > 0 ? child->PreferredSize.y : contentSize.y + child->PreferredSize.y, child->MinSize.y, child->MaxSize.y)
+						std::clamp(contentBounds.Width(), child->MinSize.x, child->MaxSize.x),
+						std::clamp(child->PreferredSize.y >= 0 ? child->PreferredSize.y : contentBounds.Height() + child->PreferredSize.y, child->MinSize.y, child->MaxSize.y)
 					};
 					
 					origin.y -= computedSize.y;
@@ -257,38 +443,40 @@ namespace bsf
 
 				}
 			}
-			else if (Layout == UIPanelLayout::Horizontal)
+			else if (Layout == UILayout::Horizontal)
 			{
-				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
+				glm::vec2 origin = contentBounds.Position;
 
 				for (auto& child : m_Children)
 				{
 					glm::vec2 computedSize = {
-						std::clamp(child->PreferredSize.x > 0 ? child->PreferredSize.x : contentSize.x + child->PreferredSize.x, child->MinSize.x, child->MaxSize.x),
-						std::clamp(contentSize.y, child->MinSize.y, child->MaxSize.y)
+						std::clamp(child->PreferredSize.x >= 0 ? child->PreferredSize.x : contentBounds.Width() + child->PreferredSize.x, child->MinSize.x, child->MaxSize.x),
+						std::clamp(contentBounds.Height(), child->MinSize.y, child->MaxSize.y)
 					};
 
-					child->UpdateBounds(root, origin + glm::vec2(0.0f, (contentSize.y - computedSize.y) / 2.0f), computedSize);
+					child->UpdateBounds(root, origin + glm::vec2(0.0f, (contentBounds.Height() - computedSize.y) / 2.0f), computedSize);
 					origin.x += computedSize.x;
 				}
 			}
-			else if (Layout == UIPanelLayout::Fill)
+			else if (Layout == UILayout::Fill)
 			{
-				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
+				if (m_Children.size() > 1)
+					BSF_WARN("More than 1 child in 'Fill' layout");
+
+				glm::vec2 origin = contentBounds.Position;
 
 				auto& child = m_Children.front();
 				
-				glm::vec2 computedSize = {
-					std::clamp(contentSize.x, child->MinSize.x, child->MaxSize.x),
-					std::clamp(contentSize.y, child->MinSize.y, child->MaxSize.y)
-				};
+				glm::vec2 computedSize = glm::vec2(std::clamp(contentBounds.Width(), child->MinSize.x, child->MaxSize.x),
+					std::clamp(contentBounds.Height(), child->MinSize.y, child->MaxSize.y));
 
-				child->UpdateBounds(root, origin + glm::vec2(0.0f, (contentSize.y - computedSize.y) / 2.0f), computedSize);
+				child->UpdateBounds(root, 
+					origin + glm::vec2((contentBounds.Width() - computedSize.x) / 2.0f, (contentBounds.Height() - computedSize.y) / 2.0f), computedSize);
 			}
 			else
 			{
 
-				glm::vec2 origin = Bounds.Position + glm::vec2{ Margin.Left, Margin.Right };
+				glm::vec2 origin = contentBounds.Position;
 
 
 				for (auto& child : m_Children)
@@ -303,7 +491,7 @@ namespace bsf
 
 	uint32_t UIElement::m_NextId = 1;
 
-	UIElement::UIElement() : UIElement(MakeFlags(UIElementFlags::None))
+	UIElement::UIElement() : UIElement(MakeFlags(UIElementFlags::ReceiveHover))
 	{
 	}
 
@@ -313,6 +501,42 @@ namespace bsf
 	{
 	}
 
+#ifdef BSF_ENABLE_DIAGNOSTIC
+	void UIElement::RenderDebugInfo(const UIRoot& root, Renderer2D& r2, const Time& time)
+	{
+		if (Hovered)
+		{
+			const std::array<std::pair<std::string, std::string>, 3> infos = {
+				std::pair<std::string, std::string>{ "Position", Format("%.2f %.2f", Bounds.Left(), Bounds.Top()) },
+				std::pair<std::string, std::string>{ "Size", Format("%.2f %.2f", Bounds.Width(), Bounds.Height()) },
+				std::pair<std::string, std::string>{ "Margin", Format("%.2f", Margin) }
+			};
+			std::array<std::string, infos.size()> infoStrings;
+			auto& font = Assets::GetInstance().Get<Font>(AssetName::FontText);
+			float width = 0.0f;
+
+			for (size_t i = 0; i < infos.size(); ++i)
+			{
+				infoStrings[i] = infos[i].first + ": " + infos[i].second;
+				width = std::max(width, font->GetStringWidth(infoStrings[i]));
+			}
+
+			r2.Push();
+			r2.Pivot(EPivot::TopLeft);
+			r2.Translate({ Bounds.Left(), Bounds.Top() });
+			r2.Color({ 0.0f, 0.0f, 0.0f, 0.75f });
+			r2.Scale(0.25f); 
+			r2.DrawQuad({ 0, 0 }, { width, infoStrings.size() });
+			r2.Color(Colors::Yellow);
+			for (const auto& str : infoStrings)
+			{
+				r2.DrawString(font, str);
+				r2.Translate({ 0.0f, -1.0f });
+			}
+			r2.Pop();
+		}
+	}
+#endif
 
 	bool UIElement::GetFlag(UIElementFlags flag) const
 	{
@@ -470,12 +694,15 @@ namespace bsf
 		m_Projection = glm::ortho(0.0f, viewport.x, 0.0f, viewport.y, -1.0f, 1.0f);
 		m_InverseProjection = glm::inverse(m_Projection);
 		r2.Begin(m_Projection);
-		for (auto& l = m_Layers.rbegin(); l != m_Layers.rend(); l++)
+		for (auto& l = m_Layers.begin(); l != m_Layers.end(); l++)
 		{
 			(*l)->Traverse([&](UIElement& el) { el.m_Style = &m_Style; });
 			(*l)->Update(*this, time);
 			(*l)->UpdateBounds(*this, { 0.0f, 0.0f }, viewport);
 			(*l)->Render(*this, r2, time);
+#ifdef BSF_ENABLE_DIAGNOSTIC
+			(*l)->Traverse([&](UIElement& el) { el.RenderDebugInfo(*this, r2, time); });
+#endif
 		}
 		r2.End();
 	}
@@ -594,6 +821,10 @@ namespace bsf
 	{
 		float zoomSpeed = std::max(0.5f, std::abs(m_Zoom - m_TargetZoom)) * 4.0f;
 		m_Zoom = MoveTowards(m_Zoom, m_TargetZoom, time.Delta * zoomSpeed);
+
+		// Update pattern texture
+		UpdatePattern();
+
 	}
 
 	void UIStageEditorArea::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
@@ -663,7 +894,7 @@ namespace bsf
 			m_Pattern = CreateCheckerBoard({
 				ToHexColor(m_Stage->CheckerColors[0]),
 				ToHexColor(m_Stage->CheckerColors[1])
-				});
+			}, m_Pattern);
 		}
 
 	}
@@ -724,6 +955,7 @@ namespace bsf
 
 	UITextInput::UITextInput() : UIElement(MakeFlags(UIElementFlags::ReceiveFocus))
 	{
+		Margin = 1.0f;
 		MinSize = { 0.0f, 1.5f };
 		PreferredSize = { 0.0f, 1.5f };
 
@@ -743,11 +975,11 @@ namespace bsf
 
 	void UITextInput::Update(const UIRoot& root, const Time& time)
 	{
-		const float margin = GetStyle().ComputeMargin(GetStyle().ContentMargin);
+		const float margin = GetStyle().GetMargin(Margin);
 
 		// Update the current value
-		m_Value = std::move(m_Pull());
-		MinSize.y = MaxSize.y = PreferredSize.y = 1.5 + 2 * margin;
+		m_Value = m_Pull();
+		MinSize.y = MaxSize.y = PreferredSize.y = 1.5f + 2.0f * margin;
 	}
 
 	void UITextInput::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
@@ -759,12 +991,10 @@ namespace bsf
 	{
 		auto& style = GetStyle();
 
-		const float margin = style.ComputeMargin(style.ContentMargin);
-		Rect innerBounds = Bounds;
+		const float margin = style.GetMargin(Margin);
 		glm::vec2 shadowOffset = { style.TextShadowOffset, -style.TextShadowOffset };
-
-		innerBounds.Position += glm::vec2(margin);
-		innerBounds.Size -= glm::vec2(margin *  2.0f);
+		Rect innerBounds = Bounds;
+		innerBounds.Shrink(margin); 
 
 		r2.Push();
 
@@ -826,7 +1056,7 @@ namespace bsf
 	{
 		auto& style = GetStyle();
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
-		const float margin = style.ComputeMargin(style.ContentMargin);
+		const float margin = style.GetMargin(Margin);
 		float width = font->GetStringWidth(Text);
 		MaxSize = PreferredSize = MinSize = glm::vec2(width + 2.0f * margin, 1.0f + 2.0 * margin) * Scale;
 	}
@@ -839,10 +1069,9 @@ namespace bsf
 	void UIText::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
 		auto& style = GetStyle();
-		const float margin = style.ComputeMargin(style.ContentMargin);
+		const float margin = style.GetMargin();
 		auto contentBounds = Bounds;
-		contentBounds.Position += glm::vec2(margin);
-		contentBounds.Size -= 2.0f * glm::vec2(margin);
+		contentBounds.Shrink(margin);
 
 		r2.Push();
 		r2.Pivot(EPivot::BottomLeft);
@@ -855,7 +1084,6 @@ namespace bsf
 		r2.Pop();
 	}
 
-	#pragma endregion
 
 
 
@@ -881,7 +1109,7 @@ namespace bsf
 	void UISlider::Update(const UIRoot& root, const Time& time)
 	{
 		auto& style = GetStyle();
-		MinSize.y = MaxSize.y = style.SliderTrackThickness + style.ComputeMargin(style.ContentMargin) * 4.0f;
+		MinSize.y = MaxSize.y = style.SliderTrackThickness + style.GetMargin() * 4.0f;
 	}
 
 	void UISlider::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
@@ -889,7 +1117,10 @@ namespace bsf
 		auto& style = GetStyle();
 		auto texture = Assets::GetInstance().Get<Texture2D>(AssetName::TexSphereUI);
 		auto contentBounds = GetContentBounds();
-		float margin = style.ComputeMargin(style.ContentMargin);
+		float margin = style.GetMargin();
+
+		auto color = style.DefaultColor(ForegroundColor, style.Palette.Primary);
+		auto darker = Darken(color, 0.5f);
 
 		r2.Push();
 
@@ -897,13 +1128,22 @@ namespace bsf
 
 		r2.Pivot(EPivot::Left);
 		r2.NoTexture();
-		r2.Color(style.ShadowColor);
+		r2.Color(darker);
 		r2.DrawQuad({ 0.0f,0.0f }, { contentBounds.Size.x, style.SliderTrackThickness });
 
 		r2.Pivot(EPivot::Center);
-		r2.Color(style.DefaultColor(ForegroundColor, style.Palette.Primary));
+		
+		r2.Push();
+		r2.Translate({ style.ShadowOffset, -style.ShadowOffset });
+		r2.Color(style.ShadowColor);
 		r2.Texture(texture);
 		r2.DrawQuad({ GetDelta() * contentBounds.Size.x, 0.0f }, glm::vec2(contentBounds.Height() + margin));
+		r2.Pop();
+
+		r2.Color(color);
+		r2.Texture(texture);
+		r2.DrawQuad({ GetDelta() * contentBounds.Size.x, 0.0f }, glm::vec2(contentBounds.Height() + margin));
+
 		r2.Pop();
 
 	}
@@ -916,7 +1156,7 @@ namespace bsf
 	Rect UISlider::GetContentBounds() const
 	{
 		auto& style = GetStyle();
-		float margin = style.ComputeMargin(style.ContentMargin);
+		float margin = style.GetMargin();
 		auto contentBounds = Bounds;
 		contentBounds.Shrink(2.0f * margin, margin);
 		return contentBounds;
@@ -939,9 +1179,14 @@ namespace bsf
 		return (m_GetValue() - Min) / (Max - Min);
 	}
 
+	void UIColorPicker::Bind(const BindFn& fn)
+	{
+		m_GetValue = fn;
+	}
+
 	UIColorPicker::UIColorPicker()
 	{
-		Layout = UIPanelLayout::Vertical;
+		Layout = UILayout::Vertical;
 
 
 		m_RGB = {
@@ -954,8 +1199,9 @@ namespace bsf
 		m_RGB[1]->ForegroundColor = Colors::Green;
 		m_RGB[2]->ForegroundColor = Colors::Blue;
 
-		m_Preview = MakeRef<UIPanel>();
-		m_Preview->BackgroundColor = Colors::Red;
+		m_RGB[0]->Bind([&]() -> float& { return m_GetValue().r; });
+		m_RGB[1]->Bind([&]() -> float& { return m_GetValue().g; });
+		m_RGB[2]->Bind([&]() -> float& { return m_GetValue().b; });
 
 		m_Label = MakeRef<UIText>();
 
@@ -964,34 +1210,201 @@ namespace bsf
 		for (const auto& slider : m_RGB)
 			AddChild(slider);
 
-		AddChild(m_Preview);
+		HasShadow = true;
+		Margin = 1.0f;
 	}
 
 	void UIColorPicker::Update(const UIRoot& root, const Time& time)
 	{
-
-
 		auto& style = GetStyle();
-		const float margin = style.ComputeMargin(style.MarginUnit);
-		
-		//SetMargin(margin);
-
 		m_Label->Scale = style.LabelFontScale;
 		m_Label->Text = Label;
-		m_Preview->MinSize.y = m_Preview->MaxSize.y = GetStyle().ComputeMargin(2.0f);
+		BackgroundColor = glm::vec4(m_GetValue(), 1.0f);
 
 		UIPanel::Update(root, time);
+	}
 
-		MinSize.y = m_Preview->MinSize.y + m_Label->MinSize.y;
-		MaxSize.y = m_Preview->MaxSize.y + m_Label->MinSize.y;
 
-		for (const auto& slider : m_RGB)
-		{
-			MinSize.y += slider->MinSize.y;
-			MaxSize.y += slider->MaxSize.y;
-		}
+	UILayer::UILayer()
+	{
+		BackgroundColor = Colors::Transparent;
+	}
+
+	UIButton::UIButton()
+	{
+		Margin = 1.0f;
+	}
+
+	void UIButton::Update(const UIRoot& root, const Time& time)
+	{
+		auto& style = GetStyle();
+		float margin = style.GetMargin(Margin);
+		const auto& font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
+		MinSize = glm::vec2(font->GetStringWidth(Label) + 2.0f * margin, 1.0f + 2.0f * margin) * 1.0f;
+	}
+
+	void UIButton::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
+	{
+		Bounds = { origin, computedSize };
+	}
+
+	void UIButton::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
+	{
+		auto& style = GetStyle();
+		float margin = style.GetMargin(Margin);
+		const auto& font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
+		auto contentBounds = Bounds;
+		contentBounds.Shrink(margin);
+
+		r2.Push();
+
+		r2.Translate(contentBounds.Position);
+
+		r2.Color(style.ShadowColor);
+		r2.DrawQuad({ style.ShadowOffset, -style.ShadowOffset }, contentBounds.Size);
+
+		r2.Color(style.GetBackgroundColor(*this, style.Palette.BackgroundVariant));
+		r2.DrawQuad({ 0.0f, 0.0f }, contentBounds.Size);
+
+		r2.Pivot(EPivot::Center);
+		r2.Translate(contentBounds.Size / 2.0f);
+		r2.TextShadowColor(style.ShadowColor);
+		r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
+		r2.Color(Hovered ? style.Palette.Secondary : style.GetForegroundColor(*this, style.Palette.Foreground));
+		r2.DrawStringShadow(font, Label);
+
+		r2.Pop();
 
 	}
 
+
+
+
+	#pragma endregion
+
+	UIStageList::UIStageList(uint32_t rows, uint32_t cols) :
+		m_Rows(rows),
+		m_Columns(cols)
+	{
+		Margin = 1.0f;
+
+		AddSubscription(Wheel, [&](const WheelEvent& evt) {
+			int32_t dir = -Sign(evt.DeltaY);
+			m_TopRow = std::clamp((int32_t)m_TopRow + dir, 0, (int32_t)m_MaxTopRow);
+		});
+
+		AddSubscription(MouseClicked, [&](const MouseEvent& evt) {
+			
+			if (evt.Button == MouseButton::Left)
+			{
+				glm::vec2 pos = { evt.X,evt.Y };
+
+				for (const auto& info : m_FilesInfo)
+				{
+					if (!info.Visible)
+						continue;
+
+					if (info.Bounds.Contains(pos))
+						FileSelected.Emit({ info.FileName });
+				}
+			}
+		});
+
+	}
+
+	void UIStageList::SetFiles(const std::vector<std::string>& files)
+	{
+		uint32_t visibleItems = m_Rows * m_Columns;
+		m_Files = files;
+		m_FilesInfo.clear();
+		m_FilesInfo.resize(files.size());
+		m_TopRow = 0;
+		m_TotalRows = files.size() / m_Columns + (files.size() % m_Columns == 0 ? 0 : 1);
+		m_MaxTopRow = std::max(0, (int32_t)m_TotalRows - (int32_t)m_Rows);
+	}
+
+	void UIStageList::Update(const UIRoot& root, const Time& time)
+	{
+		auto& style = GetStyle();
+		auto contentBounds = Bounds;
+		const float margin = style.GetMargin(Margin);
+		m_ItemHeight = 2.0f;
+		MinSize.y = m_Rows * (m_ItemHeight + margin) + margin;
+	}
+
+	void UIStageList::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
+	{
+		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
+		auto& style = GetStyle();
+		auto contentBounds = Bounds;
+		const float margin = style.GetMargin(Margin);
+		contentBounds.Shrink(margin);
+
+		r2.Push();
+		r2.Pivot(EPivot::BottomLeft);
+
+
+		for (const auto& info : m_FilesInfo)
+		{
+			if (!(info.Visible && info.Loaded))
+				continue;
+
+			r2.Color(style.GetBackgroundColor(*this, style.Palette.BackgroundVariant));
+			r2.DrawQuad(info.Bounds.Position, info.Bounds.Size);
+
+			r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
+			r2.TextShadowColor(style.ShadowColor);
+			r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
+			r2.DrawStringShadow(font, info.Name, info.Bounds.Position);
+		}
+
+		r2.Pop();
+	}
+
+	void UIStageList::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
+	{
+		static Stage s_Stage;
+
+		Bounds = { origin, computedSize };
+		auto& style = GetStyle();
+		auto contentBounds = Bounds;
+		const float margin = style.GetMargin(Margin);
+		contentBounds.Shrink(margin);
+
+		m_ItemWidth = (contentBounds.Width() - (m_Columns - 1.0f) * margin) / m_Columns;
+
+		std::for_each(m_FilesInfo.begin(), m_FilesInfo.end(), [](FileInfo& info) {info.Visible = false; });
+
+		for (size_t i = 0; i < (size_t)m_Rows * m_Columns; i++)
+		{
+			size_t index = (size_t)m_TopRow * m_Columns + i;
+
+			if (index >= m_Files.size())
+				break;
+
+			auto& current = m_FilesInfo[index];
+
+			if (!current.Loaded)
+			{
+				s_Stage.Load(m_Files[index]);
+				current.FileName = m_Files[index];
+				current.Name = s_Stage.Name;
+				current.Loaded = true;
+			}
+
+			current.Visible = true;
+
+			uint32_t x = i % m_Columns;
+			uint32_t y = m_Rows - (i / m_Columns + 1);
+			
+			current.Bounds = {
+				contentBounds.Position + glm::vec2((m_ItemWidth + margin) * x, (m_ItemHeight + margin) * y),
+				glm::vec2(m_ItemWidth, m_ItemHeight)
+			};
+
+
+		}
+
+	}
 
 }

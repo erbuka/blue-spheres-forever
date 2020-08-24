@@ -1,5 +1,3 @@
-_BSF_LOCATION = _ACTION
-
 workspace "BlueSpheresForever"
     architecture "x86_64"
     configurations { "Debug", "Release", "Distribution" }
@@ -9,10 +7,10 @@ workspace "BlueSpheresForever"
     filter "configurations:Debug"
         symbols "On"
         optimize "Off"
-        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC_TOOL" }
+        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC" }
 
     filter "configurations:Release"
-        defines { "BSF_ENABLE_DIAGNOSTIC_TOOL" }
+        defines { "BSF_ENABLE_DIAGNOSTIC" }
         symbols "Off"
         optimize "On"
     

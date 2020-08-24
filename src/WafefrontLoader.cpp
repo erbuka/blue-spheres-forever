@@ -2,6 +2,7 @@
 
 #include "Model.h"
 #include "WafefrontLoader.h"
+#include "Log.h"
 
 #include <sstream>
 #include <string_view>

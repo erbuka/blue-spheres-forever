@@ -55,7 +55,7 @@ namespace bsf
 
 		// fadeIn
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f);
-		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeIn);
+		ScheduleTask(ESceneTaskEvent::PostRender, fadeIn);
 
 		// fadeOut
 		auto waitFadeOut = MakeRef<WaitForTask>(s_FadeOutTime);
@@ -69,10 +69,10 @@ namespace bsf
 				app.GotoScene(MakeRef<MenuScene>());
 			});
 
-			ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, fadeOut);
+			ScheduleTask(ESceneTaskEvent::PostRender, fadeOut);
 		});
 
-		ScheduleTask<WaitForTask>(ESceneTaskEvent::PostRender, waitFadeOut);
+		ScheduleTask(ESceneTaskEvent::PostRender, waitFadeOut);
 
 		// Play intro sound
 		auto playIntroSound = MakeRef<SceneTask>();
@@ -81,7 +81,7 @@ namespace bsf
 			self.SetDone();
 		});
 
-		ScheduleTask<SceneTask>(ESceneTaskEvent::PreRender, playIntroSound);
+		ScheduleTask(ESceneTaskEvent::PreRender, playIntroSound);
 
 	}
 	

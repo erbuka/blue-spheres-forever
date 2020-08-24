@@ -1,5 +1,7 @@
 #include "BsfPch.h"
+
 #include "BlurFilter.h"
+#include "Common.h"
 
 #include "Texture.h"
 #include "Framebuffer.h"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Time.h"
 #include "Common.h"
 #include "EventEmitter.h"
 
