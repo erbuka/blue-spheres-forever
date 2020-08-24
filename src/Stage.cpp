@@ -111,7 +111,7 @@ namespace bsf
 			StartDirection = root.at("startDirection").get<glm::vec2>();
 			Rings = MaxRings = root.at("maxRings").get<uint32_t>();
 			EmeraldColor = root.at("emeraldColor").get<glm::vec3>();
-			CheckerColors = root.at("patternColors").get<std::array<glm::vec3, 2>>();
+			PatternColors = root.at("patternColors").get<std::array<glm::vec3, 2>>();
 			SkyColors = root.at("skyColors").get<std::array<glm::vec3, 2>>();
 			m_Data = root.at("data").get<std::vector<EStageObject>>();
 			m_AvoidSearch = root.at("avoidSearch").get<std::vector<EAvoidSearch>>();
@@ -136,7 +136,7 @@ namespace bsf
 			{ "startDirection", StartDirection },
 			{ "maxRings" , MaxRings },
 			{ "emeraldColor", EmeraldColor },
-			{ "patternColors", CheckerColors },
+			{ "patternColors", PatternColors },
 			{ "skyColors", SkyColors },
 			{ "data", m_Data },
 			{ "avoidSearch", m_AvoidSearch }
@@ -199,7 +199,7 @@ namespace bsf
 		is.Read(StartDirection); // ivec2
 		is.Read(EmeraldColor);// vec3
 
-		is.ReadSome(2, CheckerColors.data()); // 2 * vec3
+		is.ReadSome(2, PatternColors.data()); // 2 * vec3
 		is.ReadSome(2, SkyColors.data()); // 2 * vec3
 		is.ReadSome(2, StarColors.data()); // 2 * vec3
 
@@ -475,7 +475,7 @@ namespace bsf
 
 		result->FloorRenderingMode = EFloorRenderingMode::CheckerBoard;
 		result->BumpMappingEnabled = false;
-		result->CheckerColors = {
+		result->PatternColors = {
 			s_CheckerBoardPatterns[(tl % 16) * 2],
 			s_CheckerBoardPatterns[(tl % 16) * 2 + 1]
 		};

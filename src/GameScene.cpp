@@ -277,7 +277,7 @@ namespace bsf
 		// Textures
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
 		{
-			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->CheckerColors[0]), ToHexColor(m_Stage->CheckerColors[1]) });
+			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
 			m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
 		}
 		else

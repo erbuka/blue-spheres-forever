@@ -478,7 +478,13 @@ namespace bsf
 
 	void Renderer2D::Clip(const Rect& clip)
 	{
-		m_State.top().Clip = clip;
+		if (m_State.top().Clip.has_value())
+		{
+			m_State.top().Clip = m_State.top().Clip.value().Intersect(clip);
+		}
+		else
+			m_State.top().Clip = clip;
+
 	}
 
 	void Renderer2D::NoClip()

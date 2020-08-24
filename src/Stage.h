@@ -70,7 +70,7 @@ namespace bsf
 		EFloorRenderingMode FloorRenderingMode;
 		bool BumpMappingEnabled;
 		glm::vec3 EmeraldColor = Colors::Green;
-		std::array<glm::vec3, 2> CheckerColors = { Colors::Red, Colors::White }, 
+		std::array<glm::vec3, 2> PatternColors = { Colors::Red, Colors::White }, 
 			SkyColors = { Colors::Blue, Colors::Blue }, StarColors;
 
 		static void SaveStageFiles(const std::vector<std::string>& files);

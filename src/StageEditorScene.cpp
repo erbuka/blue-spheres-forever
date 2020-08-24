@@ -172,13 +172,13 @@ namespace bsf
 
 				auto cp1 = MakeRef<UIColorPicker>();
 				cp1->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
-				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->CheckerColors[0]; });
+				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->PatternColors[0]; });
 				cp1->Label = "Primary";
 				panel->AddChild(cp1);
 
 				auto cp2 = MakeRef<UIColorPicker>();
 				cp2->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
-				cp2->Bind([&]() -> glm::vec3& { return m_CurrentStage->CheckerColors[1]; });
+				cp2->Bind([&]() -> glm::vec3& { return m_CurrentStage->PatternColors[1]; });
 				cp2->Label = "Secondary";
 
 				panel->AddChild(cp2);
@@ -323,11 +323,18 @@ namespace bsf
 			dialogPanel->PreferredSize.x = s_uiStageListDialogSize;
 			dialogPanel->Pack();
 
-			m_uiStageList = MakeRef<UIStageList>(4, 3);
-			AddSubscription(m_uiStageList->FileSelected, [&](const UIStageList::FileSelectedEvent& evt) { 
+
+			m_uiStageList = MakeRef<UIStageList>(4, 4);
+			
+			AddSubscription(m_uiStageList->FileSelected, [&](const UIStageList::StageSelectedEvent& evt) { 
 				LoadStage(evt.FileName); 
 				m_uiRoot->PopLayer();
 			});
+			
+			AddSubscription(m_uiStageList->FileReorder, [&](const UIStageList::StageReorderEvent& evt) {
+				Stage::SaveStageFiles(evt.Files);
+			});
+			
 			dialogPanel->AddChild(m_uiStageList);
 
 			m_uiStageListDialogLayer->AddChild(dialogPanel);
@@ -668,11 +675,13 @@ namespace bsf
 			auto& buttonState = m_MouseButtonState[evt.Button];
 			buttonState.Pressed = false;
 
+			m_Layers.back()->Traverse([&](UIElement& el) { el.GlobalMouseReleased.Emit({ pos.x, pos.y, 0, 0, evt.Button }); });
 
 			if (intersection)
 			{
+				intersection->MouseReleased.Emit({ pos.x, pos.y, 0, 0, evt.Button });
 
-				if (std::chrono::system_clock::now() - buttonState.TimePressed < std::chrono::milliseconds(500))
+				if (std::chrono::system_clock::now() - buttonState.TimePressed < std::chrono::milliseconds(250))
 				{
 					intersection->MouseClicked.Emit({ pos.x, pos.y, 0, 0, evt.Button });
 				}
@@ -693,6 +702,12 @@ namespace bsf
 		m_Viewport = viewport;
 		m_Projection = glm::ortho(0.0f, viewport.x, 0.0f, viewport.y, -1.0f, 1.0f);
 		m_InverseProjection = glm::inverse(m_Projection);
+
+		for (uint32_t i = 0; i < m_LayersToPop; ++i)
+			m_Layers.pop_back();
+
+		m_LayersToPop = 0;
+
 		r2.Begin(m_Projection);
 		for (auto& l = m_Layers.begin(); l != m_Layers.end(); l++)
 		{
@@ -892,8 +907,8 @@ namespace bsf
 		if (m_Stage)
 		{
 			m_Pattern = CreateCheckerBoard({
-				ToHexColor(m_Stage->CheckerColors[0]),
-				ToHexColor(m_Stage->CheckerColors[1])
+				ToHexColor(m_Stage->PatternColors[0]),
+				ToHexColor(m_Stage->PatternColors[1])
 			}, m_Pattern);
 		}
 
@@ -1290,7 +1305,79 @@ namespace bsf
 
 		AddSubscription(Wheel, [&](const WheelEvent& evt) {
 			int32_t dir = -Sign(evt.DeltaY);
-			m_TopRow = std::clamp((int32_t)m_TopRow + dir, 0, (int32_t)m_MaxTopRow);
+			//m_TopRow = std::clamp((int32_t)m_TopRow + dir, 0, (int32_t)m_MaxTopRow);
+			m_HeightOffset = std::clamp(m_HeightOffset + dir * m_ItemHeight, 0.0f, m_MaxHeightOffset);
+
+		});
+
+		AddSubscription(MousePressed, [&](const MouseEvent& evt) {
+
+			if (evt.Button == MouseButton::Left)
+			{
+				glm::vec2 pos = { evt.X,evt.Y };
+
+				for (auto& info : m_FilesInfo)
+				{
+					if (!info.Visible)
+						continue;
+
+					if (info.CurrentBounds.Contains(pos))
+					{
+						info.IsDragged = true;
+						m_DraggedItem = info;
+					}
+				}
+
+				
+			}
+		});
+
+		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
+			if (evt.Button == MouseButton::Left)
+			{
+				if (m_DraggedItem.has_value())
+				{
+					auto& draggedItem = m_DraggedItem.value();
+					draggedItem.CurrentBounds.Position = { evt.X, evt.Y };
+
+					auto draggedIt = std::find(m_FilesInfo.begin(), m_FilesInfo.end(), draggedItem);
+
+					for (auto it = m_FilesInfo.begin(); it != m_FilesInfo.end(); ++it)
+					{
+						if (it->TargetBounds.Contains({ evt.X, evt.Y }))
+						{
+							std::swap(*it, *draggedIt);
+						}
+					}
+
+					
+
+				}
+			
+			}
+		});
+
+		AddSubscription(GlobalMouseReleased, [&](const MouseEvent& evt) {
+			if (m_DraggedItem.has_value())
+			{
+				auto& draggedItem = m_DraggedItem.value();
+
+				auto draggedIt = std::find(m_FilesInfo.begin(), m_FilesInfo.end(), draggedItem);
+
+				draggedIt->IsDragged = false;
+				draggedIt->CurrentBounds = draggedItem.CurrentBounds;
+				m_DraggedItem = std::nullopt;
+
+				std::vector<std::string> files;
+				files.reserve(m_FilesInfo.size());
+
+				std::transform(m_FilesInfo.begin(), m_FilesInfo.end(), std::back_inserter(files), [](const StageInfo& info) {
+					return info.FileName;
+				});
+
+				FileReorder.Emit({ std::move(files) });
+
+			}
 		});
 
 		AddSubscription(MouseClicked, [&](const MouseEvent& evt) {
@@ -1304,8 +1391,15 @@ namespace bsf
 					if (!info.Visible)
 						continue;
 
-					if (info.Bounds.Contains(pos))
+					if (info.CurrentBounds.Contains(pos))
+					{
 						FileSelected.Emit({ info.FileName });
+						// So here we have to break, it could happend that
+						// we click 2 files at the same time if they're animating.
+						// We don't want that of course, a single click should
+						// ba a single file
+						break;
+					}
 				}
 			}
 		});
@@ -1318,9 +1412,9 @@ namespace bsf
 		m_Files = files;
 		m_FilesInfo.clear();
 		m_FilesInfo.resize(files.size());
-		m_TopRow = 0;
 		m_TotalRows = files.size() / m_Columns + (files.size() % m_Columns == 0 ? 0 : 1);
 		m_MaxTopRow = std::max(0, (int32_t)m_TotalRows - (int32_t)m_Rows);
+		m_HeightOffset = 0.0f;
 	}
 
 	void UIStageList::Update(const UIRoot& root, const Time& time)
@@ -1328,41 +1422,58 @@ namespace bsf
 		auto& style = GetStyle();
 		auto contentBounds = Bounds;
 		const float margin = style.GetMargin(Margin);
+		
 		m_ItemHeight = 2.0f;
 		MinSize.y = m_Rows * (m_ItemHeight + margin) + margin;
+
+		const float rowHeight = m_ItemHeight + margin;
+
+		m_TotalHeight = m_TotalRows * rowHeight  + margin;
+		m_MaxHeightOffset = m_MaxTopRow * rowHeight;
+
 	}
 
 	void UIStageList::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
-		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		auto& style = GetStyle();
 		auto contentBounds = Bounds;
 		const float margin = style.GetMargin(Margin);
+		const float dS = time.Delta * Bounds.Width();
+
 		contentBounds.Shrink(margin);
 
 		r2.Push();
 		r2.Pivot(EPivot::BottomLeft);
 
 
-		for (const auto& info : m_FilesInfo)
+		r2.Clip(Bounds);
+
+		for (auto& info : m_FilesInfo)
 		{
-			if (!(info.Visible && info.Loaded))
+
+			info.CurrentBounds.Position = MoveTowards(info.CurrentBounds.Position, info.TargetBounds.Position, dS);
+			info.CurrentBounds.Size = MoveTowards(info.CurrentBounds.Size, info.TargetBounds.Size, dS);
+
+			if (!(info.Loaded && info.Visible))
 				continue;
 
-			r2.Color(style.GetBackgroundColor(*this, style.Palette.BackgroundVariant));
-			r2.DrawQuad(info.Bounds.Position, info.Bounds.Size);
+			if(!info.IsDragged)
+				RenderItem(r2, info);
 
-			r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
-			r2.TextShadowColor(style.ShadowColor);
-			r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
-			r2.DrawStringShadow(font, info.Name, info.Bounds.Position);
 		}
+
+		r2.NoClip();
+
+		if(m_DraggedItem.has_value())
+			RenderItem(r2, m_DraggedItem.value());
+
 
 		r2.Pop();
 	}
 
 	void UIStageList::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
 	{
+		// TODO can be dynamic doesn't really make any difference
 		static Stage s_Stage;
 
 		Bounds = { origin, computedSize };
@@ -1373,37 +1484,131 @@ namespace bsf
 
 		m_ItemWidth = (contentBounds.Width() - (m_Columns - 1.0f) * margin) / m_Columns;
 
-		std::for_each(m_FilesInfo.begin(), m_FilesInfo.end(), [](FileInfo& info) {info.Visible = false; });
+		std::for_each(m_FilesInfo.begin(), m_FilesInfo.end(), [](StageInfo& info) {info.Visible = false; });
 
-		for (size_t i = 0; i < (size_t)m_Rows * m_Columns; i++)
+
+		for (int32_t i = 0; i < m_Files.size(); ++i)
 		{
-			size_t index = (size_t)m_TopRow * m_Columns + i;
+			int32_t x = i % (int32_t)m_Columns;
+			int32_t y = -i / (int32_t)m_Columns;
 
-			if (index >= m_Files.size())
-				break;
+			auto& info = m_FilesInfo[i];
 
-			auto& current = m_FilesInfo[index];
+			info.TargetBounds.Position.x = contentBounds.Position.x + x * (m_ItemWidth + margin);
+			info.TargetBounds.Position.y = contentBounds.Position.y + contentBounds.Height() +
+				(y - 1) * (m_ItemHeight + margin) + margin + m_HeightOffset;
 
-			if (!current.Loaded)
+			info.TargetBounds.Size = { m_ItemWidth, m_ItemHeight };
+
+			if (!info.Initialized)
 			{
-				s_Stage.Load(m_Files[index]);
-				current.FileName = m_Files[index];
-				current.Name = s_Stage.Name;
-				current.Loaded = true;
+				info.CurrentBounds = info.TargetBounds;
+				info.Initialized = true;
 			}
 
-			current.Visible = true;
+			info.Visible = Bounds.Intersects(info.CurrentBounds);
 
-			uint32_t x = i % m_Columns;
-			uint32_t y = m_Rows - (i / m_Columns + 1);
-			
-			current.Bounds = {
-				contentBounds.Position + glm::vec2((m_ItemWidth + margin) * x, (m_ItemHeight + margin) * y),
-				glm::vec2(m_ItemWidth, m_ItemHeight)
-			};
-
+			if (info.Visible && !info.Loaded)
+			{
+				s_Stage.Load(m_Files[i]);
+				info.FileName = m_Files[i];
+				info.Name = s_Stage.Name;
+				info.MaxRings = s_Stage.MaxRings;
+				info.BlueSpheres = s_Stage.Count(EStageObject::BlueSphere);
+				info.Pattern = CreateCheckerBoard({
+					ToHexColor(s_Stage.PatternColors[0]),
+					ToHexColor(s_Stage.PatternColors[1])
+					});
+				info.Loaded = true;
+			}
 
 		}
+
+	}
+
+	void UIStageList::RenderItem(Renderer2D& r2, const StageInfo& info)
+	{
+		auto& assets = Assets::GetInstance();
+		auto& style = GetStyle();
+
+		auto font = assets.Get<Font>(AssetName::FontMain);
+		auto sphereUi = assets.Get<Texture2D>(AssetName::TexSphereUI);
+		auto ringUi = assets.Get<Texture2D>(AssetName::TexRingUI);
+
+		const float margin = style.GetMargin(Margin);
+
+		Rect innerBounds = info.CurrentBounds;
+		innerBounds.Shrink(margin);
+
+		// Internal interface
+		r2.Push();
+		{
+			r2.NoTexture();
+			r2.Color(style.ShadowColor);
+			r2.DrawQuad(info.CurrentBounds.Position + glm::vec2(style.ShadowOffset, -style.ShadowOffset), info.CurrentBounds.Size);
+
+			r2.Texture(info.Pattern);
+			r2.Color({ glm::vec3(Colors::White * 0.75f), 1.0f });
+			r2.DrawQuad(info.CurrentBounds.Position, info.CurrentBounds.Size, { 2.0f * info.CurrentBounds.Aspect(), 2.0f });
+
+			r2.Clip(innerBounds);
+
+			{ // Stage Name
+				r2.Push();
+				r2.Translate({ innerBounds.Left(), innerBounds.Bottom() });
+				r2.Scale(0.75f);
+				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
+				r2.TextShadowColor(style.ShadowColor);
+				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
+				r2.DrawStringShadow(font, info.Name);
+				r2.Pop();
+			}
+
+			{ // Sphere counter
+				r2.Push();
+				r2.Pivot(EPivot::TopLeft);
+				r2.Translate({ innerBounds.Left(), innerBounds.Top() });
+				r2.Scale(0.5f);
+
+				r2.Texture(sphereUi);
+
+				r2.Color(style.ShadowColor);
+				r2.DrawQuad({ style.ShadowOffset, -style.ShadowOffset });
+
+				r2.Color(Colors::BlueSphere);
+				r2.DrawQuad();
+
+				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
+				r2.TextShadowColor(style.ShadowColor);
+				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
+				r2.DrawStringShadow(font, Format("%d", info.MaxRings), { 1.0f + margin, 0.0f });
+
+				r2.Pop();
+			}
+
+			{ // Ring counter
+				r2.Push();
+				r2.Pivot(EPivot::TopRight);
+				r2.Translate({ innerBounds.Right(), innerBounds.Top() });
+				r2.Scale(0.5f);
+
+				r2.Texture(ringUi);
+
+				r2.Color(style.ShadowColor);
+				r2.DrawQuad({ style.ShadowOffset, -style.ShadowOffset });
+
+				r2.Color(Colors::Ring);
+				r2.DrawQuad();
+
+				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
+				r2.TextShadowColor(style.ShadowColor);
+				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
+				r2.DrawStringShadow(font, Format("%d", info.MaxRings), { -1.0f - margin, 0.0f });
+
+				r2.Pop();
+			}
+		}
+		r2.Pop();
 
 	}
 

@@ -22,6 +22,7 @@ TODO
 - Add name of the stage to the left bar
 - Add start postion/direction buttons
 - Stage editor area background ???
+- Fix double file selected
 */
 
 namespace bsf
@@ -116,9 +117,9 @@ namespace bsf
 	public:
 		UIElement();
 		UIElement(std::underlying_type_t<UIElementFlags> flags);
-		UIElement(UIElement&) = delete;
+		UIElement(const UIElement&) = delete;
 		UIElement(UIElement&&) = delete;
-		virtual ~UIElement() = default;
+		virtual ~UIElement() {}
 
 		Rect Bounds;
 		float Margin = 0.0f;
@@ -134,7 +135,8 @@ namespace bsf
 
 		EventEmitter<KeyPressedEvent> KeyPressed;
 		EventEmitter<KeyReleasedEvent> KeyReleased;
-		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked, MousePressed;
+		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked, MousePressed, MouseReleased;
+		EventEmitter<MouseEvent> GlobalMouseReleased;
 		EventEmitter<WheelEvent> Wheel;
 
 		virtual void Update(const UIRoot& root, const Time& time) {}
@@ -173,7 +175,7 @@ namespace bsf
 
 		void Render(const glm::vec2& windowSize, const glm::vec2& viewport, Renderer2D& renderer, const Time& time);
 		void PushLayer(const Ref<UILayer>& layer) { m_Layers.push_back(layer); }
-		void PopLayer() { m_Layers.pop_back(); }
+		void PopLayer() { m_LayersToPop++; }
 	private:
 
 		UIStyle m_Style;
@@ -181,6 +183,7 @@ namespace bsf
 		glm::vec2 m_Viewport, m_WindowSize;
 		glm::mat4 m_Projection, m_InverseProjection;
 		std::list<Ref<UILayer>> m_Layers;
+		uint32_t m_LayersToPop = 0;
 
 		struct MouseButtonState
 		{
@@ -255,14 +258,21 @@ namespace bsf
 	class UIStageList : public UIElement
 	{
 	public:
-		UIStageList(uint32_t rows, uint32_t cols);
 
-		struct FileSelectedEvent
+		struct StageSelectedEvent
 		{
 			std::string FileName;
 		};
 
-		EventEmitter<FileSelectedEvent> FileSelected;
+		struct StageReorderEvent
+		{
+			std::vector<std::string> Files;
+		};
+
+		UIStageList(uint32_t rows, uint32_t cols);
+
+		EventEmitter<StageSelectedEvent> FileSelected;
+		EventEmitter<StageReorderEvent> FileReorder;
 
 		void SetFiles(const std::vector<std::string>& files);
 		void Update(const UIRoot& root, const Time& time) override;
@@ -271,13 +281,18 @@ namespace bsf
 
 	private:
 
-		struct FileInfo
+		struct StageInfo
 		{
+			bool IsDragged = false;
+			bool Initialized = false;
 			bool Loaded = false;
 			bool Visible = false;
 			std::string FileName;
 			std::string Name;
-			Rect Bounds;
+			uint32_t MaxRings = 0, BlueSpheres = 0;
+			Ref<Texture2D> Pattern = nullptr;
+			Rect TargetBounds, CurrentBounds;
+			bool operator==(const StageInfo& other) { return FileName == other.FileName; }
 		};
 
 		uint32_t m_Rows = 0;
@@ -286,12 +301,19 @@ namespace bsf
 		float m_ItemWidth = 0.0f;
 		float m_ItemHeight = 0.0f;
 
-		uint32_t m_TopRow = 0;
-		uint32_t m_MaxTopRow = 0;
+		float m_MaxHeightOffset = 0.0f;
+		float m_HeightOffset = 0.0f;
+		float m_TotalHeight = 0.0f;
+
 		uint32_t m_TotalRows = 0;
+		uint32_t m_MaxTopRow = 0;
 
 		std::vector<std::string> m_Files;
-		std::vector<FileInfo> m_FilesInfo;
+		std::vector<StageInfo> m_FilesInfo;
+
+		std::optional<StageInfo> m_DraggedItem;
+
+		void RenderItem(Renderer2D& r2, const StageInfo& item);
 
 	};
 

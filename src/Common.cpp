@@ -18,6 +18,19 @@ namespace bsf
 		return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y;
 	}
 
+	bool Rect::Intersects(const Rect& other) const
+	{
+		return glm::all(glm::greaterThan(Intersect(other).Size, glm::vec2(0.0f, 0.0f)));
+	}
+
+	Rect Rect::Intersect(const Rect& other) const
+	{
+		auto min = glm::max(Position, other.Position);
+		auto max = glm::min(Position + Size, other.Position + other.Size);
+		auto size = glm::max(max - min, { 0.0f, 0.0f });
+		return { min, size };
+	}
+
 	void Rect::Shrink(float x, float y)
 	{
 		Position += glm::vec2(x, y);

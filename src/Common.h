@@ -80,8 +80,14 @@ namespace bsf
 
 	struct Rect
 	{
-		glm::vec2 Position, Size;
+		glm::vec2 Position = { 0.0f, 0.0f }, Size = { 0.0f, 0.0f };
+
 		bool Contains(const glm::vec2& pos) const;
+		bool Intersects(const Rect& other) const;
+		Rect Intersect(const Rect& other) const;
+
+		float Aspect() const { return Size.x / Size.y; }
+		float InverseAspect() const { return 1.0f / Aspect(); }
 
 		float Left() const { return Position.x; }
 		float Right() const { return Position.x + Size.x; }
@@ -207,23 +213,31 @@ namespace bsf
 		return static_cast<std::underlying_type_t<Enum>>(f) | MakeFlags(args...);
 	}
 
-
+	
 	template<typename T, typename K>
 	T MoveTowards(const T& from, const T& target, K k)
 	{
-		using T0 = std::enable_if_t<std::is_arithmetic_v<T>, T>;
-		using K0 = std::enable_if_t<std::is_arithmetic_v<K>, K>;
+		static_assert(std::is_arithmetic_v<T>, "T is not arithmetic");
+		static_assert(std::is_arithmetic_v<K>, "K is not arithmetic");
 
 		T distance = target - from;
 		T dir = distance >= 0.0f ? 1.0f : -1.0f;
 		return  k < std::abs(distance) ? from + k * dir : target;
 	}
 
+	template<template<int, typename, glm::qualifier> typename V, int N, typename T>
+	V<N, T, glm::defaultp> MoveTowards(const V<N, T, glm::defaultp>& from, const V<N, T, glm::defaultp>& target, T t)
+	{
+		auto diff = target - from;
+		T length = glm::length(diff);
+		return  t < length ? from + t * glm::normalize(diff) : target;
+	}
+
 	template<typename ...Args>
 	std::string Format(const std::string& format, Args... args)
 	{
 		static constexpr uint32_t bufSize = 1024;
-		char buffer[bufSize];
+		static char buffer[bufSize];
 		std::snprintf(buffer, bufSize, format.c_str(), args...);
 		return std::string(buffer);
 	}
