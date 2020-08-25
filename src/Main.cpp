@@ -24,7 +24,7 @@ void ConvertStages();
 int main() 
 {
 	ConvertStages();
-	//return 0;
+	ConvertSections();
 
 	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
@@ -39,6 +39,22 @@ int main()
 }
 
 
+
+template<typename T, size_t N>
+std::vector<T> Flip(const std::vector<T>& v)
+{
+	std::vector<T> data(v);
+
+	for (uint32_t y = 0; y < N / 2; y++)
+	{
+		for (uint32_t x = 0; x < N; x++)
+		{
+			std::swap(data[y * N + x], data[(N - y - 1) * N + x]);
+		}
+	}
+
+	return data;
+}
 
 // Load sections as binary and save as json
 void ConvertSections()
@@ -73,15 +89,13 @@ void ConvertSections()
 		std::vector<uint8_t> avoidSearch(16 * 16);
 		is.ReadSome(avoidSearch.size(), avoidSearch.data());
 
+		auto data2 = Flip<uint32_t, 16>(data);
+		auto avoidSearch2 = Flip<uint8_t, 16>(avoidSearch);
 
-		for (uint32_t y = 0; y < 8; y++)
-		{
-			for (uint32_t x = 0; x < 16; x++)
-			{
-				std::swap(data[y * 16 + x], data[(16 - y - 1) * 16 + x]);
-				std::swap(avoidSearch[y * 16 + x], avoidSearch[(16 - y - 1) * 16 + x]);
-			}
-		}
+		std::cout << i << std::endl;
+		
+		assert((data == Flip<uint32_t, 16>(data2)));
+		assert((avoidSearch == Flip<uint8_t, 16>(avoidSearch2)));
 
 		section["data"] = data;
 		section["avoidSearch"] = avoidSearch;
@@ -143,8 +157,7 @@ void ConvertStages()
 			// Need to flip here
 			auto flipped = flipStage(stage);
 
-			assert(stage == flipStage(flipped));
-			
+			assert((stage == flipStage(flipped)));
 
 			path.replace_extension(".bssj");
 			flipped.Save(path.string());
