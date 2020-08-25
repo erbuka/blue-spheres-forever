@@ -275,6 +275,9 @@ namespace bsf
 		m_pShadow = MakeRef<ShaderProgram>(s_ShadowVertex, s_ShadowFragment);
 		
 		// Textures
+		m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
+		m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
+		/*
 		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
 		{
 			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
@@ -286,6 +289,7 @@ namespace bsf
 			m_txGroundMap->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			m_txGroundMap->SetAnisotropy(16.0f);
 		} 
+		*/
 
 		// Skybox
 		auto& skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);

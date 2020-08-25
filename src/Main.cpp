@@ -24,9 +24,6 @@ static void ConvertStages();
 
 int main() 
 {
-
-	ConvertStages();
-
 	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());

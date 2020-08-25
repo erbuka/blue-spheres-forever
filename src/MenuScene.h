@@ -82,12 +82,12 @@ namespace bsf
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
 		float GetUIHeight() const override { return 1.5f; }
 
-		void AddOption(const std::string& caption, const Ref<T>& value);
-		const Ref<T>& GetSelectedOption();
+		void AddOption(const std::string& caption, const T& value);
+		const T& GetSelectedOption();
 
 	private:
 		uint32_t m_SelectedOption;
-		std::vector<std::pair<std::string, Ref<T>>> m_Options;
+		std::vector<std::pair<std::string, T>> m_Options;
 	};
 
 	class StageCodeMenuItem : public MenuItem
@@ -163,12 +163,11 @@ namespace bsf
 		void OnDetach() override;
 	private:
 
-		std::vector<Ref<Stage>> LoadCustomStages();
 
 		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 
 		MenuRoot m_MenuRoot;
-		Ref<SelectMenuItem<Stage>> m_SelectStageMenuItem;
+		Ref<SelectMenuItem<std::string>> m_SelectStageMenuItem;
 		Ref<StageCodeMenuItem> m_StageCodeMenuItem;
 		std::list<Unsubscribe> m_Subscriptions;
 	};

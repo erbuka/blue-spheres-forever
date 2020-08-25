@@ -1,6 +1,7 @@
 #include "BsfPch.h"
 
 #include <sstream>
+#include <chrono>
 
 #include "Common.h"
 #include "Color.h"
@@ -96,6 +97,47 @@ namespace bsf
 
 		return ss.str();
 
+	}
+
+
+	/*
+		TODO Review this. It sucks it's so ugly, but I don't like the version
+		with find_first_of etc. That doesn't seem very safe.
+		Have to reverse 2 times because I can't erase with reverse iterators
+	*/
+	void Trim(std::string& str)
+	{
+		static auto trimImpl = [](std::string& str) {
+			for (auto it = str.begin(); it != str.end();)
+			{
+				if (*it == ' ')
+					it = str.erase(it);
+				else
+					break;
+			}
+		};
+		trimImpl(str);
+		std::reverse(str.begin(), str.end());
+		trimImpl(str);
+		std::reverse(str.begin(), str.end());
+
+	}
+
+	uint32_t UniqueId()
+	{
+		/* 
+		Did this just for fun, it should be fine for its purpose (generate file names),
+		but It's not reliable in general. Don't use for complex ids
+		*/
+		static constexpr uint32_t mask = 0xabcede18;
+		static uint32_t iteration = 0;
+		using namespace std::chrono;
+		uint32_t millis = (uint32_t)(duration_cast<milliseconds>(system_clock::now().time_since_epoch())).count()
+			+ (iteration++);
+
+		millis ^= mask;
+
+		return millis;
 	}
 
 	Ref<Texture2D> CreateCheckerBoard(const std::array<uint32_t, 2>& colors, Ref<Texture2D> target)

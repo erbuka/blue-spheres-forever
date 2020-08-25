@@ -18,8 +18,8 @@ namespace bsf
 	static constexpr float s_uiTopBarHeight = s_uiScale / 10.0f;
 	static constexpr float s_uiPropertiesWidth = s_uiScale / 2.0f;
 	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiPanelMargin;
-	static constexpr float s_uiSaveDialogSize = s_uiScale / 2.0f;
-	static constexpr float s_uiStageListDialogSize = s_uiScale;
+	static constexpr float s_uiStageListItemWidth = s_uiScale / 4.0f;
+	static constexpr float s_uiStageListItemHeight = s_uiScale / 6.0f;
 
 	void StageEditorScene::OnAttach()
 	{
@@ -58,16 +58,26 @@ namespace bsf
 		m_uiRoot->Detach(GetApplication());
 	}
 
+	void StageEditorScene::OnNewButtonClick(const MouseEvent& evt)
+	{
+		m_CurrentStageFile = std::nullopt;
+		m_CurrentStage = MakeRef<Stage>(32, 32);
+	}
+
 	void StageEditorScene::OnSaveButtonClick(const MouseEvent& evt)
 	{
+		Trim(m_CurrentStage->Name);
+
 		if (m_CurrentStageFile.has_value())
 		{
 			m_CurrentStage->Save(m_CurrentStageFile.value());
 		}
 		else
 		{
-			m_uiSaveStageName->SetValue(m_CurrentStage->Name);
-			m_uiRoot->PushLayer(m_uiSaveDialogLayer);
+			std::stringstream fileName;
+			fileName << "assets/data/" << std::hex << UniqueId() << ".bssj";
+			m_CurrentStageFile = fileName.str();
+			m_CurrentStage->Save(m_CurrentStageFile.value());
 		}
 	}
 
@@ -164,6 +174,44 @@ namespace bsf
 			properties->Layout = UILayout::Vertical;
 			properties->PreferredSize = { s_uiPropertiesWidth, 0.0f };
 
+			// Stage name
+			{
+				auto stageNameInput = MakeRef<UITextInput>();
+				stageNameInput->Label = "Stage Name";
+				stageNameInput->BindPull([&] { return m_CurrentStage->Name; });
+				stageNameInput->BindPush([&](const std::string& val) { m_CurrentStage->Name = val; return true; });
+				properties->AddChild(stageNameInput);
+			}
+
+
+			// Max Rings input
+			{
+				auto maxRingsInput = MakeRef<UITextInput>();
+				maxRingsInput->Label = "Max Rings";
+				maxRingsInput->BindPush([&, check = std::regex("^[0-9]+$")](const std::string& val) {
+
+					if (std::regex_match(val, check))
+					{
+						m_CurrentStage->MaxRings = std::atoi(val.c_str());
+						return true;
+					}
+					else if (val.empty())
+					{
+						m_CurrentStage->MaxRings = 0;
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				});
+
+				maxRingsInput->BindPull([&] {return std::to_string(m_CurrentStage->MaxRings); });
+
+				properties->AddChild(maxRingsInput);
+			}
+
+
 			// Pattern Colors
 			{
 
@@ -217,33 +265,6 @@ namespace bsf
 				properties->AddChild(cp1);
 			}
 
-			// Max Rings input
-			{
-				auto maxRingsInput = MakeRef<UITextInput>();
-				maxRingsInput->Label = "Max Rings";
-				maxRingsInput->BindPush([&, check = std::regex("^[0-9]+$")](const std::string& val) {
-
-					if (std::regex_match(val, check))
-					{
-						m_CurrentStage->MaxRings = std::atoi(val.c_str());
-						return true;
-					}
-					else if (val.empty())
-					{
-						m_CurrentStage->MaxRings = 0;
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				});
-
-				maxRingsInput->BindPull([&] {return std::to_string(m_CurrentStage->MaxRings); });
-
-				properties->AddChild(maxRingsInput);
-			}
-
 
 			// Editor area
 			m_uiEditorArea = MakeRef<UIStageEditorArea>();
@@ -267,48 +288,6 @@ namespace bsf
 
 			m_uiRoot->PushLayer(main);
 		}
-		
-		// Stage save dialog layer
-		{
-			m_uiSaveDialogLayer = MakeRef<UILayer>();
-			m_uiSaveDialogLayer->Layout = UILayout::Fill;
-			m_uiSaveDialogLayer->BackgroundColor = style.ShadowColor;
-			AddSubscription(m_uiSaveDialogLayer->MouseClicked, [&](auto&) { m_uiRoot->PopLayer(); });
-
-			{
-				auto dialogPanel = MakeRef<UIPanel>();
-				dialogPanel->Layout = UILayout::Vertical;
-				dialogPanel->HasShadow = true;
-				dialogPanel->PreferredSize.x = s_uiSaveDialogSize;
-				dialogPanel->Pack();
-
-				m_uiSaveStageName = MakeRef<UITextInput>();
-				m_uiSaveStageName->Label = "Stage Name";
-				dialogPanel->AddChild(m_uiSaveStageName);
-
-				auto okBtn = MakeRef<UIButton>();
-				okBtn->Label = "Save";
-
-
-				AddSubscription(okBtn->MouseClicked, [&] (const MouseEvent& evt) {
-					auto name = m_uiSaveStageName->GetValue();
-
-					BSF_INFO("Name: {0}", name);
-
-					if (!name.empty())
-					{
-						auto file = Format("assets/data/%s.jbss", name);
-						m_CurrentStage->Save(file);
-						m_CurrentStageFile = file;
-						m_uiRoot->PopLayer();
-					}
-				});
-
-				dialogPanel->AddChild(okBtn);
-
-				m_uiSaveDialogLayer->AddChild(dialogPanel);
-			}
-		}
 
 		// Stage list dialog layer
 		{
@@ -318,13 +297,14 @@ namespace bsf
 			AddSubscription(m_uiStageListDialogLayer->MouseClicked, [&](auto&) { m_uiRoot->PopLayer(); });
 
 			auto dialogPanel = MakeRef<UIPanel>();
-			dialogPanel->Layout = UILayout::Vertical;
+			dialogPanel->Layout = UILayout::Horizontal;
 			dialogPanel->HasShadow = true;
-			dialogPanel->PreferredSize.x = s_uiStageListDialogSize;
 			dialogPanel->Pack();
 
-
+			// Stage list
 			m_uiStageList = MakeRef<UIStageList>(4, 4);
+			m_uiStageList->ItemWidth = s_uiStageListItemWidth;
+			m_uiStageList->ItemHeight = s_uiStageListItemHeight;
 			
 			AddSubscription(m_uiStageList->FileSelected, [&](const UIStageList::StageSelectedEvent& evt) { 
 				LoadStage(evt.FileName); 
@@ -336,6 +316,12 @@ namespace bsf
 			});
 			
 			dialogPanel->AddChild(m_uiStageList);
+
+			// Scroll slider
+			auto scrollSlider = MakeRef<UISlider>();
+			scrollSlider->Orientation = UISliderOrientation::Vertical;
+			dialogPanel->AddChild(scrollSlider);
+
 
 			m_uiStageListDialogLayer->AddChild(dialogPanel);
 
@@ -387,6 +373,7 @@ namespace bsf
 
 		if (m_ShouldPack)
 		{
+			//MaxSize = glm::max(PreferredSize, MinSize);
 			MaxSize = glm::max(PreferredSize, MinSize);
 			m_ShouldPack = false;
 		}
@@ -869,8 +856,8 @@ namespace bsf
 			r2.Translate(Bounds.Position - m_ViewOrigin);
 			r2.Scale({ m_Zoom, m_Zoom });
 
-			glm::uvec2 bl = glm::clamp(glm::floor(GetRawStageCoordinates(Bounds.Position)), 0.0f, (float)m_Stage->GetWidth());
-			glm::uvec2 tr = glm::clamp(glm::ceil(GetRawStageCoordinates(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetHeight());
+			glm::uvec2 bl = glm::clamp(glm::floor(GetUnboundedCoordinates(Bounds.Position)), 0.0f, (float)m_Stage->GetWidth());
+			glm::uvec2 tr = glm::clamp(glm::ceil(GetUnboundedCoordinates(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetHeight());
 
 			for (uint32_t x = bl.x; x < tr.x; ++x)
 			{
@@ -916,9 +903,9 @@ namespace bsf
 
 	void UIStageEditorArea::DrawCursor(Renderer2D& r2, const UIStyle& style)
 	{
-		static const float lw = style.StageAreaCrosshairSize; // line width
-		static const float lt = style.StageAreaCrosshairThickness; // thickness
-		static const std::array<std::pair<glm::vec2, glm::vec2>, 8> quads = {
+		const float lw = style.StageAreaCrosshairSize; // line width
+		const float lt = style.StageAreaCrosshairThickness; // thickness
+		const std::array<std::pair<glm::vec2, glm::vec2>, 8> quads = {
 			std::make_pair(glm::vec2(0, 0), glm::vec2(lw, lt)),
 			std::make_pair(glm::vec2(0, 0), glm::vec2(lt, lw)),
 			std::make_pair(glm::vec2(1.0f - lw, 0), glm::vec2(lw, lt)),
@@ -951,14 +938,14 @@ namespace bsf
 		}
 	}
 
-	glm::vec2 UIStageEditorArea::GetRawStageCoordinates(const glm::vec2 pos) const
+	glm::vec2 UIStageEditorArea::GetUnboundedCoordinates(const glm::vec2 pos) const
 	{
 		return  (pos - Bounds.Position + m_ViewOrigin) / m_Zoom;
 	}
 
 	std::optional<glm::ivec2> UIStageEditorArea::GetStageCoordinates(const glm::vec2 pos) const
 	{
-		glm::ivec2 localPos = glm::floor(GetRawStageCoordinates(pos));
+		glm::ivec2 localPos = glm::floor(GetUnboundedCoordinates(pos));
 
 		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetWidth() 
 			&& localPos.y >= 0 && localPos.y < m_Stage->GetHeight())
@@ -970,19 +957,27 @@ namespace bsf
 
 	UITextInput::UITextInput() : UIElement(MakeFlags(UIElementFlags::ReceiveFocus))
 	{
+		static std::string s_TestStr = " ";
+		static std::regex s_AllowedCharacters("^[a-zA-Z0-9_\\s]$");
+
 		Margin = 1.0f;
 		MinSize = { 0.0f, 1.5f };
 		PreferredSize = { 0.0f, 1.5f };
 
 		AddSubscription(KeyPressed, [&](const KeyPressedEvent& evt) {
-			if ((evt.KeyCode >= GLFW_KEY_A && evt.KeyCode <= GLFW_KEY_Z) ||
-				(evt.KeyCode >= GLFW_KEY_0 && evt.KeyCode <= GLFW_KEY_9))
+		
+			if (evt.KeyCode == GLFW_KEY_BACKSPACE)
 			{
-				m_Push(m_Value + (char)evt.KeyCode);
+				if(!m_Value.empty())
+					m_Push(m_Value.substr(0, m_Value.size() - 1));
 			}
-			else if (evt.KeyCode == GLFW_KEY_BACKSPACE && !m_Value.empty())
+			else
 			{
-				m_Push(m_Value.substr(0, m_Value.size() - 1));
+				s_TestStr[0] = (char)evt.KeyCode;
+
+				if(std::regex_match(s_TestStr, s_AllowedCharacters))
+					m_Push(m_Value + (char)evt.KeyCode);
+
 			}
 		});
 
@@ -1107,8 +1102,13 @@ namespace bsf
 	{
 		auto sliderMouseHandler = [&](const MouseEvent& evt) {
 			auto contentBounds = GetContentBounds();
-			float t = (std::clamp(evt.X, contentBounds.Left(), contentBounds.Right()) - contentBounds.Left()) / contentBounds.Width();
+			glm::vec2 pos = { evt.X, evt.Y };
+			auto conj = m_Limits[1] - m_Limits[0];
+			float len = glm::length(conj);
+			auto dir = glm::normalize(conj);
+			float t = std::clamp(glm::dot(dir, pos - m_Limits[0]), 0.0f, len) / len;
 			m_GetValue() = t * (Max - Min) + Min;
+			ValueChanged.Emit({ m_GetValue() });
 		};
 
 		AddSubscription(MouseDragged, sliderMouseHandler);
@@ -1124,7 +1124,7 @@ namespace bsf
 	void UISlider::Update(const UIRoot& root, const Time& time)
 	{
 		auto& style = GetStyle();
-		MinSize.y = MaxSize.y = style.SliderTrackThickness + style.GetMargin() * 4.0f;
+		MinSize = glm::vec2(style.SliderTrackThickness + style.GetMargin(4.0f));
 	}
 
 	void UISlider::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
@@ -1139,25 +1139,49 @@ namespace bsf
 
 		r2.Push();
 
-		r2.Translate(contentBounds.Position + glm::vec2(0.0f, contentBounds.Size.y / 2.0f));
+		glm::vec2 originOffset,
+			trackSize,
+			handleSize;
+		EPivot trackPivot;
 
-		r2.Pivot(EPivot::Left);
+
+		if (Orientation == UISliderOrientation::Horizontal)
+		{
+			originOffset = { 0.0f, contentBounds.Size.y / 2.0f };
+			trackSize = { contentBounds.Width(), style.SliderTrackThickness };
+			handleSize = glm::vec2(contentBounds.Height() + margin);
+			trackPivot = EPivot::Left;
+		}
+		else
+		{
+			originOffset = { contentBounds.Width() / 2.0f, 0.0f };
+			trackSize = { style.SliderTrackThickness, contentBounds.Height() };
+			handleSize = glm::vec2(contentBounds.Width() + margin);
+			trackPivot = EPivot::Bottom;
+		}
+
+		auto handlePosition = GetHandlePosition();
+
+		r2.Push();
+
+		r2.Pivot(trackPivot);
 		r2.NoTexture();
 		r2.Color(darker);
-		r2.DrawQuad({ 0.0f,0.0f }, { contentBounds.Size.x, style.SliderTrackThickness });
+		r2.DrawQuad(contentBounds.Position + originOffset, trackSize);
 
 		r2.Pivot(EPivot::Center);
-		
+
 		r2.Push();
 		r2.Translate({ style.ShadowOffset, -style.ShadowOffset });
 		r2.Color(style.ShadowColor);
 		r2.Texture(texture);
-		r2.DrawQuad({ GetDelta() * contentBounds.Size.x, 0.0f }, glm::vec2(contentBounds.Height() + margin));
+		r2.DrawQuad(handlePosition, handleSize);
 		r2.Pop();
 
 		r2.Color(color);
 		r2.Texture(texture);
-		r2.DrawQuad({ GetDelta() * contentBounds.Size.x, 0.0f }, glm::vec2(contentBounds.Height() + margin));
+		r2.DrawQuad(handlePosition, handleSize);
+
 
 		r2.Pop();
 
@@ -1166,6 +1190,21 @@ namespace bsf
 	void UISlider::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
 	{
 		Bounds = { origin, computedSize };
+
+		auto contentBounds = GetContentBounds();
+
+		if (Orientation == UISliderOrientation::Horizontal)
+		{
+			m_Limits[0] = { contentBounds.Left(), contentBounds.Bottom() + contentBounds.Height() / 2.0f };
+			m_Limits[1] = { contentBounds.Right(), contentBounds.Bottom() + contentBounds.Height() / 2.0f };
+		}
+		else
+		{
+			m_Limits[0] = { contentBounds.Left() + contentBounds.Width() / 2.0f, contentBounds.Top() };
+			m_Limits[1] = { contentBounds.Left() + contentBounds.Width() / 2.0f, contentBounds.Bottom() };
+		}
+
+
 	}
 
 	Rect UISlider::GetContentBounds() const
@@ -1173,7 +1212,11 @@ namespace bsf
 		auto& style = GetStyle();
 		float margin = style.GetMargin();
 		auto contentBounds = Bounds;
-		contentBounds.Shrink(2.0f * margin, margin);
+		if(Orientation == UISliderOrientation::Horizontal)
+			contentBounds.Shrink(2.0f * margin, margin);
+		else
+			contentBounds.Shrink(margin, 2.0f * margin);
+
 		return contentBounds;
 	}
 
@@ -1192,6 +1235,11 @@ namespace bsf
 	float UISlider::GetDelta() const
 	{
 		return (m_GetValue() - Min) / (Max - Min);
+	}
+
+	glm::vec2 UISlider::GetHandlePosition() const
+	{
+		return glm::lerp(m_Limits[0], m_Limits[1], GetDelta());
 	}
 
 	void UIColorPicker::Bind(const BindFn& fn)
@@ -1306,7 +1354,7 @@ namespace bsf
 		AddSubscription(Wheel, [&](const WheelEvent& evt) {
 			int32_t dir = -Sign(evt.DeltaY);
 			//m_TopRow = std::clamp((int32_t)m_TopRow + dir, 0, (int32_t)m_MaxTopRow);
-			m_HeightOffset = std::clamp(m_HeightOffset + dir * m_ItemHeight, 0.0f, m_MaxHeightOffset);
+			m_HeightOffset = std::clamp(m_HeightOffset + dir * ItemHeight, 0.0f, m_MaxHeightOffset);
 
 		});
 
@@ -1316,7 +1364,7 @@ namespace bsf
 			{
 				glm::vec2 pos = { evt.X,evt.Y };
 
-				for (auto& info : m_FilesInfo)
+				for (auto& info : m_StagesInfo)
 				{
 					if (!info.Visible)
 						continue;
@@ -1333,25 +1381,31 @@ namespace bsf
 		});
 
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
-			if (evt.Button == MouseButton::Left)
+			if (evt.Button == MouseButton::Left && m_DraggedItem.has_value())
 			{
-				if (m_DraggedItem.has_value())
+				
+				auto& draggedItem = m_DraggedItem.value();
+				draggedItem.CurrentBounds.Position += glm::vec2(evt.DeltaX, evt.DeltaY);
+
+				auto draggedIt = std::find(m_StagesInfo.begin(), m_StagesInfo.end(), draggedItem);
+
+
+				for (auto it = m_StagesInfo.begin(); it != m_StagesInfo.end(); ++it)
 				{
-					auto& draggedItem = m_DraggedItem.value();
-					draggedItem.CurrentBounds.Position = { evt.X, evt.Y };
-
-					auto draggedIt = std::find(m_FilesInfo.begin(), m_FilesInfo.end(), draggedItem);
-
-					for (auto it = m_FilesInfo.begin(); it != m_FilesInfo.end(); ++it)
+					// TODO Can't swap here have to insert the dragged element so that
+					// the order of the other elements does not change
+					if (it->TargetBounds.Contains({ evt.X, evt.Y }))
 					{
-						if (it->TargetBounds.Contains({ evt.X, evt.Y }))
-						{
-							std::swap(*it, *draggedIt);
-						}
+						/*
+						std::vector<StageInfo> newStageInfo;
+						newStageInfo.reserve(m_StagesInfo.size());
+						auto [min, max] = std::minmax(it, draggedIt);
+						auto count = max - min;
+						auto pos = std::copy(m_StagesInfo.begin(), min, std::back_inserter(newStageInfo));
+						*/
+						std::swap(*it, *draggedIt);
+
 					}
-
-					
-
 				}
 			
 			}
@@ -1362,16 +1416,16 @@ namespace bsf
 			{
 				auto& draggedItem = m_DraggedItem.value();
 
-				auto draggedIt = std::find(m_FilesInfo.begin(), m_FilesInfo.end(), draggedItem);
+				auto draggedIt = std::find(m_StagesInfo.begin(), m_StagesInfo.end(), draggedItem);
 
 				draggedIt->IsDragged = false;
 				draggedIt->CurrentBounds = draggedItem.CurrentBounds;
 				m_DraggedItem = std::nullopt;
 
 				std::vector<std::string> files;
-				files.reserve(m_FilesInfo.size());
+				files.reserve(m_StagesInfo.size());
 
-				std::transform(m_FilesInfo.begin(), m_FilesInfo.end(), std::back_inserter(files), [](const StageInfo& info) {
+				std::transform(m_StagesInfo.begin(), m_StagesInfo.end(), std::back_inserter(files), [](const StageInfo& info) {
 					return info.FileName;
 				});
 
@@ -1386,7 +1440,7 @@ namespace bsf
 			{
 				glm::vec2 pos = { evt.X,evt.Y };
 
-				for (const auto& info : m_FilesInfo)
+				for (const auto& info : m_StagesInfo)
 				{
 					if (!info.Visible)
 						continue;
@@ -1410,8 +1464,8 @@ namespace bsf
 	{
 		uint32_t visibleItems = m_Rows * m_Columns;
 		m_Files = files;
-		m_FilesInfo.clear();
-		m_FilesInfo.resize(files.size());
+		m_StagesInfo.clear();
+		m_StagesInfo.resize(files.size());
 		m_TotalRows = files.size() / m_Columns + (files.size() % m_Columns == 0 ? 0 : 1);
 		m_MaxTopRow = std::max(0, (int32_t)m_TotalRows - (int32_t)m_Rows);
 		m_HeightOffset = 0.0f;
@@ -1423,10 +1477,10 @@ namespace bsf
 		auto contentBounds = Bounds;
 		const float margin = style.GetMargin(Margin);
 		
-		m_ItemHeight = 2.0f;
-		MinSize.y = m_Rows * (m_ItemHeight + margin) + margin;
+		MinSize.y = m_Rows * (ItemHeight + margin) + margin;
+		MinSize.x = m_Columns * (ItemWidth + margin) + margin;
 
-		const float rowHeight = m_ItemHeight + margin;
+		const float rowHeight = ItemHeight + margin;
 
 		m_TotalHeight = m_TotalRows * rowHeight  + margin;
 		m_MaxHeightOffset = m_MaxTopRow * rowHeight;
@@ -1440,6 +1494,8 @@ namespace bsf
 		const float margin = style.GetMargin(Margin);
 		const float dS = time.Delta * Bounds.Width();
 
+		//BSF_INFO("{0} {1}", Bounds.Width(), Bounds.Height());
+
 		contentBounds.Shrink(margin);
 
 		r2.Push();
@@ -1448,7 +1504,7 @@ namespace bsf
 
 		r2.Clip(Bounds);
 
-		for (auto& info : m_FilesInfo)
+		for (auto& info : m_StagesInfo)
 		{
 
 			info.CurrentBounds.Position = MoveTowards(info.CurrentBounds.Position, info.TargetBounds.Position, dS);
@@ -1482,9 +1538,9 @@ namespace bsf
 		const float margin = style.GetMargin(Margin);
 		contentBounds.Shrink(margin);
 
-		m_ItemWidth = (contentBounds.Width() - (m_Columns - 1.0f) * margin) / m_Columns;
+		ItemWidth = (contentBounds.Width() - (m_Columns - 1.0f) * margin) / m_Columns;
 
-		std::for_each(m_FilesInfo.begin(), m_FilesInfo.end(), [](StageInfo& info) {info.Visible = false; });
+		std::for_each(m_StagesInfo.begin(), m_StagesInfo.end(), [](StageInfo& info) {info.Visible = false; });
 
 
 		for (int32_t i = 0; i < m_Files.size(); ++i)
@@ -1492,13 +1548,13 @@ namespace bsf
 			int32_t x = i % (int32_t)m_Columns;
 			int32_t y = -i / (int32_t)m_Columns;
 
-			auto& info = m_FilesInfo[i];
+			auto& info = m_StagesInfo[i];
 
-			info.TargetBounds.Position.x = contentBounds.Position.x + x * (m_ItemWidth + margin);
+			info.TargetBounds.Position.x = contentBounds.Position.x + x * (ItemWidth + margin);
 			info.TargetBounds.Position.y = contentBounds.Position.y + contentBounds.Height() +
-				(y - 1) * (m_ItemHeight + margin) + margin + m_HeightOffset;
+				(y - 1) * (ItemHeight + margin) + margin + m_HeightOffset;
 
-			info.TargetBounds.Size = { m_ItemWidth, m_ItemHeight };
+			info.TargetBounds.Size = { ItemWidth, ItemHeight };
 
 			if (!info.Initialized)
 			{

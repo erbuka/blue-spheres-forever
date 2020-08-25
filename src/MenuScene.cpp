@@ -64,13 +64,13 @@ namespace bsf
 	}
 
 	template<typename T>
-	void SelectMenuItem<T>::AddOption(const std::string& caption, const Ref<T>& value)
+	void SelectMenuItem<T>::AddOption(const std::string& caption, const T& value)
 	{
 		m_Options.push_back({ caption, value });
 	}
 
 	template<typename T>
-	const Ref<T>& SelectMenuItem<T>::GetSelectedOption()
+	const T& SelectMenuItem<T>::GetSelectedOption()
 	{
 		return m_Options[m_SelectedOption].second;
 	}
@@ -97,20 +97,20 @@ namespace bsf
 
 
 		customStagesMenu->AddItem<ButtonMenuItem>("Play")->SetConfirmFunction([&](MenuRoot& root) {
-			auto stage = m_SelectStageMenuItem->GetSelectedOption();
+			auto stageFile = m_SelectStageMenuItem->GetSelectedOption();
+			auto stage = MakeRef<Stage>();
+			stage->Load(stageFile);
 			PlayStage(stage, GameInfo{ GameMode::CustomStage, 0, 0 });
 			return true;
 		});
 
 		{ // Custom stage select
-			m_SelectStageMenuItem = customStagesMenu->AddItem<SelectMenuItem<Stage>>("Stage");
-
-			uint32_t i = 0;
-			for (const auto& stage : LoadCustomStages())
+			m_SelectStageMenuItem = customStagesMenu->AddItem<SelectMenuItem<std::string>>("Stage");
+			Stage stage;
+			for (const auto& stageFile : Stage::GetStageFiles())
 			{
-				std::stringstream ss;
-				ss << "Stage #" << ++i;
-				m_SelectStageMenuItem->AddOption(ss.str(), stage);
+				stage.Load(stageFile);
+				m_SelectStageMenuItem->AddOption(stage.Name, stageFile);
 			}
 		}
 
@@ -190,26 +190,7 @@ namespace bsf
 			unsubscribe();
 	}
 
-	std::vector<Ref<Stage>> MenuScene::LoadCustomStages()
-	{
-		namespace fs = std::filesystem;
-
-		std::vector<Ref<Stage>> result;
-
-		for (auto& entry : fs::directory_iterator("assets/data"))
-		{
-			if (entry.is_regular_file() && entry.path().extension() == ".bss")
-			{
-				BSF_INFO("Loading stage: {0}", entry.path().string());
-				auto stage = MakeRef<Stage>();
-				if(stage->FromFile(entry.path().string()))
-					result.push_back(stage);
-			}
-		}
-
-		return result;
-	}
-
+	
 	void MenuScene::PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo)
 	{
 		auto fadeTask = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);

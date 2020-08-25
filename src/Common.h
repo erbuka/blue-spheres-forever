@@ -243,6 +243,11 @@ namespace bsf
 	}
 
 
+	void Trim(std::string& str);
+
+	uint32_t UniqueId();
+
+
 	template<typename T>
 	struct InterpolatedValue
 	{

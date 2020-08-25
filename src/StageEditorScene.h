@@ -23,6 +23,7 @@ TODO
 - Add start postion/direction buttons
 - Stage editor area background ???
 - Fix double file selected
+- Add some sort of notification/messages for when the user saves, or maybe for errors
 */
 
 namespace bsf
@@ -68,11 +69,23 @@ namespace bsf
 
 	};
 
+	template<typename T>
+	struct UIBoundValue
+	{
+	public:
+		UIBoundValue(const T& def) : m_Default(def) {}
+		std::function<void(T)> Set = [&](T val) { m_Default = val; };
+		std::function<T(void)> Get = [&] { return m_Default; };
+	private:
+		T m_Default;
+	};
+
+
+
 	struct UIStyle
 	{
 
 		UIStyle() { Recompute(); }
-		
 
 		// Sizes
 		float GlobalScale = 20.0f;
@@ -269,10 +282,14 @@ namespace bsf
 			std::vector<std::string> Files;
 		};
 
-		UIStageList(uint32_t rows, uint32_t cols);
 
 		EventEmitter<StageSelectedEvent> FileSelected;
 		EventEmitter<StageReorderEvent> FileReorder;
+
+		float ItemWidth = 2.0f;
+		float ItemHeight = 2.0f;
+
+		UIStageList(uint32_t rows, uint32_t cols);
 
 		void SetFiles(const std::vector<std::string>& files);
 		void Update(const UIRoot& root, const Time& time) override;
@@ -298,9 +315,6 @@ namespace bsf
 		uint32_t m_Rows = 0;
 		uint32_t m_Columns = 0;
 		
-		float m_ItemWidth = 0.0f;
-		float m_ItemHeight = 0.0f;
-
 		float m_MaxHeightOffset = 0.0f;
 		float m_HeightOffset = 0.0f;
 		float m_TotalHeight = 0.0f;
@@ -309,7 +323,7 @@ namespace bsf
 		uint32_t m_MaxTopRow = 0;
 
 		std::vector<std::string> m_Files;
-		std::vector<StageInfo> m_FilesInfo;
+		std::vector<StageInfo> m_StagesInfo;
 
 		std::optional<StageInfo> m_DraggedItem;
 
@@ -338,7 +352,7 @@ namespace bsf
 
 		void DrawCursor(Renderer2D& r2, const UIStyle& style);
 
-		glm::vec2 GetRawStageCoordinates(const glm::vec2 pos) const;
+		glm::vec2 GetUnboundedCoordinates(const glm::vec2 pos) const;
 		std::optional<glm::ivec2> GetStageCoordinates(const glm::vec2 pos) const;
 
 		// StageObject: { Texture, Tint }
@@ -411,13 +425,26 @@ namespace bsf
 
 	};
 	
+	enum class UISliderOrientation { Horizontal, Vertical };
+
+
+	
 	class UISlider : public UIElement
 	{
 	public:
+
+		struct ValueChangedEvent
+		{
+			float Value;
+		};
+
 		using BindFn = std::function<float&(void)>;
+
+		EventEmitter<ValueChangedEvent> ValueChanged;
 
 		std::string Label = "Color Picker";
 		float Min = 0.0f, Max = 1.0f;
+		UISliderOrientation Orientation = UISliderOrientation::Horizontal;
 
 		UISlider();
 
@@ -432,9 +459,12 @@ namespace bsf
 
 		bool IntersectHandle(const glm::vec2& pos) const;
 		float GetDelta() const;
+		glm::vec2 GetHandlePosition() const;
 
-		float m_FallbackValue = 0.0f;
-		BindFn m_GetValue = [&] () -> float& { return m_FallbackValue; };
+		std::array<glm::vec2, 2> m_Limits;
+
+		float m_DefaultValue = 0.0f;
+		BindFn m_GetValue = [&] () -> float& { return m_DefaultValue; };
 	};
 
 	class UIColorPicker : public UIPanel
@@ -469,6 +499,7 @@ namespace bsf
 
 	private:
 
+		void OnNewButtonClick(const MouseEvent& evt);
 		void OnSaveButtonClick(const MouseEvent& evt);
 		void OnStageListButtonClick(const MouseEvent& evt);
 
@@ -477,8 +508,7 @@ namespace bsf
 		std::optional<std::string> m_CurrentStageFile;
 		Ref<Stage> m_CurrentStage;
 		Ref<UIRoot> m_uiRoot;
-		Ref<UILayer> m_uiSaveDialogLayer, m_uiStageListDialogLayer;
-		Ref<UITextInput> m_uiSaveStageName;
+		Ref<UILayer> m_uiStageListDialogLayer;
 		Ref<UIStageEditorArea> m_uiEditorArea;
 		Ref<UIStageList> m_uiStageList;
 
