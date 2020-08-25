@@ -73,13 +73,13 @@ namespace bsf
 	struct UIBoundValue
 	{
 	public:
+		UIBoundValue() = default;
 		UIBoundValue(const T& def) : m_Default(def) {}
-		std::function<void(T)> Set = [&](T val) { m_Default = val; };
+		std::function<void(const T&)> Set = [&](const T& val) { m_Default = val; };
 		std::function<T(void)> Get = [&] { return m_Default; };
 	private:
 		T m_Default;
 	};
-
 
 
 	struct UIStyle
@@ -374,27 +374,19 @@ namespace bsf
 	public:
 		std::string Label;
 
-		using PushFn = std::function<bool(const std::string&)>;
-		using PullFn = std::function<std::string(void)>;
-
 		UITextInput();
 
-		void BindPush(const PushFn& push) { m_Push = push; }
-		void BindPull(const PullFn& pull) { m_Pull = pull; }
+		void Bind(const UIBoundValue<std::string>& value) { m_Value = value; }
 
 		void Update(const UIRoot& root, const Time& time) override;
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
-		std::string GetValue() const { return m_Pull(); }
-		void SetValue(const std::string& value) { m_Push(value); }
+		std::string GetValue() const { return m_Value.Get(); }
+		void SetValue(const std::string& value) { m_Value.Set(value); };
 
 	private:
-
-		PushFn m_Push = [&](const std::string& val) { m_Value = val; return true; };
-		PullFn m_Pull = [&] { return m_Value; };
-
-		std::string m_Value;
+		UIBoundValue<std::string> m_Value = "";
 	};
 
 	class UIText : public UIElement

@@ -176,38 +176,37 @@ namespace bsf
 
 			// Stage name
 			{
+				UIBoundValue<std::string> val;
+				val.Get = [&] { return m_CurrentStage->Name; };
+				val.Set = [&](const std::string& val) { m_CurrentStage->Name = val; };
 				auto stageNameInput = MakeRef<UITextInput>();
 				stageNameInput->Label = "Stage Name";
-				stageNameInput->BindPull([&] { return m_CurrentStage->Name; });
-				stageNameInput->BindPush([&](const std::string& val) { m_CurrentStage->Name = val; return true; });
+				stageNameInput->Bind(val);
 				properties->AddChild(stageNameInput);
 			}
 
 
 			// Max Rings input
 			{
-				auto maxRingsInput = MakeRef<UITextInput>();
-				maxRingsInput->Label = "Max Rings";
-				maxRingsInput->BindPush([&, check = std::regex("^[0-9]+$")](const std::string& val) {
+				UIBoundValue<std::string> val;
 
+				val.Set = [&, check = std::regex("^[0-9]+$")](const std::string& val) {
 					if (std::regex_match(val, check))
 					{
 						m_CurrentStage->MaxRings = std::atoi(val.c_str());
-						return true;
 					}
 					else if (val.empty())
 					{
 						m_CurrentStage->MaxRings = 0;
-						return true;
 					}
-					else
-					{
-						return false;
-					}
-				});
+				};
 
-				maxRingsInput->BindPull([&] {return std::to_string(m_CurrentStage->MaxRings); });
+				val.Get = [&] { return std::to_string(m_CurrentStage->MaxRings); };
 
+
+				auto maxRingsInput = MakeRef<UITextInput>();
+				maxRingsInput->Label = "Max Rings";
+				maxRingsInput->Bind(val);
 				properties->AddChild(maxRingsInput);
 			}
 
@@ -965,18 +964,20 @@ namespace bsf
 		PreferredSize = { 0.0f, 1.5f };
 
 		AddSubscription(KeyPressed, [&](const KeyPressedEvent& evt) {
-		
+
+			auto current = m_Value.Get();
+
 			if (evt.KeyCode == GLFW_KEY_BACKSPACE)
 			{
-				if(!m_Value.empty())
-					m_Push(m_Value.substr(0, m_Value.size() - 1));
+				if(!current.empty())
+					m_Value.Set(current.substr(0, current.size() - 1));
 			}
 			else
 			{
 				s_TestStr[0] = (char)evt.KeyCode;
 
 				if(std::regex_match(s_TestStr, s_AllowedCharacters))
-					m_Push(m_Value + (char)evt.KeyCode);
+					m_Value.Set(current + (char)evt.KeyCode);
 
 			}
 		});
@@ -988,7 +989,6 @@ namespace bsf
 		const float margin = GetStyle().GetMargin(Margin);
 
 		// Update the current value
-		m_Value = m_Pull();
 		MinSize.y = MaxSize.y = PreferredSize.y = 1.5f + 2.0f * margin;
 	}
 
@@ -1000,7 +1000,7 @@ namespace bsf
 	void UITextInput::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
 		auto& style = GetStyle();
-
+		auto value = m_Value.Get();
 		const float margin = style.GetMargin(Margin);
 		glm::vec2 shadowOffset = { style.TextShadowOffset, -style.TextShadowOffset };
 		Rect innerBounds = Bounds;
@@ -1026,7 +1026,7 @@ namespace bsf
 			r2.Push();
 			r2.Pivot(EPivot::BottomLeft);
 			r2.Translate({ margin, 0.0f });
-			r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), m_Value);
+			r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), value);
 			r2.Pop();
 		}
 
