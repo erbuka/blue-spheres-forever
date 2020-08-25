@@ -19,8 +19,6 @@ TODO:
 - Finish the stage list UI
 - Add "New" button
 - Finish tool bar icons
-- Add name of the stage to the left bar
-- Add start postion/direction buttons
 - Stage editor area background ???
 - Fix double file selected
 - Add some sort of notification/messages for when the user saves, or maybe for errors
@@ -45,7 +43,8 @@ namespace bsf
 		YellowSphere,
 		Bumper,
 		Ring,
-		AvoidSearch
+		AvoidSearch,
+		Position
 	};
 
 	enum class UILayout
@@ -364,6 +363,7 @@ namespace bsf
 		std::unordered_map<EStageObject, std::tuple<Ref<Texture2D>, glm::vec4>> m_StageObjRendering;
 		// Avoid search { Texture, Tint }
 		std::tuple<Ref<Texture2D>, glm::vec4> m_AvoidSearchRendering;
+		std::tuple<Ref<Texture2D>, glm::vec4> m_PositionRendering;
 
 		float m_MinZoom = 0.5f, m_MaxZoom = std::numeric_limits<float>::max();
 
@@ -496,12 +496,6 @@ namespace bsf
 
 	private:
 
-		void OnNewButtonClick(const MouseEvent& evt);
-		void OnSaveButtonClick(const MouseEvent& evt);
-		void OnStageListButtonClick(const MouseEvent& evt);
-
-		void LoadStage(const std::string& fileName);
-
 		std::optional<std::string> m_CurrentStageFile;
 		Ref<Stage> m_CurrentStage;
 		Ref<UIRoot> m_uiRoot;
@@ -511,7 +505,15 @@ namespace bsf
 
 		std::vector<Ref<UIIconButton>> m_ToolButtons;
 
+		void OnNewButtonClick(const MouseEvent& evt);
+		void OnSaveButtonClick(const MouseEvent& evt);
+		void OnStageListButtonClick(const MouseEvent& evt);
+
+		void LoadStage(const std::string& fileName);
 		void InitializeUI();
+
+
+
 
 	};
 

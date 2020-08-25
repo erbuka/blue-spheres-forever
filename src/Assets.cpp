@@ -73,6 +73,7 @@ namespace bsf
 		m_Assets[AssetName::TexUISphere] = loadTex2D("assets/textures/sphere_ui.png");
 		m_Assets[AssetName::TexUIRing] = loadTex2D("assets/textures/ring_ui.png");
 		m_Assets[AssetName::TexUIAvoidSearch] = loadTex2D("assets/textures/avoid_search_ui.png");
+		m_Assets[AssetName::TexUIPosition] = loadTex2D("assets/textures/position_ui.png");
 
 
 		// Sound

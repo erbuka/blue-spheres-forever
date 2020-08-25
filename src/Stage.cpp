@@ -273,6 +273,20 @@ namespace bsf
 		return std::count(std::execution::par_unseq, m_Data.begin(), m_Data.end(), object);
 	}
 
+
+	bool Stage::operator==(const Stage& other) const
+	{
+		return m_Data == other.m_Data &&
+			m_AvoidSearch == other.m_AvoidSearch &&
+			StartPoint == other.StartPoint &&
+			StartDirection == other.StartDirection &&
+			MaxRings == other.MaxRings &&
+			EmeraldColor == other.EmeraldColor &&
+			SkyColors == other.SkyColors &&
+			PatternColors == other.PatternColors;
+
+	}
+
 	void Stage::WrapX(int32_t& x) const
 	{
 		while (x < 0)

@@ -38,6 +38,7 @@ namespace bsf
 		TexUISphere,
 		TexUIRing,
 		TexUIAvoidSearch,
+		TexUIPosition,
 
 		FontMain,
 		FontText,

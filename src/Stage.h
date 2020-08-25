@@ -60,7 +60,7 @@ namespace bsf
 
 		std::string Name = "Untitled";
 		
-		glm::ivec2 StartPoint = { 0.0f, 0.0f }, StartDirection = { 0.0f, 0.0f };
+		glm::ivec2 StartPoint = { 0, 0 }, StartDirection = { 1, 0 };
 
 		uint32_t MaxRings = 0;
 		uint32_t Rings = 0;
@@ -106,7 +106,10 @@ namespace bsf
 
 		bool IsPerfect() const { return Rings == 0; }
 
+		std::vector<EStageObject>& GetData() { return m_Data; }
+		std::vector<EAvoidSearch>& GetAvoidSearch() { return m_AvoidSearch; }
 
+		bool operator==(const Stage& other) const;
 
 	private:
 

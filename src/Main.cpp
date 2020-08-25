@@ -17,13 +17,15 @@ using namespace glm;
 
 // TODO Move convertion functions somewhere else
 
-static void LoadSectionsBinary();
-
-static void ConvertStages();
+void ConvertSections();
+void ConvertStages();
 
 
 int main() 
 {
+	ConvertStages();
+	//return 0;
+
 	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
@@ -38,9 +40,8 @@ int main()
 
 
 
-
 // Load sections as binary and save as json
-static void LoadSectionsBinary()
+void ConvertSections()
 {
 
 	using json = nlohmann::json;
@@ -73,7 +74,7 @@ static void LoadSectionsBinary()
 		is.ReadSome(avoidSearch.size(), avoidSearch.data());
 
 
-		for (uint32_t y = 0; y < 16; y++)
+		for (uint32_t y = 0; y < 8; y++)
 		{
 			for (uint32_t x = 0; x < 16; x++)
 			{
@@ -104,10 +105,32 @@ static void LoadSectionsBinary()
 void ConvertStages()
 {
 	namespace fs = std::filesystem;
-
 	std::vector<Ref<Stage>> result;
 
 	Stage stage;
+
+	auto flipStage = [](const Stage& s) {
+		Stage stage(s);
+
+		auto& data = stage.GetData();
+		auto& avoid = stage.GetAvoidSearch();
+		auto w = stage.GetWidth();
+		auto h = stage.GetHeight();
+
+		for (size_t y = 0; y < stage.GetHeight() / 2; y++)
+		{
+			for (size_t x = 0; x < stage.GetWidth(); x++)
+			{
+				std::swap(data[y * w + x], data[(h - (y + 1)) * w + x]);
+				std::swap(avoid[y * w + x], avoid[(h - (y + 1)) * w + x]);
+			}
+		}
+		stage.StartPoint.y = stage.GetHeight() - (stage.StartPoint.y + 1);
+		stage.StartDirection.y = -stage.StartDirection.y;
+
+		return stage;
+	};
+
 
 	for (auto& entry : fs::directory_iterator("assets/data"))
 	{
@@ -116,8 +139,15 @@ void ConvertStages()
 		{
 			stage.FromFile(path.string());
 			stage.Name = path.filename().string();
+
+			// Need to flip here
+			auto flipped = flipStage(stage);
+
+			assert(stage == flipStage(flipped));
+			
+
 			path.replace_extension(".bssj");
-			stage.Save(path.string());
+			flipped.Save(path.string());
 		}
 	}
 

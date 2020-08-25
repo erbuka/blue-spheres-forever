@@ -135,6 +135,7 @@ namespace bsf
 				std::make_tuple(StageEditorTool::Bumper,		AssetName::TexUISphere,			Colors::White),
 				std::make_tuple(StageEditorTool::Ring,			AssetName::TexUIRing,			Colors::Ring),
 				std::make_tuple(StageEditorTool::AvoidSearch,	AssetName::TexUIAvoidSearch,	Colors::White),
+				std::make_tuple(StageEditorTool::Position,		AssetName::TexUIPosition,		Colors::White),
 			};
 
 			for (const auto& toolSpec : tools)
@@ -791,6 +792,7 @@ namespace bsf
 		m_BgPattern = CreateCheckerBoard({ 0xffffffff, 0xffcccccc });
 
 		m_AvoidSearchRendering = { assets.Get<Texture2D>(AssetName::TexUIAvoidSearch), Colors::White };
+		m_PositionRendering = { assets.Get<Texture2D>(AssetName::TexUIPosition), Colors::White };
 
 		auto editCallback = [&](const MouseEvent& evt) {
 
@@ -807,6 +809,14 @@ namespace bsf
 					else if (ActiveTool == StageEditorTool::AvoidSearch)
 					{
 						m_Stage->SetAvoidSearchAt(stageCoords.x, stageCoords.y, EAvoidSearch::Yes);
+					}
+					else if (ActiveTool == StageEditorTool::Position)
+					{
+						if (m_Stage->StartPoint == stageCoords)
+							m_Stage->StartDirection = { -m_Stage->StartDirection.y, m_Stage->StartDirection.x };
+						
+						m_Stage->StartPoint = stageCoords;
+
 					}
 
 				}
@@ -860,12 +870,10 @@ namespace bsf
 
 			r2.Push();
 			
-			r2.Color(style.GetBackgroundColor(*this, style.Palette.Background));
-			r2.DrawQuad(Bounds.Position, Bounds.Size);
-
 			r2.Clip(Bounds);
 			
 			r2.Texture(m_BgPattern);
+			r2.Color(style.GetBackgroundColor(*this, style.Palette.Background));
 			r2.DrawQuad(Bounds.Position, Bounds.Size, Bounds.Size / (m_Zoom * 2.0f) , m_ViewOrigin / (m_Zoom * 2.0f) + glm::vec2(0.25f, 0.25f));
 
 			r2.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
@@ -908,6 +916,32 @@ namespace bsf
 					}
 
 				}
+			}
+
+			// Position
+			{
+				float angle = std::atan2f((float)m_Stage->StartDirection.y, (float)m_Stage->StartDirection.x)
+					- glm::pi<float>() / 2.0f;
+
+				r2.Push();
+				r2.Texture(std::get<0>(m_PositionRendering));
+				r2.Pivot(EPivot::Center);
+				r2.Translate({ 0.5f, 0.5f });
+
+				{
+					r2.Push();
+					r2.Color(style.ShadowColor);
+					r2.Translate((glm::vec2)m_Stage->StartPoint + glm::vec2(style.ShadowOffset, -style.ShadowOffset));
+					r2.Rotate(angle);
+					r2.DrawQuad();
+					r2.Pop();
+				}
+
+				r2.Translate(m_Stage->StartPoint);
+				r2.Rotate(angle);
+				r2.Color(std::get<1>(m_PositionRendering));
+				r2.DrawQuad();
+				r2.Pop();
 			}
 
 			DrawCursor(r2, style);
