@@ -105,6 +105,15 @@ namespace bsf
 		m_uiRoot = MakeRef<UIRoot>();
 		m_uiRoot->Attach(GetApplication());
 		m_uiRoot->SetStyle(style);
+
+		const auto makeToolBarButton = [&](AssetName icon, const glm::vec4& tint) {
+			auto btn = MakeRef<UIIconButton>();
+			btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+			btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
+			btn->Icon = assets.Get<Texture2D>(icon);
+			btn->Tint = tint;
+			return btn;
+		};
 		
 		// Editor layer
 		{
@@ -117,25 +126,23 @@ namespace bsf
 			title->Text = "Stage Editor";
 			topBar->AddChild(title);
 
+			
+
 			auto tools = {
-				std::make_tuple(StageEditorTool::BlueSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::BlueSphere),
-				std::make_tuple(StageEditorTool::RedSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::RedSphere),
-				std::make_tuple(StageEditorTool::YellowSphere, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::YellowSphere),
-				std::make_tuple(StageEditorTool::Bumper, assets.Get<Texture2D>(AssetName::TexSphereUI), Colors::White),
-				std::make_tuple(StageEditorTool::Ring, assets.Get<Texture2D>(AssetName::TexRingUI), Colors::Ring),
+				std::make_tuple(StageEditorTool::BlueSphere,	AssetName::TexUISphere,			Colors::BlueSphere),
+				std::make_tuple(StageEditorTool::RedSphere,		AssetName::TexUISphere,			Colors::RedSphere),
+				std::make_tuple(StageEditorTool::YellowSphere,	AssetName::TexUISphere,			Colors::YellowSphere),
+				std::make_tuple(StageEditorTool::Bumper,		AssetName::TexUISphere,			Colors::White),
+				std::make_tuple(StageEditorTool::Ring,			AssetName::TexUIRing,			Colors::Ring),
+				std::make_tuple(StageEditorTool::AvoidSearch,	AssetName::TexUIAvoidSearch,	Colors::White),
 			};
 
 			for (const auto& toolSpec : tools)
 			{
-				auto btn = MakeRef<UIIconButton>();
 
-				btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-				btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-				btn->Icon = std::get<1>(toolSpec);
-				btn->Tint = std::get<2>(toolSpec);
-				auto tool = std::get<0>(toolSpec);
+				auto btn = makeToolBarButton(std::get<1>(toolSpec), std::get<2>(toolSpec));
 
-				AddSubscription(btn->MouseClicked, [&, btn, tool](const MouseEvent& evt) {
+				AddSubscription(btn->MouseClicked, [&, btn, tool = std::get<0>(toolSpec)](const MouseEvent& evt) {
 					for (auto& b : m_ToolButtons)
 						b->Selected = false;
 					m_uiEditorArea->ActiveTool = tool;
@@ -146,24 +153,17 @@ namespace bsf
 				topBar->AddChild(btn);
 			}
 
+		
 			// Save button
 			{
-				auto btn = MakeRef<UIIconButton>();
-				btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-				btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-				btn->Icon = assets.Get<Texture2D>(AssetName::TexWhite);
-				btn->Tint = Colors::Green;
+				auto btn = makeToolBarButton(AssetName::TexWhite, Colors::Green);
 				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnSaveButtonClick);
 				topBar->AddChild(btn);
 			}
 
 			// Stage list button
 			{
-				auto btn = MakeRef<UIIconButton>();
-				btn->PreferredSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-				btn->MaxSize = glm::vec2{ s_uiToolbarButtonSize, s_uiToolbarButtonSize };
-				btn->Icon = assets.Get<Texture2D>(AssetName::TexWhite);
-				btn->Tint = Colors::Yellow;
+				auto btn = makeToolBarButton(AssetName::TexWhite, Colors::Yellow);
 				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnStageListButtonClick);
 				topBar->AddChild(btn);
 
@@ -317,10 +317,18 @@ namespace bsf
 			dialogPanel->AddChild(m_uiStageList);
 
 			// Scroll slider
-			auto scrollSlider = MakeRef<UISlider>();
-			scrollSlider->Orientation = UISliderOrientation::Vertical;
-			dialogPanel->AddChild(scrollSlider);
+			{
+				UIBoundValue<float> val = 0.0f;
+				val.Get = [&] {return m_uiStageList->GetScroll(); };
+				val.Set = [&](const float& v) { m_uiStageList->SetScroll(v); };
 
+				auto scrollSlider = MakeRef<UISlider>();
+				scrollSlider->Orientation = UISliderOrientation::Vertical;
+				scrollSlider->ForegroundColor = style.Palette.BackgroundVariant;
+				scrollSlider->Bind(val);
+
+				dialogPanel->AddChild(scrollSlider);
+			}
 
 			m_uiStageListDialogLayer->AddChild(dialogPanel);
 
@@ -606,7 +614,10 @@ namespace bsf
 
 		AddSubscription(app.Wheel, [&](const WheelEvent& evt) {
 			if (m_MouseState.HoverTarget)
-				m_MouseState.HoverTarget->Wheel.Emit(evt);
+			{
+				auto pos = GetMousePosition({ evt.X, evt.Y });
+				m_MouseState.HoverTarget->Wheel.Emit({ evt.DeltaX, evt.DeltaY, pos.x, pos.y });
+			}
 		});
 
 		AddSubscription(app.MousePressed, [&](const MouseEvent& evt) {
@@ -761,23 +772,25 @@ namespace bsf
 		auto& assets = Assets::GetInstance();
 
 		static const std::unordered_map<StageEditorTool, EStageObject> s_toolMap = {
-			{ StageEditorTool::BlueSphere, EStageObject::BlueSphere },
-			{ StageEditorTool::RedSphere, EStageObject::RedSphere },
-			{ StageEditorTool::YellowSphere, EStageObject::YellowSphere },
-			{ StageEditorTool::Bumper, EStageObject::Bumper },
-			{ StageEditorTool::Ring, EStageObject::Ring }
+			{ StageEditorTool::BlueSphere,		EStageObject::BlueSphere },
+			{ StageEditorTool::RedSphere,		EStageObject::RedSphere },
+			{ StageEditorTool::YellowSphere,	EStageObject::YellowSphere },
+			{ StageEditorTool::Bumper,			EStageObject::Bumper },
+			{ StageEditorTool::Ring,			EStageObject::Ring }
 		};
 
 		m_StageObjRendering = {
-			{ EStageObject::BlueSphere,		{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::BlueSphere }},
-			{ EStageObject::RedSphere,		{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::RedSphere }},
-			{ EStageObject::YellowSphere,	{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::YellowSphere }},
-			{ EStageObject::Bumper,			{ assets.Get<Texture2D>(AssetName::TexSphereUI),	Colors::White }},
-			{ EStageObject::Ring,			{ assets.Get<Texture2D>(AssetName::TexRingUI),		Colors::Ring }}
+			{ EStageObject::BlueSphere,		{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::BlueSphere }},
+			{ EStageObject::RedSphere,		{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::RedSphere }},
+			{ EStageObject::YellowSphere,	{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::YellowSphere }},
+			{ EStageObject::Bumper,			{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::White }},
+			{ EStageObject::Ring,			{ assets.Get<Texture2D>(AssetName::TexUIRing),		Colors::Ring }}
 		};
 
 		m_Pattern = CreateCheckerBoard({ 0, 0 });
 		m_BgPattern = CreateCheckerBoard({ 0xffffffff, 0xffcccccc });
+
+		m_AvoidSearchRendering = { assets.Get<Texture2D>(AssetName::TexUIAvoidSearch), Colors::White };
 
 		auto editCallback = [&](const MouseEvent& evt) {
 
@@ -788,10 +801,16 @@ namespace bsf
 				if (evt.Button == MouseButton::Left)
 				{
 					if (auto obj = s_toolMap.find(ActiveTool); obj != s_toolMap.end())
+					{
 						m_Stage->SetValueAt(stageCoords.x, stageCoords.y, obj->second);
-				}
+					}
+					else if (ActiveTool == StageEditorTool::AvoidSearch)
+					{
+						m_Stage->SetAvoidSearchAt(stageCoords.x, stageCoords.y, EAvoidSearch::Yes);
+					}
 
-				if (evt.Button == MouseButton::Right)
+				}
+				else if (evt.Button == MouseButton::Right)
 				{
 					m_Stage->SetValueAt(stageCoords.x, stageCoords.y, EStageObject::None);
 					m_Stage->SetAvoidSearchAt(stageCoords.x, stageCoords.y, EAvoidSearch::No);
@@ -834,9 +853,10 @@ namespace bsf
 		if (m_Stage)
 		{
 			auto& style = GetStyle();
-
+			auto& assets = Assets::GetInstance();
 			auto size = glm::vec2(m_Stage->GetWidth(), m_Stage->GetHeight()) * m_Zoom;
 			auto tiling = glm::vec2(m_Stage->GetWidth(), m_Stage->GetHeight()) / 2.0f;
+			auto texWhite = assets.Get<Texture2D>(AssetName::TexWhite);
 
 			r2.Push();
 			
@@ -873,6 +893,20 @@ namespace bsf
 						r2.Color(std::get<1>(obj->second));
 						r2.DrawQuad({ x, y });
 					}
+
+					if (m_Stage->GetAvoidSearchAt(x, y) == EAvoidSearch::Yes)
+					{
+						r2.Push();
+						r2.Texture(std::get<0>(m_AvoidSearchRendering));
+						r2.Color(style.ShadowColor);
+						r2.DrawQuad({ x + style.ShadowOffset, y - style.ShadowOffset });
+
+						r2.Color(std::get<1>(m_AvoidSearchRendering));
+						r2.DrawQuad({ x, y });
+
+						r2.Pop();
+					}
+
 				}
 			}
 
@@ -900,6 +934,7 @@ namespace bsf
 
 	}
 
+	
 	void UIStageEditorArea::DrawCursor(Renderer2D& r2, const UIStyle& style)
 	{
 		const float lw = style.StageAreaCrosshairSize; // line width
@@ -1107,18 +1142,13 @@ namespace bsf
 			float len = glm::length(conj);
 			auto dir = glm::normalize(conj);
 			float t = std::clamp(glm::dot(dir, pos - m_Limits[0]), 0.0f, len) / len;
-			m_GetValue() = t * (Max - Min) + Min;
-			ValueChanged.Emit({ m_GetValue() });
+			m_Value.Set(t * (Max - Min) + Min);
+			ValueChanged.Emit({ m_Value.Get() });
 		};
 
 		AddSubscription(MouseDragged, sliderMouseHandler);
 		AddSubscription(MousePressed, sliderMouseHandler);
 
-	}
-
-	void UISlider::Bind(const BindFn& fn)
-	{
-		m_GetValue = fn;
 	}
 
 	void UISlider::Update(const UIRoot& root, const Time& time)
@@ -1130,7 +1160,7 @@ namespace bsf
 	void UISlider::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
 		auto& style = GetStyle();
-		auto texture = Assets::GetInstance().Get<Texture2D>(AssetName::TexSphereUI);
+		auto texture = Assets::GetInstance().Get<Texture2D>(AssetName::TexUISphere);
 		auto contentBounds = GetContentBounds();
 		float margin = style.GetMargin();
 
@@ -1234,7 +1264,7 @@ namespace bsf
 
 	float UISlider::GetDelta() const
 	{
-		return (m_GetValue() - Min) / (Max - Min);
+		return (m_Value.Get() - Min) / (Max - Min);
 	}
 
 	glm::vec2 UISlider::GetHandlePosition() const
@@ -1262,9 +1292,13 @@ namespace bsf
 		m_RGB[1]->ForegroundColor = Colors::Green;
 		m_RGB[2]->ForegroundColor = Colors::Blue;
 
-		m_RGB[0]->Bind([&]() -> float& { return m_GetValue().r; });
-		m_RGB[1]->Bind([&]() -> float& { return m_GetValue().g; });
-		m_RGB[2]->Bind([&]() -> float& { return m_GetValue().b; });
+		for (size_t i = 0; i < m_RGB.size(); ++i)
+		{
+			UIBoundValue<float> val = 0.0f;
+			val.Get = [&, i] { return glm::value_ptr(m_GetValue())[i]; };
+			val.Set = [&, i] (const float& v) { glm::value_ptr(m_GetValue())[i] = v; };
+			m_RGB[i]->Bind(val);
+		}
 
 		m_Label = MakeRef<UIText>();
 
@@ -1529,7 +1563,8 @@ namespace bsf
 
 	void UIStageList::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
 	{
-		// TODO can be dynamic doesn't really make any difference
+		// TODO can be dynamic doesn't really make any difference (not sure)
+		// Or could ma make it static
 		static Stage s_Stage;
 
 		Bounds = { origin, computedSize };
@@ -1582,14 +1617,24 @@ namespace bsf
 
 	}
 
+	void UIStageList::SetScroll(float scroll)
+	{
+		m_HeightOffset = glm::lerp(0.0f, m_MaxHeightOffset, std::clamp(scroll, 0.0f, 1.0f));
+	}
+
+	float UIStageList::GetScroll() const
+	{
+		return m_HeightOffset / m_MaxHeightOffset;
+	}
+
 	void UIStageList::RenderItem(Renderer2D& r2, const StageInfo& info)
 	{
 		auto& assets = Assets::GetInstance();
 		auto& style = GetStyle();
 
 		auto font = assets.Get<Font>(AssetName::FontMain);
-		auto sphereUi = assets.Get<Texture2D>(AssetName::TexSphereUI);
-		auto ringUi = assets.Get<Texture2D>(AssetName::TexRingUI);
+		auto sphereUi = assets.Get<Texture2D>(AssetName::TexUISphere);
+		auto ringUi = assets.Get<Texture2D>(AssetName::TexUIRing);
 
 		const float margin = style.GetMargin(Margin);
 

@@ -959,7 +959,7 @@ namespace bsf
 				renderer2d.Pivot(EPivot::TopLeft);
 				renderer2d.Translate({ padding, sh - padding });
 
-				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexSphereUI));
+				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexUISphere));
 				
 				renderer2d.Color(Colors::Black);
 				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });
@@ -984,7 +984,7 @@ namespace bsf
 				renderer2d.Pivot(EPivot::TopRight);
 				renderer2d.Translate({ sw - padding, sh - padding });
 
-				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexRingUI));
+				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexUIRing));
 
 				renderer2d.Color(Colors::Black);
 				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });

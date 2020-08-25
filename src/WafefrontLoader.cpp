@@ -3,6 +3,7 @@
 #include "Model.h"
 #include "WafefrontLoader.h"
 #include "Log.h"
+#include "Common.h"
 
 #include <sstream>
 #include <string_view>
@@ -106,7 +107,7 @@ namespace bsf
 			std::string line;
 			std::getline(stdIs, line);
 	
-			// TODO: trim line
+			Trim(line);
 
 			// Skip empty lines
 			if (line.empty())

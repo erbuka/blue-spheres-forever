@@ -15,7 +15,7 @@
 #include "Common.h"
 
 /*
-TODO
+TODO:
 - Finish the stage list UI
 - Add "New" button
 - Finish tool bar icons
@@ -44,7 +44,8 @@ namespace bsf
 		RedSphere,
 		YellowSphere,
 		Bumper,
-		Ring
+		Ring,
+		AvoidSearch
 	};
 
 	enum class UILayout
@@ -96,6 +97,7 @@ namespace bsf
 
 		float StageAreaCrosshairSize = 0.3f;
 		float StageAreaCrosshairThickness = 0.1f;
+		float StageAreaAvoidSearchThickness = 0.3f;
 
 		float TextShadowOffset = 0.025f;
 		float LabelFontScale = 0.5f;
@@ -296,6 +298,9 @@ namespace bsf
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
 
+		void SetScroll(float scroll);
+		float GetScroll() const;
+
 	private:
 
 		struct StageInfo
@@ -357,6 +362,8 @@ namespace bsf
 
 		// StageObject: { Texture, Tint }
 		std::unordered_map<EStageObject, std::tuple<Ref<Texture2D>, glm::vec4>> m_StageObjRendering;
+		// Avoid search { Texture, Tint }
+		std::tuple<Ref<Texture2D>, glm::vec4> m_AvoidSearchRendering;
 
 		float m_MinZoom = 0.5f, m_MaxZoom = std::numeric_limits<float>::max();
 
@@ -430,7 +437,6 @@ namespace bsf
 			float Value;
 		};
 
-		using BindFn = std::function<float&(void)>;
 
 		EventEmitter<ValueChangedEvent> ValueChanged;
 
@@ -440,7 +446,7 @@ namespace bsf
 
 		UISlider();
 
-		void Bind(const BindFn& fn);
+		void Bind(const UIBoundValue<float>& value) { m_Value = value; }
 		void Update(const UIRoot& root, const Time& time) override;
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 		void UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize) override;
@@ -455,8 +461,7 @@ namespace bsf
 
 		std::array<glm::vec2, 2> m_Limits;
 
-		float m_DefaultValue = 0.0f;
-		BindFn m_GetValue = [&] () -> float& { return m_DefaultValue; };
+		UIBoundValue<float> m_Value = 0.0f;
 	};
 
 	class UIColorPicker : public UIPanel

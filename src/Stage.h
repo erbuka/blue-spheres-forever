@@ -106,7 +106,6 @@ namespace bsf
 
 		bool IsPerfect() const { return Rings == 0; }
 
-		void Dump();
 
 
 	private:

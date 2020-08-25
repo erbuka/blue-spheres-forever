@@ -35,8 +35,9 @@ namespace bsf
 		TexStar,
 		TexBRDFLut,
 
-		TexSphereUI,
-		TexRingUI,
+		TexUISphere,
+		TexUIRing,
+		TexUIAvoidSearch,
 
 		FontMain,
 		FontText,

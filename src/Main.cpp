@@ -15,7 +15,7 @@
 using namespace bsf;
 using namespace glm;
 
-// TODO Remove conversion functions
+// TODO Move convertion functions somewhere else
 
 static void LoadSectionsBinary();
 

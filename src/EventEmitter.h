@@ -29,6 +29,7 @@ namespace bsf
 	struct WheelEvent
 	{
 		float DeltaX, DeltaY;
+		float X, Y;
 	};
 
 	struct WindowResizedEvent

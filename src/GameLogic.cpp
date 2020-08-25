@@ -65,7 +65,10 @@ namespace bsf
 
 
 
-
+	// TODO It freezes because coordinates are no wrapped around
+	// Also check s3 stage6, very weird behavior. Actually I fixed
+	// it in the first version with avoid search. Have to try the
+	// original game to check what happens
 	struct TransformRingState
 	{
 	public:
@@ -86,19 +89,25 @@ namespace bsf
 			return CurrentPath.size() > 0 && CurrentPath.back() == StartingPoint;
 		}
 
+
+		// TODO Improve performance reuse vector passed as parameter
 		std::vector<TransformRingState> GenerateChildren()
 		{
-
-
 			std::vector<TransformRingState> result;
 			result.reserve(s_Directions.size());
 
-			// First let's check if all the surrounding spheres are red
+
+
+			const glm::ivec2& position = CurrentPath.size() == 0 ? StartingPoint : CurrentPath.back();
+			
+			// Check if this location is marked for avoid search. If that's the case, skip completely.
+			if (m_Stage->GetAvoidSearchAt(position) == EAvoidSearch::Yes)
+				return result;
+			
+			// Let's check if all the surrounding spheres are red
 			// If that's the case we should discard all the children of this state
 			// since they would not lead to a solution
 			// This is very big improvement on some stages (like sonic3 stage 6)
-
-			const glm::ivec2& position = CurrentPath.size() == 0 ? StartingPoint : CurrentPath.back();
 			bool allRed = true;
 			for (const auto& dir : s_AllDirections)
 			{
@@ -186,13 +195,14 @@ namespace bsf
 		{
 			// TODO: Maybe this can be calculated once
 
-			float h = CurrentPath.size();
+			float score = CurrentPath.size();
 
 			if (CurrentPath.size() > 0)
 			{
-				h += glm::distance(glm::vec2(StartingPoint), glm::vec2(CurrentPath.back()));
+				score += glm::distance(glm::vec2(StartingPoint), glm::vec2(CurrentPath.back()));
 			}
-			return h;
+
+			return score;
 		}
 
 

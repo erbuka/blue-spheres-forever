@@ -26,6 +26,11 @@ namespace bsf
 
 	void Assets::Load()
 	{
+		const auto loadTex2D = [](const std::string& fileName) {
+			auto result = MakeRef<Texture2D>(fileName);
+			result->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
+			return result;
+		};
 
 
 		// Stage generator
@@ -61,37 +66,13 @@ namespace bsf
 
 		m_Assets[AssetName::TexBumperMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexBumperRoughness] = CreateGray(0.1f);
+		m_Assets[AssetName::TexBumper] = loadTex2D("assets/textures/bumper.png");
 
-		{
-			auto bumper = MakeRef<Texture2D>("assets/textures/bumper.png");
-			bumper->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_Assets[AssetName::TexBumper] = bumper;
-		}
-
-
-		{
-			auto star = MakeRef<Texture2D>("assets/textures/star.png");
-			m_Assets[AssetName::TexStar] = star;
-		}
-
-		{
-			auto brdf = MakeRef<Texture2D>("assets/textures/ibl_brdf_lut.png");
-			brdf->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_Assets[AssetName::TexBRDFLut] = brdf;
-		}
-
-		{
-			auto sphereUi = MakeRef<Texture2D>("assets/textures/sphere-ui.png");
-			sphereUi->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_Assets[AssetName::TexSphereUI] = sphereUi;
-		}
-
-
-		{
-			auto ringUi = MakeRef<Texture2D>("assets/textures/ring-ui.png");
-			ringUi->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_Assets[AssetName::TexRingUI] = ringUi;
-		}
+		m_Assets[AssetName::TexStar] = loadTex2D("assets/textures/star.png");
+		m_Assets[AssetName::TexBRDFLut] = loadTex2D("assets/textures/ibl_brdf_lut.png");
+		m_Assets[AssetName::TexUISphere] = loadTex2D("assets/textures/sphere_ui.png");
+		m_Assets[AssetName::TexUIRing] = loadTex2D("assets/textures/ring_ui.png");
+		m_Assets[AssetName::TexUIAvoidSearch] = loadTex2D("assets/textures/avoid_search_ui.png");
 
 
 		// Sound

@@ -23,7 +23,9 @@ namespace bsf
 
     static void GLFW_Scroll(GLFWwindow* window, double xoffset, double yoffset)
     {
-        BD_APP(window)->Wheel.Emit({ (float)xoffset, (float)yoffset });
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+        BD_APP(window)->Wheel.Emit({ (float)xoffset, (float)yoffset, (float)x, (float)y });
     }
 
     static void GLFW_Key(GLFWwindow* window, int key, int scancode, int action, int mods)

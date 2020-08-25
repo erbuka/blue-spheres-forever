@@ -273,18 +273,6 @@ namespace bsf
 		return std::count(std::execution::par_unseq, m_Data.begin(), m_Data.end(), object);
 	}
 
-	// TODO Remove
-	void Stage::Dump()
-	{
-		for (int32_t y = 0; y < m_Height; y++)
-		{
-			for (int32_t x = 0; x < m_Width; x++)
-			{
-				std::cout << (int)m_Data[y * m_Width + x];
-			}
-			std::cout << std::endl;
-		}
-	}
 	void Stage::WrapX(int32_t& x) const
 	{
 		while (x < 0)
