@@ -209,6 +209,12 @@ namespace bsf
 			return score;
 		}
 
+		bool operator==(const TransformRingState& other) const
+		{
+			glm::ivec2 posA = CurrentPath.size() == 0 ? StartingPoint : CurrentPath.back();
+			glm::ivec2 posB = other.CurrentPath.size() == 0 ? other.StartingPoint : other.CurrentPath.back();
+			return m_Stage->WrapCoordinates(posA) == m_Stage->WrapCoordinates(posB);
+		}
 
 
 	private:
@@ -222,12 +228,7 @@ namespace bsf
 	}
 
 	
-	bool operator==(const TransformRingState& a, const TransformRingState& b)
-	{
-		glm::ivec2 posA = a.CurrentPath.size() == 0 ? a.StartingPoint : a.CurrentPath.back();
-		glm::ivec2 posB = b.CurrentPath.size() == 0 ? b.StartingPoint : b.CurrentPath.back();
-		return posA == posB;
-	}
+
 	// TODO Freezes in stage 3171 2118 0205
 	class TransformRingAlgorithm
 	{
