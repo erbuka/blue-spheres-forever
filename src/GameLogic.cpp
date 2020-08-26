@@ -91,10 +91,9 @@ namespace bsf
 
 
 		// TODO Improve performance reuse vector passed as parameter
-		std::vector<TransformRingState> GenerateChildren()
-		{
-			std::vector<TransformRingState> result;
-			result.reserve(s_Directions.size());
+		 void GenerateChildren(std::vector<TransformRingState>& result)
+		 {
+			result.clear();
 
 
 
@@ -102,7 +101,7 @@ namespace bsf
 			
 			// Check if this location is marked for avoid search. If that's the case, skip completely.
 			if (m_Stage->GetAvoidSearchAt(position) == EAvoidSearch::Yes)
-				return result;
+				return;
 			
 			// Let's check if all the surrounding spheres are red
 			// If that's the case we should discard all the children of this state
@@ -119,7 +118,7 @@ namespace bsf
 			}
 
 			if (allRed)
-				return result;
+				return;
 
 
 			// This is the root state. There's no previous
@@ -189,7 +188,6 @@ namespace bsf
 
 			}
 
-			return result;
 		}
 
 		float Score() const
@@ -216,16 +214,18 @@ namespace bsf
 			return m_Stage->WrapCoordinates(posA) == m_Stage->WrapCoordinates(posB);
 		}
 
+		bool operator<(const TransformRingState& other)
+		{
+			return Score() < other.Score();
+		}
+
 
 	private:
 		Stage* m_Stage;
 	};
 
 
-	bool operator<(const TransformRingState& a, const TransformRingState& b)
-	{
-		return a.Score() < b.Score();
-	}
+
 
 	
 
@@ -250,8 +250,10 @@ namespace bsf
 
 			bool pathFound = false;
 			std::vector<glm::ivec2> path;
-			std::vector<TransformRingState> openSet, closedSet;
+			std::vector<TransformRingState> openSet;
+			std::vector<TransformRingState> children;
 			
+
 			openSet.emplace_back(&m_Stage, m_StartingPoint);
 			
 			while (!openSet.empty())
@@ -261,8 +263,6 @@ namespace bsf
 				auto current = openSet.front();
 				openSet.erase(openSet.begin());
 
-				closedSet.push_back(current);
-				
 				if (current.GoalTest()) // Done
 				{
 					path = std::move(current.CurrentPath);
@@ -270,7 +270,9 @@ namespace bsf
 					break;
 				}
 
-				for (auto& state : current.GenerateChildren())
+				current.GenerateChildren(children);
+
+				for (auto& state : children)
 				{
 					
 					if (std::find(openSet.begin(), openSet.end(), state) == openSet.end())
