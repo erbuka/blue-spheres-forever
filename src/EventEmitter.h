@@ -47,6 +47,11 @@ namespace bsf
 	{
 		int32_t KeyCode;
 	};
+
+	struct CharacterTypedEvent
+	{
+		char Character;
+	};
 	
 	#pragma endregion
 

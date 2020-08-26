@@ -91,17 +91,11 @@ namespace bsf
 
 	}
 
-	void Stage::Load(const std::string& fileName)
+	bool Stage::Load(const std::string& fileName)
 	{
 		try
 		{
 			auto root = json::parse(ReadTextFile(fileName));
-
-			if (fileName.empty())
-			{
-				BSF_ERROR("Invalid stage file: {0}", fileName);
-				return;
-			}
 
 			Version = root.at("version").get<uint32_t>();
 			Name = root.at("name").get<std::string>();
@@ -116,10 +110,13 @@ namespace bsf
 			m_Data = root.at("data").get<std::vector<EStageObject>>();
 			m_AvoidSearch = root.at("avoidSearch").get<std::vector<EAvoidSearch>>();
 		}
-		catch (std::runtime_error& err)
+		catch (std::exception& err)
 		{
-			throw std::runtime_error("Invalid stage file: " + fileName);
+			BSF_ERROR("Invalid stage file: {0}", fileName);
+			return false;
 		}
+
+		return true;
 	}
 
 	void Stage::Save(const std::string& fileName)
@@ -206,8 +203,8 @@ namespace bsf
 		is.Read(MaxRings); // uint32
 		Rings = MaxRings;
 
-		m_Data.resize(m_Width * m_Height);
-		m_AvoidSearch.resize(m_Width * m_Height);
+		m_Data.resize((size_t)m_Width * m_Height);
+		m_AvoidSearch.resize((size_t)m_Width * m_Height);
 
 		is.ReadSome(m_Data.size(), m_Data.data()); // 1024 bytes
 		is.ReadSome(m_AvoidSearch.size(), m_AvoidSearch.data()); // 1024 bytes;
@@ -249,23 +246,23 @@ namespace bsf
 	EStageObject Stage::GetValueAt(int32_t x, int32_t y) const
 	{
 		WrapX(x); WrapY(y);
-		return m_Data[y * m_Width + x];
+		return m_Data[(size_t)y * m_Width + x];
 	}
 	void Stage::SetValueAt(int32_t x, int32_t y, EStageObject obj)
 	{
 		WrapX(x); WrapY(y);
-		m_Data[y * m_Width + x] = obj;
+		m_Data[(size_t)y * m_Width + x] = obj;
 	}
 	
 	EAvoidSearch Stage::GetAvoidSearchAt(int32_t x, int32_t y) const
 	{
 		WrapX(x); WrapY(y);
-		return m_AvoidSearch[y * m_Width + x];
+		return m_AvoidSearch[(size_t)y * m_Width + x];
 	}
 	void Stage::SetAvoidSearchAt(int32_t x, int32_t y, EAvoidSearch val)
 	{
 		WrapX(x); WrapY(y);
-		m_AvoidSearch[y * m_Width + x] = val;
+		m_AvoidSearch[(size_t)y * m_Width + x] = val;
 	}
 
 	uint32_t Stage::Count(EStageObject object) const
@@ -343,10 +340,10 @@ namespace bsf
 		uint32_t Rings;
 		std::array<EStageObject, s_SectionSize * s_SectionSize> Data;
 		std::array<EAvoidSearch, s_SectionSize * s_SectionSize> AvoidSearch;
-		inline EStageObject GetValueAt(int32_t x, int32_t y) { return Data[y * s_SectionSize + x]; }
+		inline EStageObject GetValueAt(int32_t x, int32_t y) { return Data[(size_t)y * s_SectionSize + x]; }
 		inline EStageObject GetValueAt(const glm::ivec2& pos) { return GetValueAt(pos.x, pos.y); }
 
-		inline EAvoidSearch GetAvoidSearchAt(int32_t x, int32_t y) { return AvoidSearch[y * s_SectionSize + x]; }
+		inline EAvoidSearch GetAvoidSearchAt(int32_t x, int32_t y) { return AvoidSearch[(size_t)y * s_SectionSize + x]; }
 		inline EAvoidSearch GetAvoidSearchAt(const glm::ivec2& pos) { return GetAvoidSearchAt(pos.x, pos.y); }
 
 		StageSection Flip(bool horizontal) 
@@ -363,8 +360,8 @@ namespace bsf
 						y * s_SectionSize + s_SectionSize - (x + 1) :
 						(s_SectionSize - (y + 1)) * s_SectionSize + x;
 
-					result.Data[y * s_SectionSize + x] = Data[swapIndex];
-					result.AvoidSearch[y * s_SectionSize + x] = AvoidSearch[swapIndex];
+					result.Data[(size_t)y * s_SectionSize + x] = Data[swapIndex];
+					result.AvoidSearch[(size_t)y * s_SectionSize + x] = AvoidSearch[swapIndex];
 				}
 			}
 
@@ -449,7 +446,7 @@ namespace bsf
 		{
 			for (uint32_t sx = 0; sx < 2; sx++)
 			{
-				auto& s = sections[sy * 2 + sx];
+				auto& s = sections[(size_t)sy * 2 + sx];
 
 				result->MaxRings += s.Rings;
 				
@@ -478,8 +475,8 @@ namespace bsf
 		result->FloorRenderingMode = EFloorRenderingMode::CheckerBoard;
 		result->BumpMappingEnabled = false;
 		result->PatternColors = {
-			s_CheckerBoardPatterns[(tl % 16) * 2],
-			s_CheckerBoardPatterns[(tl % 16) * 2 + 1]
+			s_CheckerBoardPatterns[((size_t)tl % 16) * 2],
+			s_CheckerBoardPatterns[((size_t)tl % 16) * 2 + 1]
 		};
 		
 		result->SkyColors = {
@@ -518,7 +515,7 @@ namespace bsf
 		ca[38] = true;
 
 		// Before calculating the binary form, stage number is increased by 19088742
-		cb = (stage + 19088742);
+		cb = ((uint64_t)stage + 19088742);
 
 		// Calculate code in binary form (note that some values (ca) are missing here)
 

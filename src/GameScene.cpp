@@ -296,12 +296,12 @@ namespace bsf
 		m_Sky = skyGenerator->Generate({ 1024, m_Stage->SkyColors[0], m_Stage->SkyColors[1] });
 
 		// Event hanlders
-		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &GameScene::OnResize));
-		m_Subscriptions.push_back(m_GameLogic->GameStateChanged.Subscribe(this, &GameScene::OnGameStateChanged));
-		m_Subscriptions.push_back(m_GameLogic->GameAction.Subscribe(this, &GameScene::OnGameAction));
+		AddSubscription(app.WindowResized, this, &GameScene::OnResize);
+		AddSubscription(m_GameLogic->GameStateChanged, this, &GameScene::OnGameStateChanged);
+		AddSubscription(m_GameLogic->GameAction, this, &GameScene::OnGameAction);
 
 
-		m_Subscriptions.push_back(app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
+		AddSubscription(app.KeyPressed, [&](const KeyPressedEvent& evt) {
 			if (evt.KeyCode == GLFW_KEY_LEFT)
 			{
 				m_GameLogic->Rotate(GameLogic::ERotate::Left);
@@ -328,7 +328,7 @@ namespace bsf
 				m_GameMessages.emplace_back("Message Test");
 			}
 
-		}));
+		});
 
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 0.5f);
 		ScheduleTask(ESceneTaskEvent::PostRender, fadeIn);
@@ -805,8 +805,6 @@ namespace bsf
 	
 	void GameScene::OnDetach()
 	{
-		for (auto& unsubscribe : m_Subscriptions)
-			unsubscribe();
 	}
 
 	void GameScene::OnResize(const WindowResizedEvent& evt)

@@ -134,7 +134,7 @@ namespace bsf
 
 		// Events
 		auto& app = GetApplication();
-		m_Subscriptions.push_back(app.KeyPressed.Subscribe([&](const KeyPressedEvent& evt) {
+		AddSubscription(app.KeyPressed, [&](const KeyPressedEvent& evt) {
 			switch (evt.KeyCode)
 			{
 			case GLFW_KEY_LEFT: m_MenuRoot.OnDirectionInput(Direction::Left); break;
@@ -147,7 +147,7 @@ namespace bsf
 					m_MenuRoot.OnKeyTyped(evt.KeyCode);
 				break;
 			}
-		}));
+		});
 
 
 		// Fade In
@@ -185,9 +185,6 @@ namespace bsf
 	void MenuScene::OnDetach()
 	{
 		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->FadeOut(0.5f);
-
-		for (auto& unsubscribe : m_Subscriptions)
-			unsubscribe();
 	}
 
 	

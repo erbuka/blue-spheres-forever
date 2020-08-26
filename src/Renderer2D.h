@@ -67,10 +67,7 @@ namespace bsf
 
 		size_t Size() const { return m_Characters.size(); }
 
-		const std::string& GetText() const { return m_PlainText; }
-
-		std::vector<Character>::iterator begin() { return m_Characters.begin(); }
-		std::vector<Character>::iterator end() { return m_Characters.end(); }
+		const std::string& GetPlainText() const { return m_PlainText; }
 
 		const Character& operator[](size_t i) const { return m_Characters[i]; }
 		FormattedString& operator+=(const std::string& str) { Add(str); return *this; }
@@ -89,7 +86,7 @@ namespace bsf
 		Renderer2D();
 		~Renderer2D();
 
-		Renderer2D(Renderer2D&) = delete;
+		Renderer2D(const Renderer2D&) = delete;
 		Renderer2D(Renderer2D&&) = delete;
 
 		void Initialize();

@@ -76,7 +76,7 @@ namespace bsf
 		static void SaveStageFiles(const std::vector<std::string>& files);
 		static std::vector<std::string> GetStageFiles();
 
-		void Load(const std::string& fileName);
+		[[nodiscard]] bool Load(const std::string& fileName);
 		void Save(const std::string& fileName);
 		bool FromFile(const std::string& filename);
 		void Initialize(uint32_t width, uint32_t height);

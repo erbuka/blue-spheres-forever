@@ -138,7 +138,7 @@ namespace bsf
 	class MenuRoot
 	{
 	public:
-		glm::vec2 ViewportSize;
+		glm::vec2 ViewportSize = { 0.0f, 0.0f };
 
 		void OnConfirm();
 		void OnDirectionInput(Direction direction);
@@ -169,7 +169,6 @@ namespace bsf
 		MenuRoot m_MenuRoot;
 		Ref<SelectMenuItem<std::string>> m_SelectStageMenuItem;
 		Ref<StageCodeMenuItem> m_StageCodeMenuItem;
-		std::list<Unsubscribe> m_Subscriptions;
 	};
 
 

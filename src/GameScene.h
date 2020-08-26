@@ -54,8 +54,6 @@ namespace bsf
 
 		float m_GameOverObjectsHeight = 0.0f;
 
-		std::list<Unsubscribe> m_Subscriptions;
-
 		MatrixStack m_Model, m_View, m_Projection;
 		MatrixStack m_ShadowView, m_ShadowProjection, m_ShadowModel;
 

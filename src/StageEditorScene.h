@@ -77,10 +77,13 @@ namespace bsf
 		UIBoundValue(const T& def) : m_Default(def) {}
 		std::function<void(const T&)> Set = [&](const T& val) { m_Default = val; };
 		std::function<T(void)> Get = [&] { return m_Default; };
+
+		explicit operator T() { return Get(); }
+		void operator=(const T& val) { Set(val); }
+
 	private:
 		T m_Default;
 	};
-
 
 	struct UIStyle
 	{
@@ -149,6 +152,7 @@ namespace bsf
 
 		EventEmitter<KeyPressedEvent> KeyPressed;
 		EventEmitter<KeyReleasedEvent> KeyReleased;
+		EventEmitter<CharacterTypedEvent> CharacterTyped;
 		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked, MousePressed, MouseReleased;
 		EventEmitter<MouseEvent> GlobalMouseReleased;
 		EventEmitter<WheelEvent> Wheel;
@@ -314,6 +318,7 @@ namespace bsf
 			Ref<Texture2D> Pattern = nullptr;
 			Rect TargetBounds, CurrentBounds;
 			bool operator==(const StageInfo& other) { return FileName == other.FileName; }
+			bool operator!=(const StageInfo& other) { return !(*this == other); }
 		};
 
 		uint32_t m_Rows = 0;

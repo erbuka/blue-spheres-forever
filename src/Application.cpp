@@ -74,6 +74,11 @@ namespace bsf
         BD_APP(window)->WindowResized.Emit({ float(w), float(h) });
     }
 
+    static void GLFW_Char(GLFWwindow* window, uint32_t codePoint)
+    {
+        BD_APP(window)->CharacterTyped.Emit({ (char)codePoint });
+    }
+
 #undef BD_APP
 
 #pragma endregion
@@ -95,7 +100,7 @@ namespace bsf
 
         m_Renderer2D = nullptr;
 
-        m_AudioMixer = nullptr;
+        m_AudioDevice = nullptr;
         
         Assets::GetInstance().Dispose();
         glfwTerminate();
@@ -139,6 +144,7 @@ namespace bsf
         glfwSetWindowSizeCallback(m_Window, &GLFW_WindowSize);
         glfwSetScrollCallback(m_Window, &GLFW_Scroll);
         glfwSetKeyCallback(m_Window, &GLFW_Key);
+        glfwSetCharCallback(m_Window, &GLFW_Char);
 
         auto startTime = std::chrono::high_resolution_clock::now();
         auto prevTime = std::chrono::high_resolution_clock::now();
@@ -153,8 +159,8 @@ namespace bsf
         // Init Renderer 2D
         m_Renderer2D = MakeRef<Renderer2D>();
 
-        // Init Audio Mixer
-        m_AudioMixer = MakeRef<AudioDevice>();
+        // Init Audio Device
+        m_AudioDevice = MakeRef<AudioDevice>();
         
         // Load Assets 
         Assets::GetInstance().Load();
@@ -177,8 +183,7 @@ namespace bsf
                     m_CurrentScene->OnAttach();
 
                     // Reset time on scene change
-                    startTime = std::chrono::high_resolution_clock::now();
-                    prevTime = std::chrono::high_resolution_clock::now();
+                    startTime = prevTime = std::chrono::high_resolution_clock::now();
                 }
 
                 auto now = std::chrono::high_resolution_clock::now();
@@ -214,14 +219,17 @@ namespace bsf
                 ImGui::Begin("Diagnostic Tool");
                 if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    ImGui::Columns(3);
+                    ImGui::Columns(4);
                     ImGui::SetColumnWidth(0, 400.0f);
                     ImGui::SetColumnWidth(1, 100.0f);
                     ImGui::SetColumnWidth(2, 100.0f);
+                    ImGui::SetColumnWidth(3, 100.0f);
 
                     ImGui::Text("Function/Scope");
                     ImGui::NextColumn();
                     ImGui::Text("Avg Time");
+                    ImGui::NextColumn();
+                    ImGui::Text("Max Time");
                     ImGui::NextColumn();
                     ImGui::Text("Calls");
                     ImGui::NextColumn();
@@ -233,6 +241,8 @@ namespace bsf
                         ImGui::Text(name);
                         ImGui::NextColumn();
                         ImGui::Text("%.3f ms", stats.MeanExecutionTime);
+                        ImGui::NextColumn();
+                        ImGui::Text("%.3f ms", stats.MaxExecutionTime);
                         ImGui::NextColumn();
                         ImGui::Text("%d", stats.Calls);
                         ImGui::NextColumn();
@@ -281,7 +291,7 @@ namespace bsf
 
     AudioDevice& bsf::Application::GetAudioDevice()
     {
-        return *(m_AudioMixer.get());
+        return *(m_AudioDevice.get());
     }
 
 	void bsf::Application::InitImGui()
@@ -303,7 +313,6 @@ namespace bsf
 	void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)
     {
         auto& tasks = scene->m_ScheduledTasks[evt];
-        auto taskIt = tasks.begin();
 
         for (auto taskIt = tasks.begin(); taskIt != tasks.end();)
         {

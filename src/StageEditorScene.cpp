@@ -569,6 +569,11 @@ namespace bsf
 
 	void UIRoot::Attach(Application& app)
 	{
+		AddSubscription(app.CharacterTyped, [&](const CharacterTypedEvent& evt) {
+			if (m_FocusedControl)
+				m_FocusedControl->CharacterTyped.Emit(evt);
+		});
+
 		AddSubscription(app.KeyPressed, [&](const KeyPressedEvent& evt) {
 			if (m_FocusedControl)
 				m_FocusedControl->KeyPressed.Emit(evt);
@@ -932,12 +937,14 @@ namespace bsf
 					r2.Push();
 					r2.Color(style.ShadowColor);
 					r2.Translate((glm::vec2)m_Stage->StartPoint + glm::vec2(style.ShadowOffset, -style.ShadowOffset));
+					r2.Scale(1.25f + std::sin(time.Elapsed * 10.0f) * 0.25f);
 					r2.Rotate(angle);
 					r2.DrawQuad();
 					r2.Pop();
 				}
 
 				r2.Translate(m_Stage->StartPoint);
+				r2.Scale(1.25f + std::sin(time.Elapsed * 10.0f) * 0.25f);
 				r2.Rotate(angle);
 				r2.Color(std::get<1>(m_PositionRendering));
 				r2.DrawQuad();
@@ -1026,29 +1033,28 @@ namespace bsf
 	UITextInput::UITextInput() : UIElement(MakeFlags(UIElementFlags::ReceiveFocus))
 	{
 		static std::string s_TestStr = " ";
-		static std::regex s_AllowedCharacters("^[a-zA-Z0-9_\\s]$");
+		static std::regex s_AllowedCharacters("^[a-zA-Z0-9_\\s\\-]$");
 
 		Margin = 1.0f;
 		MinSize = { 0.0f, 1.5f };
 		PreferredSize = { 0.0f, 1.5f };
 
-		AddSubscription(KeyPressed, [&](const KeyPressedEvent& evt) {
 
+		AddSubscription(KeyPressed, [&](const KeyPressedEvent& evt) {
 			auto current = m_Value.Get();
 
-			if (evt.KeyCode == GLFW_KEY_BACKSPACE)
+			if (evt.KeyCode == GLFW_KEY_BACKSPACE) // Backspace
 			{
-				if(!current.empty())
+				if (!current.empty())
 					m_Value.Set(current.substr(0, current.size() - 1));
 			}
-			else
-			{
-				s_TestStr[0] = (char)evt.KeyCode;
+		});
 
-				if(std::regex_match(s_TestStr, s_AllowedCharacters))
-					m_Value.Set(current + (char)evt.KeyCode);
-
-			}
+		AddSubscription(CharacterTyped, [&](const CharacterTypedEvent& evt) {
+			auto current = m_Value.Get();
+			s_TestStr[0] = evt.Character;
+			if(std::regex_match(s_TestStr, s_AllowedCharacters))
+				m_Value.Set(current + evt.Character);
 		});
 
 	}
@@ -1462,16 +1468,38 @@ namespace bsf
 				{
 					// TODO Can't swap here have to insert the dragged element so that
 					// the order of the other elements does not change
-					if (it->TargetBounds.Contains({ evt.X, evt.Y }))
+					if (it->TargetBounds.Contains({ evt.X, evt.Y }) && *it != *draggedIt)
 					{
-						/*
+						
 						std::vector<StageInfo> newStageInfo;
 						newStageInfo.reserve(m_StagesInfo.size());
 						auto [min, max] = std::minmax(it, draggedIt);
 						auto count = max - min;
-						auto pos = std::copy(m_StagesInfo.begin(), min, std::back_inserter(newStageInfo));
-						*/
-						std::swap(*it, *draggedIt);
+						auto inserter = std::copy(m_StagesInfo.begin(), min, std::back_inserter(newStageInfo));
+
+						if (count == 1)
+						{
+							inserter = *max;
+							inserter = *min;
+							std::copy(max + 1, m_StagesInfo.end(), inserter);
+						}
+						else if (it > draggedIt)
+						{
+							inserter = std::copy(min + 1, max, inserter);
+							inserter = *draggedIt;
+							std::copy(max, m_StagesInfo.end(), inserter);
+						}
+						else
+						{
+							inserter = *draggedIt;
+							inserter = std::copy(min, max, inserter);
+							std::copy(max + 1, m_StagesInfo.end(), inserter);
+						}
+						
+						m_StagesInfo = std::move(newStageInfo);
+						break;
+
+						//std::swap(*it, *draggedIt);
 
 					}
 				}
@@ -1557,12 +1585,10 @@ namespace bsf
 
 	void UIStageList::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
+		constexpr float speedFactor = 3.0f;
 		auto& style = GetStyle();
 		auto contentBounds = Bounds;
 		const float margin = style.GetMargin(Margin);
-		const float dS = time.Delta * Bounds.Width();
-
-		//BSF_INFO("{0} {1}", Bounds.Width(), Bounds.Height());
 
 		contentBounds.Shrink(margin);
 
@@ -1575,8 +1601,10 @@ namespace bsf
 		for (auto& info : m_StagesInfo)
 		{
 
-			info.CurrentBounds.Position = MoveTowards(info.CurrentBounds.Position, info.TargetBounds.Position, dS);
-			info.CurrentBounds.Size = MoveTowards(info.CurrentBounds.Size, info.TargetBounds.Size, dS);
+			float speed = std::max(Bounds.Width(), glm::distance(info.CurrentBounds.Position, info.TargetBounds.Position)) * speedFactor;
+
+			info.CurrentBounds.Position = MoveTowards(info.CurrentBounds.Position, info.TargetBounds.Position, speed * time.Delta);
+			info.CurrentBounds.Size = MoveTowards(info.CurrentBounds.Size, info.TargetBounds.Size, speed);
 
 			if (!(info.Loaded && info.Visible))
 				continue;

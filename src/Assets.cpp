@@ -41,15 +41,14 @@ namespace bsf
 		m_Assets[AssetName::SkyGenerator] = MakeRef<SkyGenerator>();
 
 		// Fonts
-		m_Assets[AssetName::FontMain] = Ref<Font>(new Font("assets/fonts/main.ttf", 128.0f));
-		m_Assets[AssetName::FontText] = Ref<Font>(new Font("assets/fonts/arial.ttf", 72.0f));
+		m_Assets[AssetName::FontMain] = MakeRef<Font>("assets/fonts/main.ttf", 128.0f);
+		m_Assets[AssetName::FontText] = MakeRef<Font>("assets/fonts/arial.ttf", 72.0f);
 
 
 		// Textures
-		m_Assets[AssetName::TexWhite] = Ref<Texture>(new Texture2D(0xffffffff));
-		m_Assets[AssetName::TexBlack] = Ref<Texture>(new Texture2D(0xff000000));
-		m_Assets[AssetName::TexTransparent] = Ref<Texture>(new Texture2D(0));
-		m_Assets[AssetName::TexNormalPosZ] = Ref<Texture>(new Texture2D(ToHexColor({ 0.5f, 0.5f, 1.0f })));
+		m_Assets[AssetName::TexWhite] = MakeRef<Texture2D>(0xffffffff);
+		m_Assets[AssetName::TexBlack] = MakeRef<Texture2D>(0xff000000);
+		m_Assets[AssetName::TexTransparent] = MakeRef<Texture2D>(0);
 
 		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.1f);
@@ -57,7 +56,6 @@ namespace bsf
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.1f);
 		
-		m_Assets[AssetName::TexGroundNormal] = m_Assets[AssetName::TexNormalPosZ];
 		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.8f);
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
@@ -68,8 +66,8 @@ namespace bsf
 		m_Assets[AssetName::TexBumperRoughness] = CreateGray(0.1f);
 		m_Assets[AssetName::TexBumper] = loadTex2D("assets/textures/bumper.png");
 
-		m_Assets[AssetName::TexStar] = loadTex2D("assets/textures/star.png");
 		m_Assets[AssetName::TexBRDFLut] = loadTex2D("assets/textures/ibl_brdf_lut.png");
+		
 		m_Assets[AssetName::TexUISphere] = loadTex2D("assets/textures/sphere_ui.png");
 		m_Assets[AssetName::TexUIRing] = loadTex2D("assets/textures/ring_ui.png");
 		m_Assets[AssetName::TexUIAvoidSearch] = loadTex2D("assets/textures/avoid_search_ui.png");
@@ -90,7 +88,7 @@ namespace bsf
 		m_Assets[AssetName::SfxCodeOk] = MakeRef<Audio>("assets/sound/ok.wav");
 		m_Assets[AssetName::SfxCodeWrong] = MakeRef<Audio>("assets/sound/wrong.wav");
 		m_Assets[AssetName::SfxTally] = MakeRef<Audio>("assets/sound/tally.mp3");
-		m_Assets[AssetName::SfxStageClear] = MakeRef<Audio>("assets/sound/stage-clear.mp3");
+		m_Assets[AssetName::SfxStageClear] = MakeRef<Audio>("assets/sound/stage_clear.mp3");
 		m_Assets[AssetName::SfxMusic] = MakeRef<Audio>("assets/sound/music_techno.mp3");
 
 		// Models

@@ -224,7 +224,7 @@ namespace bsf
 		glm::ivec2 posB = b.CurrentPath.size() == 0 ? b.StartingPoint : b.CurrentPath.back();
 		return posA == posB;
 	}
-
+	// TODO Freezes in stage 3171 2118 0205
 	class TransformRingAlgorithm
 	{
 	public:

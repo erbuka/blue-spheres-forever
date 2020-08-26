@@ -29,6 +29,8 @@ namespace bsf {
 		EventEmitter<KeyPressedEvent> KeyPressed;
 		EventEmitter<KeyReleasedEvent> KeyReleased;
 
+		EventEmitter<CharacterTypedEvent> CharacterTyped;
+
 		Application();
 		~Application();
 		
@@ -53,11 +55,9 @@ namespace bsf {
 
 		bool m_Running = false;
 
-		std::list<MouseEvent> m_PrevMousePressed;
-
 		Ref<Scene> m_NextScene, m_CurrentScene;
 		Ref<Renderer2D> m_Renderer2D;
-		Ref<AudioDevice> m_AudioMixer;
+		Ref<AudioDevice> m_AudioDevice;
 		GLFWwindow* m_Window;
 	};
 

@@ -13,7 +13,6 @@ namespace bsf
 		TexWhite,
 		TexBlack,
 		TexTransparent,
-		TexNormalPosZ,
 
 		TexBumper,
 		TexBumperMetallic,
@@ -25,14 +24,12 @@ namespace bsf
 		TexSphereMetallic,
 		TexSphereRoughness,
 
-		TexGroundNormal,
 		TexGroundMetallic,
 		TexGroundRoughness,
 
 		TexRingMetallic,
 		TexRingRoughness,
 
-		TexStar,
 		TexBRDFLut,
 
 		TexUISphere,

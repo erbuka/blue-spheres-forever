@@ -71,7 +71,7 @@ namespace bsf
 
 
 		// Input
-		m_Subscriptions.push_back(app.KeyReleased.Subscribe([&](const KeyReleasedEvent& evt) {
+		AddSubscription(app.KeyReleased, [&](const KeyReleasedEvent& evt) {
 			
 			if (m_InputEnabled && evt.KeyCode == GLFW_KEY_ENTER)
 			{
@@ -97,7 +97,7 @@ namespace bsf
 				ScheduleTask(ESceneTaskEvent::PostRender, fadeOut);
 
 			}
-		}));
+		});
 
 	}
 
@@ -117,8 +117,6 @@ namespace bsf
 	}
 	void StageClearScene::OnDetach()
 	{
-		for (auto& unsubscribe : m_Subscriptions)
-			unsubscribe();
 	}
 	void StageClearScene::RenderUI()
 	{

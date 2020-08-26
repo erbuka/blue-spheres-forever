@@ -35,6 +35,7 @@ namespace bsf
 		{
 			auto& execTimes = item.second.LastExecutionTimes;
 			execTimes.front() = item.second.ExecutionTime;
+			item.second.MaxExecutionTime = std::max(item.second.MaxExecutionTime, item.second.ExecutionTime);
 			item.second.MeanExecutionTime = std::accumulate(execTimes.begin(), execTimes.end(), 0.0f) / (float)(DiagnosticToolStats::Samples);
 		}
 	}

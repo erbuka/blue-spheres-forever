@@ -31,8 +31,6 @@ namespace bsf
 
 		bool m_InputEnabled = false;
 
-		std::list<Unsubscribe> m_Subscriptions;
-
 		GameInfo m_GameInfo;
 		
 		uint32_t m_CurrentStage = 0, m_NextStage = 0;

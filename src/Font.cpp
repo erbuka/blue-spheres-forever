@@ -114,8 +114,6 @@ namespace bsf
 				auto& c = range.chardata_for_range[i];
 				GlyphInfo charData;
 
-				BSF_INFO("Char: {0}, xoff: {1}, yoff: {2}", (char)codePoint, c.xoff, c.yoff);
-
 				charData.Advance = (float)c.xadvance / fontHeight;
 				charData.Min = { c.xoff / fontHeight, -(c.yoff + c.y1 - c.y0 + descent) / fontHeight };
 				charData.Max = { (c.xoff + c.x1 - c.x0) / fontHeight, -(c.yoff + descent) / fontHeight };

@@ -23,10 +23,11 @@ namespace bsf
 	struct DiagnosticToolStats
 	{
 		static constexpr size_t Samples = 10;
-		const char* StackItemName;
+		const char* StackItemName = nullptr;
 		uint32_t Calls = 0;
 		float ExecutionTime = 0.0f;
 		float MeanExecutionTime = 0.0f;
+		float MaxExecutionTime = 0.0f;
 		std::list<float> LastExecutionTimes = std::list<float>(Samples);
 	};
 	

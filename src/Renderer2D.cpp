@@ -348,7 +348,7 @@ namespace bsf
 	{
 		static std::array<glm::vec2, 4> pos, uvs = {};
 
-		float strWidth = font->GetStringWidth(str.GetText());
+		float strWidth = font->GetStringWidth(str.GetPlainText());
 
 		Push();
 
@@ -395,7 +395,7 @@ namespace bsf
 		Push();
 		Color(state.TextShadowColor);
 		// Draw the shadow (no color/formatting)
-		DrawString(font, str.GetText(), position + state.TextShadowOffset);
+		DrawString(font, str.GetPlainText(), position + state.TextShadowOffset);
 		Pop();
 
 		DrawString(font, str, position);

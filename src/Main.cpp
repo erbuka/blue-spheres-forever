@@ -12,6 +12,8 @@
 #include "StageClearScene.h"
 #include "StageEditorScene.h"
 
+#include "Renderer2D.h"
+
 using namespace bsf;
 using namespace glm;
 
@@ -23,6 +25,7 @@ void ConvertStages();
 
 int main() 
 {
+
 	ConvertStages();
 	ConvertSections();
 

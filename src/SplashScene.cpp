@@ -51,7 +51,7 @@ namespace bsf
 		m_pSky = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 
 		// Event handlers
-		m_Subscriptions.push_back(app.WindowResized.Subscribe(this, &SplashScene::OnResize));
+		AddSubscription(app.WindowResized, this, &SplashScene::OnResize);
 
 		// fadeIn
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f);
@@ -219,8 +219,6 @@ namespace bsf
 	
 	void SplashScene::OnDetach()
 	{
-		for (auto& unsubscribe : m_Subscriptions)
-			unsubscribe();
 	}
 
 	void SplashScene::OnResize(const WindowResizedEvent& evt)

@@ -32,7 +32,6 @@ namespace bsf
 
 		MatrixStack m_Projection, m_View, m_Model;
 
-		std::list<Unsubscribe> m_Subscriptions;
-
+		
 	};
 }
