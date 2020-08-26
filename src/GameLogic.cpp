@@ -169,13 +169,14 @@ namespace bsf
 						continue;
 
 					const auto pos = CurrentPath.back() + directions[i];
+					const auto wrappedPos = m_Stage->WrapCoordinates(pos);
 
 					// Not a red sphere
 					if (m_Stage->GetValueAt(pos) != EStageObject::RedSphere)
 						continue;
 
 					// Already in path
-					if (std::find(CurrentPath.begin(), CurrentPath.end(), pos) != CurrentPath.end())
+					if (std::find_if(CurrentPath.begin(), CurrentPath.end(), [&](auto& v) { return m_Stage->WrapCoordinates(v) == wrappedPos; }) != CurrentPath.end())
 						continue;
 
 					TransformRingState newState(*this);
@@ -194,13 +195,16 @@ namespace bsf
 		float Score() const
 		{
 			// TODO: Maybe this can be calculated once
-
+			
 			float score = CurrentPath.size();
 
 			if (CurrentPath.size() > 0)
 			{
-				score += glm::distance(glm::vec2(StartingPoint), glm::vec2(CurrentPath.back()));
+				auto diff = glm::abs(StartingPoint - CurrentPath.back());
+				score += diff.x + diff.y;
 			}
+
+
 
 			return score;
 		}
