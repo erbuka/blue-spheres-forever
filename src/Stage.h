@@ -108,6 +108,8 @@ namespace bsf
 
 		std::vector<EStageObject>& GetData() { return m_Data; }
 		std::vector<EAvoidSearch>& GetAvoidSearch() { return m_AvoidSearch; }
+		
+		glm::ivec2 WrapCoordinates(glm::ivec2 pos) { WrapX(pos.x); WrapY(pos.y); return pos; }
 
 		bool operator==(const Stage& other) const;
 
