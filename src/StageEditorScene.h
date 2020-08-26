@@ -16,12 +16,9 @@
 
 /*
 TODO:
-- Finish the stage list UI
-- Add "New" button
-- Finish tool bar icons
-- Stage editor area background ???
-- Fix double file selected
+- Add double click to select stage from list
 - Add some sort of notification/messages for when the user saves, or maybe for errors
+- Go back from stage editor
 */
 
 namespace bsf
@@ -504,18 +501,27 @@ namespace bsf
 		std::optional<std::string> m_CurrentStageFile;
 		Ref<Stage> m_CurrentStage;
 		Ref<UIRoot> m_uiRoot;
-		Ref<UILayer> m_uiStageListDialogLayer;
+		Ref<UILayer> m_uiStageListDialogLayer, m_uiConfirmDialogLayer;
 		Ref<UIStageEditorArea> m_uiEditorArea;
 		Ref<UIStageList> m_uiStageList;
+		Ref<UIText> m_uiConfirmDialogText;
+		Ref<UIPanel> m_uiConfirmDialogPanel;
 
 		std::vector<Ref<UIIconButton>> m_ToolButtons;
 
-		void OnNewButtonClick(const MouseEvent& evt);
+		std::function<void()> m_OnConfirmDialogConfirm = nullptr;
+
+		void ShowConfirmDialog(const std::string& text, const std::function<void()>& onConfirm);
+
+		void OnNewButtonClick(const MouseEvent& evt) { NewStage(); }
 		void OnSaveButtonClick(const MouseEvent& evt);
 		void OnStageListButtonClick(const MouseEvent& evt);
 
+		void NewStage();
 		void LoadStage(const std::string& fileName);
 		void InitializeUI();
+
+		
 
 
 

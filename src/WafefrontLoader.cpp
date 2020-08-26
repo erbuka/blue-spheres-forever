@@ -12,7 +12,7 @@
 namespace bsf
 {
 
-
+	// TODO try to parse with regex
 	Ref<ModelDef> WavefrontLoader::Load(const std::string& fileName)
 	{
 		std::ifstream stdIs;

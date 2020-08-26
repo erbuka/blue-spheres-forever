@@ -36,6 +36,10 @@ namespace bsf
 		TexUIRing,
 		TexUIAvoidSearch,
 		TexUIPosition,
+		TexUINew,
+		TexUIOpen,
+		TexUISave,
+		TexUIDelete,
 
 		FontMain,
 		FontText,

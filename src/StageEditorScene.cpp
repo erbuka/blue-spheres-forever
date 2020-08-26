@@ -20,6 +20,7 @@ namespace bsf
 	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiPanelMargin;
 	static constexpr float s_uiStageListItemWidth = s_uiScale / 4.0f;
 	static constexpr float s_uiStageListItemHeight = s_uiScale / 6.0f;
+	static constexpr float s_uiConfirmDialogBtnSize = s_uiScale / 6.0f;
 
 	void StageEditorScene::OnAttach()
 	{
@@ -58,10 +59,12 @@ namespace bsf
 		m_uiRoot->Detach(GetApplication());
 	}
 
-	void StageEditorScene::OnNewButtonClick(const MouseEvent& evt)
+	void StageEditorScene::ShowConfirmDialog(const std::string& text, const std::function<void()>& onConfirm)
 	{
-		m_CurrentStageFile = std::nullopt;
-		m_CurrentStage = MakeRef<Stage>(32, 32);
+		m_uiConfirmDialogText->Text = text;
+		m_uiConfirmDialogPanel->Pack();
+		m_OnConfirmDialogConfirm = onConfirm;
+		m_uiRoot->PushLayer(m_uiConfirmDialogLayer);
 	}
 
 	void StageEditorScene::OnSaveButtonClick(const MouseEvent& evt)
@@ -86,6 +89,12 @@ namespace bsf
 		auto files = Stage::GetStageFiles();
 		m_uiStageList->SetFiles(std::move(files));
 		m_uiRoot->PushLayer(m_uiStageListDialogLayer);
+	}
+
+	void StageEditorScene::NewStage()
+	{
+		m_CurrentStageFile = std::nullopt;
+		(*m_CurrentStage) = std::move(Stage(32, 32));
 	}
 
 	void StageEditorScene::LoadStage(const std::string& fileName)
@@ -126,7 +135,47 @@ namespace bsf
 			title->Text = "Stage Editor";
 			topBar->AddChild(title);
 
+
+			// New button
+			{
+				auto btn = makeToolBarButton(AssetName::TexUINew, Colors::White);
+				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnNewButtonClick);
+				topBar->AddChild(btn);
+			}
+
+
+
+			// Stage list button
+			{
+				auto btn = makeToolBarButton(AssetName::TexUIOpen, Colors::White);
+				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnStageListButtonClick);
+				topBar->AddChild(btn);
+			}
 			
+			// Save button
+			{
+				auto btn = makeToolBarButton(AssetName::TexUISave, Colors::White);
+				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnSaveButtonClick);
+				topBar->AddChild(btn);
+			}
+
+			// Delete button
+			{
+				auto btn = makeToolBarButton(AssetName::TexUIDelete, Colors::White);
+				AddSubscription(btn->MouseClicked, [&](const MouseEvent&) {
+					if (m_CurrentStageFile.has_value())
+					{
+						ShowConfirmDialog("Do you really want to delete this stage?", [&] {
+							std::filesystem::remove(m_CurrentStageFile.value());
+							NewStage();
+							m_uiRoot->PopLayer();
+						});
+					}
+				});
+				topBar->AddChild(btn);
+			}
+
+
 
 			auto tools = {
 				std::make_tuple(StageEditorTool::BlueSphere,	AssetName::TexUISphere,			Colors::BlueSphere),
@@ -155,20 +204,7 @@ namespace bsf
 			}
 
 		
-			// Save button
-			{
-				auto btn = makeToolBarButton(AssetName::TexWhite, Colors::Green);
-				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnSaveButtonClick);
-				topBar->AddChild(btn);
-			}
 
-			// Stage list button
-			{
-				auto btn = makeToolBarButton(AssetName::TexWhite, Colors::Yellow);
-				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnStageListButtonClick);
-				topBar->AddChild(btn);
-
-			}
 
 			// Properties
 			auto properties = MakeRef<UIPanel>();
@@ -290,6 +326,7 @@ namespace bsf
 		}
 
 		// Stage list dialog layer
+
 		{
 			m_uiStageListDialogLayer = MakeRef<UILayer>();
 			m_uiStageListDialogLayer->Layout = UILayout::Fill;
@@ -332,6 +369,48 @@ namespace bsf
 			}
 
 			m_uiStageListDialogLayer->AddChild(dialogPanel);
+
+		}
+
+		// Confirm dialog layer
+		{
+			m_uiConfirmDialogLayer = MakeRef<UILayer>();
+			m_uiConfirmDialogLayer->Layout = UILayout::Fill;
+			m_uiConfirmDialogLayer->BackgroundColor = style.ShadowColor;
+			AddSubscription(m_uiConfirmDialogLayer->MouseClicked, [&](const MouseEvent&) { m_uiRoot->PopLayer(); });
+
+			m_uiConfirmDialogPanel = MakeRef<UIPanel>();
+			m_uiConfirmDialogPanel->Layout = UILayout::Vertical;
+			m_uiConfirmDialogPanel->HasShadow = true;
+			m_uiConfirmDialogPanel->Margin = 2.0f;
+			m_uiConfirmDialogLayer->AddChild(m_uiConfirmDialogPanel);
+			
+			m_uiConfirmDialogText = MakeRef<UIText>();
+			m_uiConfirmDialogPanel->AddChild(m_uiConfirmDialogText);
+
+			auto buttonsPanel = MakeRef<UIPanel>();
+			buttonsPanel->Layout = UILayout::Horizontal;
+
+
+			{
+				auto btn = MakeRef<UIButton>();
+				btn->Label = "No";
+				btn->PreferredSize.x = s_uiConfirmDialogBtnSize;
+				AddSubscription(btn->MouseClicked, [&](const MouseEvent&) { m_uiRoot->PopLayer(); });
+				buttonsPanel->AddChild(btn);
+			}
+
+			{
+				auto btn = MakeRef<UIButton>();
+				btn->Label = "Yes";
+				btn->PreferredSize.x = s_uiConfirmDialogBtnSize;
+				AddSubscription(btn->MouseClicked, [&](const MouseEvent&) { m_OnConfirmDialogConfirm(); });
+				buttonsPanel->AddChild(btn);
+			}
+
+			m_uiConfirmDialogPanel->AddChild(buttonsPanel);
+
+
 
 		}
 
@@ -1377,7 +1456,7 @@ namespace bsf
 		auto& style = GetStyle();
 		float margin = style.GetMargin(Margin);
 		const auto& font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
-		MinSize = glm::vec2(font->GetStringWidth(Label) + 2.0f * margin, 1.0f + 2.0f * margin) * 1.0f;
+		MinSize = glm::vec2(font->GetStringWidth(Label) + 4.0f * margin, 1.0f + 2.0f * margin) * 1.0f;
 	}
 
 	void UIButton::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
@@ -1427,9 +1506,7 @@ namespace bsf
 
 		AddSubscription(Wheel, [&](const WheelEvent& evt) {
 			int32_t dir = -Sign(evt.DeltaY);
-			//m_TopRow = std::clamp((int32_t)m_TopRow + dir, 0, (int32_t)m_MaxTopRow);
 			m_HeightOffset = std::clamp(m_HeightOffset + dir * ItemHeight, 0.0f, m_MaxHeightOffset);
-
 		});
 
 		AddSubscription(MousePressed, [&](const MouseEvent& evt) {
@@ -1466,8 +1543,7 @@ namespace bsf
 
 				for (auto it = m_StagesInfo.begin(); it != m_StagesInfo.end(); ++it)
 				{
-					// TODO Can't swap here have to insert the dragged element so that
-					// the order of the other elements does not change
+					// TODO Maybe there's a better way to implement this. Not sure thoughh
 					if (it->TargetBounds.Contains({ evt.X, evt.Y }) && *it != *draggedIt)
 					{
 						
@@ -1744,7 +1820,7 @@ namespace bsf
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
 				r2.TextShadowColor(style.ShadowColor);
 				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
-				r2.DrawStringShadow(font, Format("%d", info.MaxRings), { 1.0f + margin, 0.0f });
+				r2.DrawStringShadow(font, Format("%d", info.BlueSpheres), { 1.0f + margin, 0.0f });
 
 				r2.Pop();
 			}

@@ -94,8 +94,6 @@ void ConvertSections()
 
 		auto data2 = Flip<uint32_t, 16>(data);
 		auto avoidSearch2 = Flip<uint8_t, 16>(avoidSearch);
-
-		std::cout << i << std::endl;
 		
 		assert((data == Flip<uint32_t, 16>(data2)));
 		assert((avoidSearch == Flip<uint8_t, 16>(avoidSearch2)));
@@ -104,6 +102,7 @@ void ConvertSections()
 		section["avoidSearch"] = avoidSearch;
 
 		sections.push_back(section);
+		BSF_INFO("Converted stage section #{0}", i);
 
 	}
 
@@ -164,6 +163,8 @@ void ConvertStages()
 
 			path.replace_extension(".bssj");
 			flipped.Save(path.string());
+
+			BSF_INFO("Converted stage: {0}", stage.Name);
 		}
 	}
 

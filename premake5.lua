@@ -15,6 +15,7 @@ workspace "BlueSpheresForever"
         optimize "On"
     
     filter "configurations:Distribution"
+        defines { "BSF_ENABLE_FILE_LOG" }
         symbols "Off"
         optimize "On"
         

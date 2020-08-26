@@ -51,7 +51,7 @@ namespace bsf
 		auto t1 = Clock::now();
 		stats.Calls++;
 		stats.ExecutionTime += 
-			std::chrono::duration_cast<std::chrono::microseconds>(t1 - m_t0).count() / 1000.0f;
+			std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(t1 - m_t0).count();
 	}
 }
 
