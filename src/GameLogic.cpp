@@ -214,7 +214,7 @@ namespace bsf
 			return m_Stage->WrapCoordinates(posA) == m_Stage->WrapCoordinates(posB);
 		}
 
-		bool operator<(const TransformRingState& other)
+		bool operator<(const TransformRingState& other) const
 		{
 			return Score() < other.Score();
 		}
