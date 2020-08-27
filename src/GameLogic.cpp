@@ -225,12 +225,8 @@ namespace bsf
 		Stage* m_Stage;
 	};
 
-
-
-
 	
 
-	// TODO Freezes in stage 3171 2118 0205
 	class TransformRingAlgorithm
 	{
 	public:
@@ -247,13 +243,11 @@ namespace bsf
 
 
 			// Find a closed red spheres path with no sharp turns(no u turn or 2x2 turns)
-			// TODO: We have closed set but we're not using it. Why?
 
 			bool pathFound = false;
 			std::vector<glm::ivec2> path;
 			std::vector<TransformRingState> openSet;
 			std::vector<TransformRingState> children;
-			
 
 			openSet.emplace_back(&m_Stage, m_StartingPoint);
 			
@@ -338,8 +332,13 @@ namespace bsf
 			};
 
 
+			// TODO Actually I think that there must a single blue sphere inside the path near to the starting point
+			// of the algorithm. If that's the case, this could fix a lot of issues with weird stage layouts
 			// If and only if there's a connected blue sphere inside the path (even diagonal are considered connected
 			// in this case), then convert into rings(floodfill)
+
+			// The problem is also with starting point... The path is allowed to take U-turns at the starting point for now
+			// which is completely wrong
 
 			int32_t convertedBlueSpheres = 0;
 
