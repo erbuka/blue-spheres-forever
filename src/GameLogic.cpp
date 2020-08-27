@@ -89,10 +89,8 @@ namespace bsf
 			return CurrentPath.size() > 0 && CurrentPath.back() == StartingPoint;
 		}
 
-
-		// TODO Improve performance reuse vector passed as parameter
-		 void GenerateChildren(std::vector<TransformRingState>& result)
-		 {
+		void GenerateChildren(std::vector<TransformRingState>& result)
+		{
 			result.clear();
 
 
@@ -137,6 +135,7 @@ namespace bsf
 					TransformRingState newState(*this);
 					newState.CurrentPath.push_back(pos);
 					newState.CurrentDirection = dir;
+					newState.ComputeScore();
 
 					result.push_back(std::move(newState));
 
@@ -182,6 +181,7 @@ namespace bsf
 					newState.CurrentPath.push_back(pos);
 					newState.CurrentDirection = directions[i];
 					newState.ForbiddenTurn = forbiddenTurn[i];
+					newState.ComputeScore();
 					result.push_back(std::move(newState));
 
 				}
@@ -190,22 +190,22 @@ namespace bsf
 
 		}
 
-		float Score() const
+		void ComputeScore()
 		{
 			// TODO: Maybe this can be calculated once
-			
-			float score = CurrentPath.size();
+
+			m_Score = CurrentPath.size();
 
 			if (CurrentPath.size() > 0)
 			{
 				auto diff = glm::abs(StartingPoint - CurrentPath.back());
-				score += diff.x + diff.y;
+				m_Score += diff.x + diff.y;
 			}
 
 
-
-			return score;
 		}
+
+		float Score() const { return m_Score; }
 
 		bool operator==(const TransformRingState& other) const
 		{
@@ -221,6 +221,7 @@ namespace bsf
 
 
 	private:
+		float m_Score = 0.0f;
 		Stage* m_Stage;
 	};
 
