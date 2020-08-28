@@ -40,6 +40,7 @@ namespace bsf
 		TexUIOpen,
 		TexUISave,
 		TexUIDelete,
+		TexUIBack,
 
 		FontMain,
 		FontText,

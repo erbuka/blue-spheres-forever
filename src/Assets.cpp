@@ -76,6 +76,7 @@ namespace bsf
 		m_Assets[AssetName::TexUIOpen] = loadTex2D("assets/textures/open_ui.png");
 		m_Assets[AssetName::TexUIDelete] = loadTex2D("assets/textures/delete_ui.png");
 		m_Assets[AssetName::TexUISave] = loadTex2D("assets/textures/save_ui.png");
+		m_Assets[AssetName::TexUIBack] = loadTex2D("assets/textures/back_ui.png");
 
 
 		// Sound

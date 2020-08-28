@@ -103,7 +103,7 @@ namespace bsf
 	public:
 		virtual ~EventReceiver() { 
 			if (!m_Subscriptions.empty())
-				BSF_ERROR("Subscriber has been destroyed but still has subscriptions");
+				BSF_ERROR("Subscriber has been destroyed but still has {0} subscriptions", m_Subscriptions.size());
 		}
 
 		void ClearSubscriptions() {

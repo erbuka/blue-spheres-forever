@@ -19,6 +19,7 @@ TODO:
 - Add double click to select stage from list
 - Add some sort of notification/messages for when the user saves, or maybe for errors
 - Go back from stage editor
+- Adjust subscriptions
 */
 
 namespace bsf
@@ -495,6 +496,7 @@ namespace bsf
 		void OnRender(const Time& time) override;
 		void OnDetach() override;
 		
+		~StageEditorScene() {}
 
 	private:
 

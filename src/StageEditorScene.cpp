@@ -3,11 +3,11 @@
 #include <regex>
 
 #include "StageEditorScene.h"
+#include "MenuScene.h"
 #include "Assets.h"
 #include "Texture.h"
 #include "Renderer2D.h"
 #include "Application.h"
-#include "MenuScene.h"
 #include "Font.h"
 
 
@@ -25,12 +25,8 @@ namespace bsf
 	void StageEditorScene::OnAttach()
 	{
 		m_CurrentStage = MakeRef<Stage>();
-		/*
-		for (uint32_t x = 0; x < m_CurrentStage->GetWidth(); x++)
-			for (uint32_t y = 0; y < m_CurrentStage->GetHeight(); y++)
-				m_CurrentStage->SetValueAt(x, y, EStageObject::BlueSphere);
-		*/
 		InitializeUI();
+		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, glm::vec4(1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 0.5f);
 	}
 	
 	void StageEditorScene::OnRender(const Time& time)
@@ -57,6 +53,8 @@ namespace bsf
 	void StageEditorScene::OnDetach()
 	{
 		m_uiRoot->Detach(GetApplication());
+		m_uiConfirmDialogLayer->Traverse([](auto& el) { el.ClearSubscriptions(); });
+		m_uiStageListDialogLayer->Traverse([](auto& el) {el.ClearSubscriptions(); });
 	}
 
 	void StageEditorScene::ShowConfirmDialog(const std::string& text, const std::function<void()>& onConfirm)
@@ -130,6 +128,18 @@ namespace bsf
 			auto topBar = MakeRef<UIPanel>();
 			topBar->Layout = UILayout::Horizontal;
 			topBar->PreferredSize = { 0.0f, s_uiTopBarHeight };
+
+			// Back button
+			{
+				auto btn = makeToolBarButton(AssetName::TexUIBack, Colors::White);
+				AddSubscription(btn->MouseClicked, [&](const MouseEvent&) {
+					auto task = ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f), 0.5f);
+					task->SetDoneFunction([&](SceneTask& self) {
+						GetApplication().GotoScene(MakeRef<MenuScene>());
+					});
+				});
+				topBar->AddChild(btn);
+			}
 
 			auto title = MakeRef<UIText>();
 			title->Text = "Stage Editor";

@@ -75,27 +75,26 @@ namespace bsf
 
 		glm::ivec2 ForbiddenTurn = { 0, 0 };
 		glm::ivec2 CurrentDirection = { 0, 0 };
-		glm::ivec2 StartingPoint = { 0, 0 };
 		std::vector<glm::ivec2> CurrentPath;
 
 		TransformRingState(Stage* stage, const glm::ivec2& startingPoint) :
 			m_Stage(stage),
-			StartingPoint(startingPoint)
+			CurrentPath({ startingPoint })
 		{
-		}
-
-		bool GoalTest() const
-		{
-			return CurrentPath.size() > 0 && CurrentPath.back() == StartingPoint;
 		}
 
 		void GenerateChildren(std::vector<TransformRingState>& result)
 		{
+			static constexpr std::array<glm::ivec2, 4> s_NoForibiddenTurn = {
+				glm::ivec2(0, 0),
+				glm::ivec2(0, 0),
+				glm::ivec2(0, 0),
+				glm::ivec2(0, 0)
+			};
+
 			result.clear();
 
-
-
-			const glm::ivec2& position = CurrentPath.size() == 0 ? StartingPoint : CurrentPath.back();
+			const glm::ivec2& position = CurrentPath.back();
 			
 			// Check if this location is marked for avoid search. If that's the case, skip completely.
 			if (m_Stage->GetAvoidSearchAt(position) == EAvoidSearch::Yes)
@@ -105,86 +104,54 @@ namespace bsf
 			// If that's the case we should discard all the children of this state
 			// since they would not lead to a solution
 			// This is very big improvement on some stages (like sonic3 stage 6)
-			bool allRed = true;
-			for (const auto& dir : s_AllDirections)
-			{
-				if (m_Stage->GetValueAt(position + dir) != EStageObject::RedSphere)
-				{
-					allRed = false;
-					break;
-				}
-			}
-
-			if (allRed)
+			if (!std::any_of(s_AllDirections.begin(), s_AllDirections.end(),
+				[&](auto& dir) { return m_Stage->GetValueAt(position + dir) != EStageObject::RedSphere; }))
 				return;
 
+			const auto& forward = CurrentDirection;
 
-			// This is the root state. There's no previous
-			// direction so we can go to any close red sphere
-			if (CurrentDirection == glm::ivec2(0, 0))
+			const std::array<glm::ivec2, 4> directions = {
+				forward,
+				glm::ivec2(-forward.y, forward.x),
+				glm::ivec2(forward.y, -forward.x),
+			};
+
+			const std::array<glm::ivec2, 4> forbiddenTurn = {
+				-forward,
+				glm::ivec2(-directions[1].y, directions[1].x),
+				glm::ivec2(directions[2].y, -directions[2].x),
+			};
+
+			const size_t dirCount = CurrentPath.size() > 1 ? directions.size() : s_Directions.size();
+			const glm::ivec2* dirPtr = CurrentPath.size() > 1 ? directions.data() : s_Directions.data();
+			const glm::ivec2* ftPtr = CurrentPath.size() > 1 ? forbiddenTurn.data() : s_NoForibiddenTurn.data();
+
+			for (size_t i = 0; i < dirCount; i++)
 			{
+				// This turn is forbidden
+				if (dirPtr[i] == ForbiddenTurn)
+					continue;
 
-				for (const auto& dir : s_Directions)
-				{
-					auto pos = StartingPoint + dir;
+				const auto pos = CurrentPath.back() + dirPtr[i];
+				const auto wrappedPos = m_Stage->WrapCoordinates(pos);
 
-					// We're only interested in red spheres
-					if (m_Stage->GetValueAt(pos) != EStageObject::RedSphere)
-						continue;
+				// Not a red sphere
+				if (m_Stage->GetValueAt(pos) != EStageObject::RedSphere)
+					continue;
 
-					TransformRingState newState(*this);
-					newState.CurrentPath.push_back(pos);
-					newState.CurrentDirection = dir;
-					newState.ComputeScore();
-
-					result.push_back(std::move(newState));
+				// Check if already in path, skipping the path first position which actually is allowed
+				if (std::find_if(CurrentPath.begin() + 1, CurrentPath.end(), 
+					[&](auto& v) { return m_Stage->WrapCoordinates(v) == wrappedPos; }) != CurrentPath.end())
+					continue;
 
 
-				}
-			}
-			else
-			{
-				// Not a root state
+				TransformRingState newState(*this);
+				newState.CurrentPath.push_back(pos);
+				newState.CurrentDirection = dirPtr[i];
+				newState.ForbiddenTurn = ftPtr[i];
+				newState.ComputeScore();
 
-				const auto& forward = CurrentDirection;
-
-				const std::array<glm::ivec2, 3> directions = {
-					forward,
-					glm::ivec2(-forward.y, forward.x),
-					glm::ivec2(forward.y, -forward.x)
-				};
-
-				const std::array<glm::ivec2, 3> forbiddenTurn = {
-					glm::ivec2(0, 0),
-					glm::ivec2(-directions[1].y, directions[1].x),
-					glm::ivec2(directions[2].y, -directions[2].x)
-				};
-
-				for (size_t i = 0; i < 3; i++)
-				{
-					// This turn is forbidden
-					if (directions[i] == ForbiddenTurn)
-						continue;
-
-					const auto pos = CurrentPath.back() + directions[i];
-					const auto wrappedPos = m_Stage->WrapCoordinates(pos);
-
-					// Not a red sphere
-					if (m_Stage->GetValueAt(pos) != EStageObject::RedSphere)
-						continue;
-
-					// Already in path
-					if (std::find_if(CurrentPath.begin(), CurrentPath.end(), [&](auto& v) { return m_Stage->WrapCoordinates(v) == wrappedPos; }) != CurrentPath.end())
-						continue;
-
-					TransformRingState newState(*this);
-					newState.CurrentPath.push_back(pos);
-					newState.CurrentDirection = directions[i];
-					newState.ForbiddenTurn = forbiddenTurn[i];
-					newState.ComputeScore();
-					result.push_back(std::move(newState));
-
-				}
+				result.push_back(std::move(newState));
 
 			}
 
@@ -192,26 +159,15 @@ namespace bsf
 
 		void ComputeScore()
 		{
-			// TODO: Maybe this can be calculated once
-
-			m_Score = CurrentPath.size();
-
-			if (CurrentPath.size() > 0)
-			{
-				auto diff = glm::abs(StartingPoint - CurrentPath.back());
-				m_Score += diff.x + diff.y;
-			}
-
-
+			auto diff = glm::abs(CurrentPath.front() - CurrentPath.back());
+			m_Score = CurrentPath.size() + diff.x + diff.y;
 		}
 
 		float Score() const { return m_Score; }
 
 		bool operator==(const TransformRingState& other) const
 		{
-			glm::ivec2 posA = CurrentPath.size() == 0 ? StartingPoint : CurrentPath.back();
-			glm::ivec2 posB = other.CurrentPath.size() == 0 ? other.StartingPoint : other.CurrentPath.back();
-			return m_Stage->WrapCoordinates(posA) == m_Stage->WrapCoordinates(posB);
+			return m_Stage->WrapCoordinates(CurrentPath.back()) == m_Stage->WrapCoordinates(other.CurrentPath.back());
 		}
 
 		bool operator<(const TransformRingState& other) const
@@ -258,11 +214,18 @@ namespace bsf
 				auto current = openSet.front();
 				openSet.erase(openSet.begin());
 
-				if (current.GoalTest()) // Done
-				{
-					path = std::move(current.CurrentPath);
-					pathFound = true;
-					break;
+				if (current.CurrentPath.size() > 1 && current.CurrentPath.front() == current.CurrentPath.back())
+				{ // We are back at the starting location, so this is a possibile goal
+					if (current.CurrentPath[1] - current.CurrentPath[0] != current.ForbiddenTurn)
+					{ // The path is valid -> done
+						pathFound = true;
+						path = std::move(current.CurrentPath);
+						break;
+					}
+					else
+					{ // Path is not valid -> discard
+						continue;
+					}
 				}
 
 				current.GenerateChildren(children);
@@ -293,7 +256,6 @@ namespace bsf
 
 				max.x = std::max(max.x, p.x);
 				max.y = std::max(max.y, p.y);
-
 			}
 			
 			// This lamda will return true if the given position is inside the path with a
@@ -332,28 +294,20 @@ namespace bsf
 			};
 
 
-			// TODO Actually I think that there must a single blue sphere inside the path near to the starting point
-			// of the algorithm. If that's the case, this could fix a lot of issues with weird stage layouts
-			// If and only if there's a connected blue sphere inside the path (even diagonal are considered connected
-			// in this case), then convert into rings(floodfill)
-
-			// The problem is also with starting point... The path is allowed to take U-turns at the starting point for now
-			// which is completely wrong
+			// Search for a blue sphere near the starting point in all 8 direction which is inside the
+			// path
 
 			int32_t convertedBlueSpheres = 0;
 
-			for (const auto& p : path)
+			for (const auto& dir : s_AllDirections)
 			{
-				for (const auto& dir : s_AllDirections)
+				auto pos = path[0] + dir;
+
+				if (isInsidePath(pos))
 				{
-					auto pos = p + dir;
-
-					if (isInsidePath(pos))
-					{
-						convertedBlueSpheres += FloodFillRings(pos);
-					}
-
+					convertedBlueSpheres += FloodFillRings(pos);
 				}
+
 			}
 
 
@@ -792,7 +746,7 @@ namespace bsf
 
 	bool GameLogic::CrossedEdge(const glm::vec2 currentPos, const glm::vec2 nextPosition, bool& horizontal, bool& vertical)
 	{
-		if (glm::ivec2(glm::round(currentPos)) == m_LastCrossedPosition)
+		if (m_Stage.WrapCoordinates(glm::round(currentPos)) == m_LastCrossedPosition)
 		{
 			horizontal = false;
 			vertical = false;
@@ -812,7 +766,7 @@ namespace bsf
 
 		if (crossed)
 		{
-			m_LastCrossedPosition = glm::round(currentPos);
+			m_LastCrossedPosition = m_Stage.WrapCoordinates(glm::round(currentPos));
 		}
 
 		return crossed;

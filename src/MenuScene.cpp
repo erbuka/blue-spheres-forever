@@ -115,7 +115,10 @@ namespace bsf
 		}
 
 		customStagesMenu->AddItem<ButtonMenuItem>("Stage Editor")->SetConfirmFunction([&](MenuRoot&) {
-			GetApplication().GotoScene(MakeRef<StageEditorScene>());
+			auto task = ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f), 0.5f);
+			task->SetDoneFunction([&](SceneTask&) {
+				GetApplication().GotoScene(MakeRef<StageEditorScene>());
+			});
 			return true;
 		});
 

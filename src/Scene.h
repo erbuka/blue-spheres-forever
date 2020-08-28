@@ -87,7 +87,7 @@ namespace bsf
 		void ScheduleTask(ESceneTaskEvent evt, const Ref<SceneTask>& task);
 
 		template<typename T, typename ... Args>
-		Ref<std::enable_if_t<std::is_base_of_v<SceneTask, T>>> ScheduleTask(ESceneTaskEvent evt, Args&&... args)
+		Ref<std::enable_if_t<std::is_base_of_v<SceneTask, T>, T>> ScheduleTask(ESceneTaskEvent evt, Args&&... args)
 		{
 			auto task = MakeRef<T>(std::forward<Args>(args)...);
 			ScheduleTask(evt, task);
