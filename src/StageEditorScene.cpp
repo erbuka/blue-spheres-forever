@@ -598,7 +598,7 @@ namespace bsf
 		if (Hovered)
 		{
 			const std::array<std::pair<std::string, std::string>, 3> infos = {
-				std::pair<std::string, std::string>{ "Position", Format("%.2f %.2f", Bounds.Left(), Bounds.Top()) },
+				std::pair<std::string, std::string>{ "Position", Format("%.2f %.2f", Bounds.Left(), Bounds.Bottom()) },
 				std::pair<std::string, std::string>{ "Size", Format("%.2f %.2f", Bounds.Width(), Bounds.Height()) },
 				std::pair<std::string, std::string>{ "Margin", Format("%.2f", Margin) }
 			};
@@ -890,7 +890,7 @@ namespace bsf
 
 		auto editCallback = [&](const MouseEvent& evt) {
 
-			if (auto stageCoordsOpt = GetStageCoordinates({ evt.X, evt.Y }); stageCoordsOpt.has_value())
+			if (auto stageCoordsOpt = ScreenToStage({ evt.X, evt.Y }); stageCoordsOpt.has_value())
 			{
 				const auto& stageCoords = stageCoordsOpt.value();
 
@@ -923,18 +923,18 @@ namespace bsf
 		};
 
 		AddSubscription(MouseMoved, [&](const MouseEvent& evt) {
-			m_CursorPos = GetStageCoordinates({ evt.X,evt.Y });
+			m_CursorPos = ScreenToStage({ evt.X,evt.Y });
 		});
 		AddSubscription(MouseClicked, editCallback);
 		AddSubscription(MouseDragged, editCallback);
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
 			if (evt.Button == MouseButton::Middle)
-				m_ViewOrigin -= glm::vec2(evt.DeltaX, evt.DeltaY);
+				m_ViewOrigin -= glm::vec2(evt.DeltaX, evt.DeltaY) / m_Zoom;
 		});
 
 
 		AddSubscription(Wheel, [&](const WheelEvent& evt) {
-			const float m = evt.DeltaY > 0 ? 1.5f : (1.0f / 1.5f);
+			const float m = evt.DeltaY > 0 ? m_ZoomStep : (1.0f / m_ZoomStep);
 			m_TargetZoom = std::clamp(m_TargetZoom * m, m_MinZoom, m_MaxZoom);
 		});
 
@@ -944,7 +944,11 @@ namespace bsf
 	void UIStageEditorArea::Update(const UIRoot& root, const Time& time)
 	{
 		float zoomSpeed = std::max(0.5f, std::abs(m_Zoom - m_TargetZoom)) * 4.0f;
+		auto prevPos = ScreenToWorld(root.GetMousePosition());
 		m_Zoom = MoveTowards(m_Zoom, m_TargetZoom, time.Delta * zoomSpeed);
+		auto nextPos = ScreenToWorld(root.GetMousePosition());
+
+		m_ViewOrigin += prevPos - nextPos;
 
 		// Update pattern texture
 		UpdatePattern();
@@ -966,19 +970,18 @@ namespace bsf
 			
 			r2.Clip(Bounds);
 			
+
 			r2.Texture(m_BgPattern);
 			r2.Color(style.GetBackgroundColor(*this, style.Palette.Background));
-			r2.DrawQuad(Bounds.Position, Bounds.Size, Bounds.Size / (m_Zoom * 2.0f) , m_ViewOrigin / (m_Zoom * 2.0f) + glm::vec2(0.25f, 0.25f));
+			r2.DrawQuad(Bounds.Position, Bounds.Size, Bounds.Size / (m_Zoom * 2.0f), m_ViewOrigin / 2.0f + glm::vec2(0.25f));
 
 			r2.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 			r2.Texture(m_Pattern);
-			r2.DrawQuad(Bounds.Position - m_ViewOrigin, size, tiling, { -0.25f, -0.25f });
+			r2.DrawQuad(WorldToScreen({ 0, 0 }), size, tiling, { -0.25f, -0.25f });
 
-			r2.Translate(Bounds.Position - m_ViewOrigin);
-			r2.Scale({ m_Zoom, m_Zoom });
 
-			glm::uvec2 bl = glm::clamp(glm::floor(GetUnboundedCoordinates(Bounds.Position)), 0.0f, (float)m_Stage->GetWidth());
-			glm::uvec2 tr = glm::clamp(glm::ceil(GetUnboundedCoordinates(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetHeight());
+			glm::uvec2 bl = glm::clamp(glm::floor(ScreenToWorld(Bounds.Position)), 0.0f, (float)m_Stage->GetWidth());
+			glm::uvec2 tr = glm::clamp(glm::ceil(ScreenToWorld(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetHeight());
 
 			for (uint32_t x = bl.x; x < tr.x; ++x)
 			{
@@ -990,10 +993,10 @@ namespace bsf
 						r2.Texture(std::get<0>(obj->second));
 
 						r2.Color(style.ShadowColor);
-						r2.DrawQuad({ x + style.ShadowOffset, y - style.ShadowOffset });
+						r2.DrawQuad(WorldToScreen({ x + style.ShadowOffset, y - style.ShadowOffset }), { m_Zoom, m_Zoom });
 						
 						r2.Color(std::get<1>(obj->second));
-						r2.DrawQuad({ x, y });
+						r2.DrawQuad(WorldToScreen({ x, y }), { m_Zoom, m_Zoom });
 					}
 
 					if (m_Stage->GetAvoidSearchAt(x, y) == EAvoidSearch::Yes)
@@ -1001,10 +1004,10 @@ namespace bsf
 						r2.Push();
 						r2.Texture(std::get<0>(m_AvoidSearchRendering));
 						r2.Color(style.ShadowColor);
-						r2.DrawQuad({ x + style.ShadowOffset, y - style.ShadowOffset });
+						r2.DrawQuad(WorldToScreen({ x + style.ShadowOffset, y - style.ShadowOffset }), { m_Zoom, m_Zoom });
 
 						r2.Color(std::get<1>(m_AvoidSearchRendering));
-						r2.DrawQuad({ x, y });
+						r2.DrawQuad(WorldToScreen({ x, y }), { m_Zoom, m_Zoom });
 
 						r2.Pop();
 					}
@@ -1020,19 +1023,18 @@ namespace bsf
 				r2.Push();
 				r2.Texture(std::get<0>(m_PositionRendering));
 				r2.Pivot(EPivot::Center);
-				r2.Translate({ 0.5f, 0.5f });
-
+				r2.Translate(WorldToScreen((glm::vec2)m_Stage->StartPoint + glm::vec2(0.5f)));
+				r2.Scale(m_Zoom);
 				{
 					r2.Push();
 					r2.Color(style.ShadowColor);
-					r2.Translate((glm::vec2)m_Stage->StartPoint + glm::vec2(style.ShadowOffset, -style.ShadowOffset));
+					r2.Translate({ style.ShadowOffset, -style.ShadowOffset });
 					r2.Scale(1.25f + std::sin(time.Elapsed * 10.0f) * 0.25f);
 					r2.Rotate(angle);
 					r2.DrawQuad();
 					r2.Pop();
 				}
 
-				r2.Translate(m_Stage->StartPoint);
 				r2.Scale(1.25f + std::sin(time.Elapsed * 10.0f) * 0.25f);
 				r2.Rotate(angle);
 				r2.Color(std::get<1>(m_PositionRendering));
@@ -1083,7 +1085,8 @@ namespace bsf
 		if (Hovered && m_CursorPos != std::nullopt)
 		{
 			r2.Push();
-			r2.Translate(m_CursorPos.value());
+			r2.Translate(WorldToScreen(m_CursorPos.value()));
+			r2.Scale(m_Zoom);
 			r2.NoTexture();
 			{ // Shadow
 				r2.Push();
@@ -1102,14 +1105,19 @@ namespace bsf
 		}
 	}
 
-	glm::vec2 UIStageEditorArea::GetUnboundedCoordinates(const glm::vec2 pos) const
+	glm::vec2 bsf::UIStageEditorArea::WorldToScreen(const glm::vec2 pos) const
 	{
-		return  (pos - Bounds.Position + m_ViewOrigin) / m_Zoom;
+		return Bounds.Position + (pos - m_ViewOrigin) * m_Zoom;
 	}
 
-	std::optional<glm::ivec2> UIStageEditorArea::GetStageCoordinates(const glm::vec2 pos) const
+	glm::vec2 bsf::UIStageEditorArea::ScreenToWorld(const glm::vec2 pos) const
 	{
-		glm::ivec2 localPos = glm::floor(GetUnboundedCoordinates(pos));
+		return m_ViewOrigin + (pos - Bounds.Position) / m_Zoom;
+	}
+
+	std::optional<glm::ivec2> UIStageEditorArea::ScreenToStage(const glm::vec2 screenPos) const
+	{
+		glm::ivec2 localPos = glm::floor(ScreenToWorld(screenPos));
 
 		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetWidth() 
 			&& localPos.y >= 0 && localPos.y < m_Stage->GetHeight())

@@ -192,6 +192,9 @@ namespace bsf
 		void Render(const glm::vec2& windowSize, const glm::vec2& viewport, Renderer2D& renderer, const Time& time);
 		void PushLayer(const Ref<UILayer>& layer) { m_Layers.push_back(layer); }
 		void PopLayer() { m_LayersToPop++; }
+
+		glm::vec2 GetMousePosition() const { return m_MouseState.Position; }
+
 	private:
 
 		UIStyle m_Style;
@@ -359,8 +362,9 @@ namespace bsf
 
 		void DrawCursor(Renderer2D& r2, const UIStyle& style);
 
-		glm::vec2 GetUnboundedCoordinates(const glm::vec2 pos) const;
-		std::optional<glm::ivec2> GetStageCoordinates(const glm::vec2 pos) const;
+		glm::vec2 WorldToScreen(const glm::vec2 pos) const;
+		glm::vec2 ScreenToWorld(const glm::vec2 pos) const;
+		std::optional<glm::ivec2> ScreenToStage(const glm::vec2 screenPos) const;
 
 		// StageObject: { Texture, Tint }
 		std::unordered_map<EStageObject, std::tuple<Ref<Texture2D>, glm::vec4>> m_StageObjRendering;
@@ -368,10 +372,10 @@ namespace bsf
 		std::tuple<Ref<Texture2D>, glm::vec4> m_AvoidSearchRendering;
 		std::tuple<Ref<Texture2D>, glm::vec4> m_PositionRendering;
 
-		float m_MinZoom = 0.5f, m_MaxZoom = std::numeric_limits<float>::max();
+		float m_MinZoom = 0.25f, m_MaxZoom = 2.0f;
 
 		glm::vec2 m_ViewOrigin = { 0.0f, 0.0f };
-		float m_Zoom = 1.0f, m_TargetZoom = 1.0f;
+		float m_Zoom = 1.0f, m_TargetZoom = 1.0f, m_ZoomStep = 1.25f;
 
 		std::optional<glm::ivec2> m_CursorPos;
 
