@@ -322,11 +322,6 @@ namespace bsf
 			{
 				paused = !paused;
 			}
-			else if (evt.KeyCode == GLFW_KEY_A)
-			{
-				// TODO Get rid if this thing
-				m_GameMessages.emplace_back("Message Test");
-			}
 
 		});
 

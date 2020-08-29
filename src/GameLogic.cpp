@@ -65,10 +65,6 @@ namespace bsf
 
 
 
-	// TODO It freezes because coordinates are no wrapped around
-	// Also check s3 stage6, very weird behavior. Actually I fixed
-	// it in the first version with avoid search. Have to try the
-	// original game to check what happens
 	struct TransformRingState
 	{
 	public:
@@ -197,9 +193,16 @@ namespace bsf
 		{
 			BSF_DIAGNOSTIC_FUNC();
 
+			// First of all we check if there's a nearby blue sphere. If not, the algorithm
+			// must not run
+			if (std::none_of(s_AllDirections.begin(), s_AllDirections.end(),
+				[&](const glm::ivec2& dir) { return m_Stage.GetValueAt(m_StartingPoint + dir) == EStageObject::BlueSphere; }))
+			{
+				BSF_INFO("No blue spheres nearby!");
+				return;
+			}
 
 			// Find a closed red spheres path with no sharp turns(no u turn or 2x2 turns)
-
 			bool pathFound = false;
 			std::vector<glm::ivec2> path;
 			std::vector<TransformRingState> openSet;
@@ -294,28 +297,40 @@ namespace bsf
 			};
 
 
-			// Search for a blue sphere near the starting point in all 8 direction which is inside the
-			// path
+				
+			// Check if we should convert the spheres to ring or not. For now, I'm checking that
+			// for every red sphere in the path, there must me a nearby blue sphere that is inside
+			// the path. I don't if I should use all the directions or just 4 directions.
+			// I think that the original game just checks if there's a blue sphere near sonic location
+			// that is inside the path. I have to make some tests in the original and then modify this
+			// this accordingly
+			// TODO Test the original game to understand the behavior
+			bool shouldConvert = std::all_of(path.begin(), path.end(), [&](const glm::ivec2& p) {
+				return std::any_of(s_AllDirections.begin(), s_AllDirections.end(), [&](const glm::ivec2& dir) {
+					return m_Stage.GetValueAt(p + dir) == EStageObject::BlueSphere && isInsidePath(p + dir);
+				});
+			});
 
-			int32_t convertedBlueSpheres = 0;
-
-			for (const auto& dir : s_AllDirections)
+			if (shouldConvert)
 			{
-				auto pos = path[0] + dir;
+				int32_t convertedBlueSpheres = 0;
 
-				if (isInsidePath(pos))
+				for (const auto& dir : s_AllDirections)
 				{
-					convertedBlueSpheres += FloodFillRings(pos);
+					auto pos = path[0] + dir;
+
+					if (isInsidePath(pos))
+						convertedBlueSpheres += FloodFillRings(pos);
+
 				}
 
-			}
 
-
-			if (convertedBlueSpheres > 0)
-			{
-				for (const auto& p : path)
+				if (convertedBlueSpheres > 0)
 				{
-					m_Stage.SetValueAt(p, EStageObject::Ring);
+					for (const auto& p : path)
+					{
+						m_Stage.SetValueAt(p, EStageObject::Ring);
+					}
 				}
 			}
 
