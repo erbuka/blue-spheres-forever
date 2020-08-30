@@ -171,6 +171,63 @@ namespace bsf
 			return Score() < other.Score();
 		}
 
+		bool IsClosed() const
+		{
+			// Check if the path is closed and also valid (last turn)
+			return CurrentPath.size() > 1 && CurrentPath.front() == CurrentPath.back() &&
+				(CurrentPath[1] - CurrentPath[0] != ForbiddenTurn);
+		}
+		
+		std::tuple<glm::ivec2, glm::ivec2> ComputeBounds() const
+		{
+			// Compute the bounding box of this path
+			glm::ivec2 min = { std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max() };
+			glm::ivec2 max = { std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min() };
+
+			for (const auto& p : CurrentPath)
+			{
+				min.x = std::min(min.x, p.x);
+				min.y = std::min(min.y, p.y);
+
+				max.x = std::max(max.x, p.x);
+				max.y = std::max(max.y, p.y);
+			}
+
+			return { min, max };
+		}
+
+		bool Contains(const std::tuple<glm::ivec2, glm::ivec2>& bounds, const glm::ivec2& pos) const
+		{
+			// Check if the given position is inside this path. The boundary is considered inside so be careful!
+			const glm::ivec2& min = std::get<0>(bounds);
+			const glm::ivec2& max = std::get<1>(bounds);
+
+			bool inside = false;
+
+			if (pos.x <= min.x || pos.x >= max.x || pos.y <= min.y || pos.y >= max.y)
+				return false;
+
+			for (int32_t x = min.x; x <= max.x; x++)
+			{
+				bool boundary = false;
+				while (std::find(CurrentPath.begin(), CurrentPath.end(), glm::ivec2{ x, pos.y }) != CurrentPath.end())
+				{
+					x++;
+					boundary = true;
+				}
+
+				if (boundary)
+					inside = !inside;
+
+				if (pos.x == x)
+				{
+					return inside;
+				}
+
+			}
+
+			return false;
+		}
 
 	private:
 		float m_Score = 0.0f;
@@ -204,6 +261,7 @@ namespace bsf
 
 			// Find a closed red spheres path with no sharp turns(no u turn or 2x2 turns)
 			bool pathFound = false;
+			glm::ivec2 floodFillPos;
 			std::vector<glm::ivec2> path;
 			std::vector<TransformRingState> openSet;
 			std::vector<TransformRingState> children;
@@ -217,29 +275,42 @@ namespace bsf
 				auto current = openSet.front();
 				openSet.erase(openSet.begin());
 
-				if (current.CurrentPath.size() > 1 && current.CurrentPath.front() == current.CurrentPath.back())
+				if (current.IsClosed())
 				{ // We are back at the starting location, so this is a possibile goal
-					if (current.CurrentPath[1] - current.CurrentPath[0] != current.ForbiddenTurn)
-					{ // The path is valid -> done
-						pathFound = true;
+
+					// Search for a blue sphere near the starting point that is also contained in the path
+					const auto bounds = current.ComputeBounds();
+					const auto floodFillDir = std::find_if(s_AllDirections.begin(), s_AllDirections.end(), [&](const glm::ivec2& dir) {
+						const auto pos = m_StartingPoint + dir;
+						return m_Stage.GetValueAt(pos) == EStageObject::BlueSphere && current.Contains(bounds, pos);
+					});
+
+					if (floodFillDir != s_AllDirections.end())
+					{
+						// If the search is successfull, this is a valid path and we have to convert inot rings
+						floodFillPos = *floodFillDir + m_StartingPoint;
 						path = std::move(current.CurrentPath);
+						pathFound = true;
 						break;
 					}
 					else
-					{ // Path is not valid -> discard
+					{
+						// Otherwise this is a closed path with no blue sphere nearby the starting point,
+						// so we don't convert to rings, and also we discard this path because it's closed
+						// and so it's also self-intersecting
 						continue;
 					}
+
+
+
 				}
 
 				current.GenerateChildren(children);
 
 				for (auto& state : children)
 				{
-					
 					if (std::find(openSet.begin(), openSet.end(), state) == openSet.end())
-					{
 						openSet.push_back(std::move(state));
-					}
 					
 				}
 				
@@ -248,92 +319,11 @@ namespace bsf
 			if (!pathFound)
 				return;
 
-			// First we get the bounding box of the path
-			glm::ivec2 min = { std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max() };
-			glm::ivec2 max = { std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min() };
-
-			for (const auto& p : path)
+			if (FloodFillRings(floodFillPos) > 0)
 			{
-				min.x = std::min(min.x, p.x);
-				min.y = std::min(min.y, p.y);
-
-				max.x = std::max(max.x, p.x);
-				max.y = std::max(max.y, p.y);
+				for (const auto& p : path)
+					m_Stage.SetValueAt(p, EStageObject::Ring);
 			}
-			
-			// This lamda will return true if the given position is inside the path with a
-			// scanline approach
-			// NB: The boundary is not considered inside.
-			// TODO: maybe should be optimized (n^2 for now) -> could split the path
-			// into scanlines before so we can access the desired line in constant time maybe
-			auto isInsidePath = [&path, &min, &max](const glm::ivec2& pos) -> bool {
-
-				bool inside = false;
-
-				if (pos.x <= min.x || pos.x >= max.x || pos.y <= min.y || pos.y >= max.y)
-					return false;
-
-
-				for (int32_t x = min.x; x <= max.x; x++)
-				{
-					bool boundary = false;
-					while (std::find(path.begin(), path.end(), glm::ivec2{ x, pos.y }) != path.end())
-					{
-						x++;
-						boundary = true;
-					}
-
-					if(boundary)
-						inside = !inside;
-
-					if (pos.x == x)
-					{
-						return inside;
-					}
-
-				}
-
-				return false;
-			};
-
-
-				
-			// Check if we should convert the spheres to ring or not. For now, I'm checking that
-			// for every red sphere in the path, there must me a nearby blue sphere that is inside
-			// the path. I don't if I should use all the directions or just 4 directions.
-			// I think that the original game just checks if there's a blue sphere near sonic location
-			// that is inside the path. I have to make some tests in the original and then modify this
-			// this accordingly
-			// TODO Test the original game to understand the behavior
-			bool shouldConvert = std::all_of(path.begin(), path.end(), [&](const glm::ivec2& p) {
-				return std::any_of(s_AllDirections.begin(), s_AllDirections.end(), [&](const glm::ivec2& dir) {
-					return m_Stage.GetValueAt(p + dir) == EStageObject::BlueSphere && isInsidePath(p + dir);
-				});
-			});
-
-			if (shouldConvert)
-			{
-				int32_t convertedBlueSpheres = 0;
-
-				for (const auto& dir : s_AllDirections)
-				{
-					auto pos = path[0] + dir;
-
-					if (isInsidePath(pos))
-						convertedBlueSpheres += FloodFillRings(pos);
-
-				}
-
-
-				if (convertedBlueSpheres > 0)
-				{
-					for (const auto& p : path)
-					{
-						m_Stage.SetValueAt(p, EStageObject::Ring);
-					}
-				}
-			}
-
 
 		}
 

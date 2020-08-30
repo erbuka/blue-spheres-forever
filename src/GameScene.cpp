@@ -744,7 +744,7 @@ namespace bsf
 					auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
 					auto [pos, tbn] = Project({ emeraldPos.x, emeraldPos.y, 0.8f });
 
-					m_pPBR->Uniform1f("uEmission", { 0.25f });
+					m_pPBR->Uniform1f("uEmission", { 0.75f });
 					m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
 					m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 					m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));

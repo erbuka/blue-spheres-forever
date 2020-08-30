@@ -15,6 +15,7 @@
 #define BSF_DIAGNOSTIC_FUNC() DiagnosticGuard bsf_dguard##__LINE__ (__FUNCTION__)
 #define BSF_DIAGNOSTIC_SCOPE(name) DiagnosticGuard bsf_dguard##__LINE__ (name)
 #define BSF_DIAGNOSTIC_END() DiagnosticTool::Get().End()
+#define BSF_DIAGNOSTIC_RESET() DiagnosticTool::Get().Reset()
 
 namespace bsf
 {
@@ -53,6 +54,8 @@ namespace bsf
 		void End();
 
 
+		void Reset() { m_Stats.clear(); }
+
 	private:
 		friend class DiagnosticGuard;
 		DiagnosticTool() = default;
@@ -70,4 +73,5 @@ namespace bsf
 #define BSF_DIAGNOSTIC_FUNC()
 #define BSF_DIAGNOSTIC_SCOPE(name)
 #define BSF_DIAGNOSTIC_END()
+#define BSF_DIAGNOSTIC_RESET()
 #endif

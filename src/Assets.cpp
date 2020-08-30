@@ -50,7 +50,7 @@ namespace bsf
 		m_Assets[AssetName::TexBlack] = MakeRef<Texture2D>(0xff000000);
 		m_Assets[AssetName::TexTransparent] = MakeRef<Texture2D>(0);
 
-		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.1f);
+		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.9f);
 		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);

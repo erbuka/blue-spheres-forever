@@ -153,7 +153,7 @@ namespace bsf
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPos));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightPos));
 
-				m_pPBR->Uniform1f("uEmission", { 0.25f });
+				m_pPBR->Uniform1f("uEmission", { 0.75f });
 
 				m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
 				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));

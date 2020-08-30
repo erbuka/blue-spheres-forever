@@ -219,6 +219,10 @@ namespace bsf
                 ImGui::Begin("Diagnostic Tool");
                 if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen))
                 {
+                    if (ImGui::Button("Reset")) {
+                        BSF_DIAGNOSTIC_RESET();
+                    };
+
                     ImGui::Columns(4);
                     ImGui::SetColumnWidth(0, 400.0f);
                     ImGui::SetColumnWidth(1, 100.0f);
