@@ -163,6 +163,7 @@ namespace bsf
 		void OnDetach() override;
 	private:
 
+		void DrawTitle(Renderer2D& r2);
 
 		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 

@@ -12,13 +12,14 @@
 #include "GameScene.h"
 #include "Audio.h"
 #include "StageEditorScene.h"
+#include "Texture.h"
 
 namespace bsf
 {
 	static constexpr float s_VirtualHeight = 10;
 
-	static constexpr glm::vec4 s_SelectedMenuColor = { 1.0f, 1.0f, 0.0f, 1.0f };
-	static constexpr glm::vec4 s_MenuColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static constexpr glm::vec4 s_SelectedMenuColor = Colors::Yellow;
+	static constexpr glm::vec4 s_MenuColor = Colors::White;
 
 
 	template<typename T>
@@ -56,10 +57,10 @@ namespace bsf
 		renderer.Push();
 		renderer.Scale({ 0.5f, 0.5f });
 		renderer.Color(color);
-		renderer.DrawString(font, Caption);
+		renderer.DrawStringShadow(font, Caption);
 		renderer.Translate({ 0.0f, -1.0f });
 		renderer.Scale({ 2.0f, 2.0f });
-		renderer.DrawString(font, m_Options[m_SelectedOption].first);
+		renderer.DrawStringShadow(font, m_Options[m_SelectedOption].first);
 		renderer.Pop();
 	}
 
@@ -161,8 +162,9 @@ namespace bsf
 
 	void MenuScene::OnRender(const Time& time)
 	{
-
-		auto& renderer2d = GetApplication().GetRenderer2D();
+		auto& assets = Assets::GetInstance();
+		auto& r2 = GetApplication().GetRenderer2D();
+		auto& font = assets.Get<Font>(AssetName::FontMain);
 		auto windowSize = GetApplication().GetWindowSize();
 
 		float height = s_VirtualHeight;
@@ -175,13 +177,25 @@ namespace bsf
 
 			glViewport(0, 0, windowSize.x, windowSize.y);
 
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			renderer2d.Begin(glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f));
+			r2.Begin(glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f));
+
+			r2.TextShadowColor({ 0.0f, 0.0f, 0.0f, 0.5f });
+			r2.TextShadowOffset({ 0.025f, -0.025f });
+
+			// Title
+			r2.Push();
+			r2.Translate({ width / 2.0f, height - 2.5f });
+			DrawTitle(r2);
+			r2.Pop();
+
+			// Menu
+			r2.Translate({ width / 2.0f, height / 2.5f });
 			m_MenuRoot.ViewportSize = { width, height };
-			m_MenuRoot.Render(GetApplication().GetRenderer2D());
-			renderer2d.End();
+			m_MenuRoot.Render(r2);
+			r2.End();
 		}
 	}
 
@@ -191,6 +205,41 @@ namespace bsf
 	}
 
 	
+	void MenuScene::DrawTitle(Renderer2D& r2)
+	{
+		auto& assets = Assets::GetInstance();
+		auto& font = assets.Get<Font>(AssetName::FontMain);
+
+		r2.Push();
+		{
+			r2.Pivot(EPivot::Center);
+			r2.Scale(1.5f);
+
+			r2.Push();
+			{
+				r2.Scale(3.0f);
+
+				r2.Texture(assets.Get<Texture2D>(AssetName::TexUISphere));
+				
+				r2.Color({ 0.0f, 0.0f, 0.0f, 0.5f });
+				r2.DrawQuad({ 0.025f, -0.025f });
+
+				r2.Color(Colors::Blue);
+				r2.DrawQuad();
+			}
+			r2.Pop();
+
+			r2.Color(Colors::White);
+			r2.Pivot(EPivot::Bottom);
+			r2.DrawStringShadow(font, "Blue Spheres");
+			
+			r2.Pivot(EPivot::Top);
+			r2.DrawStringShadow(font, "Forever");
+
+		}
+		r2.Pop();
+	}
+
 	void MenuScene::PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo)
 	{
 		auto fadeTask = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
@@ -237,7 +286,6 @@ namespace bsf
 		assert(m_MenuStack.size() > 0);
 		renderer.Push();
 		renderer.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-		renderer.Translate({ ViewportSize.x / 2.0f, ViewportSize.y / 2.0f });
 		renderer.Pivot(EPivot::Center);
 		m_MenuStack.top()->Render(*this, renderer);
 		renderer.Pop();
@@ -327,7 +375,7 @@ namespace bsf
 	{
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		renderer.Color(Selected ? s_SelectedMenuColor : s_MenuColor);
-		renderer.DrawString(font, Caption);
+		renderer.DrawStringShadow(font, Caption);
 	}
 
 	ButtonMenuItem::ButtonMenuItem(const std::string& caption) :
@@ -346,7 +394,7 @@ namespace bsf
 	{
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		renderer.Color(Selected ? s_SelectedMenuColor : s_MenuColor);
-		renderer.DrawString(font, Caption);
+		renderer.DrawStringShadow(font, Caption);
 	}
 
 
@@ -451,10 +499,10 @@ namespace bsf
 		renderer.Push();
 		renderer.Scale({ 0.5f, 0.5f });
 		renderer.Color(color);
-		renderer.DrawString(font, "Stage Code");
+		renderer.DrawStringShadow(font, "Stage Code");
 		renderer.Translate({ 0.0f, -1.0f });
 		renderer.Scale({ 2.0f, 2.0f });
-		renderer.DrawString(font, codeString);
+		renderer.DrawStringShadow(font, codeString);
 		renderer.Color({ 1.0f, 0.0f, 0.0f, 1.0f });
 		renderer.Pop();
 	}

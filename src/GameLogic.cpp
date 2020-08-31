@@ -255,7 +255,6 @@ namespace bsf
 			if (std::none_of(s_AllDirections.begin(), s_AllDirections.end(),
 				[&](const glm::ivec2& dir) { return m_Stage.GetValueAt(m_StartingPoint + dir) == EStageObject::BlueSphere; }))
 			{
-				BSF_INFO("No blue spheres nearby!");
 				return;
 			}
 

@@ -251,9 +251,9 @@ namespace bsf
 		m_GameLogic = MakeRef<GameLogic>(*m_Stage);
 
 		// Framebuffers
-		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbDeferred->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbDeferred->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
+		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		m_fbGroundReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbGroundReflections->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
@@ -264,7 +264,7 @@ namespace bsf
 		m_fbShadow->GetColorAttachment("depth")->Bind(0);
 
 		// Post processing
-		m_fBloom = MakeRef<BlurFilter>(m_fbDeferred->GetColorAttachment("emission"));
+		m_fBloom = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
 
 		// Programs
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
@@ -277,19 +277,6 @@ namespace bsf
 		// Textures
 		m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
 		m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
-		/*
-		if (m_Stage->FloorRenderingMode == EFloorRenderingMode::CheckerBoard)
-		{
-			m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
-			m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
-		}
-		else
-		{
-			m_txGroundMap = Ref<Texture2D>(new Texture2D("assets/textures/metalgrid2_basecolor.png"));
-			m_txGroundMap->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
-			m_txGroundMap->SetAnisotropy(16.0f);
-		} 
-		*/
 
 		// Skybox
 		auto& skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);
@@ -334,6 +321,9 @@ namespace bsf
 
 	}
 	
+	// TODO too many shared_ptr copies
+	// TODO remove ambient occlusion textures
+	// TODO maybe remove shadow map
 	void GameScene::OnRender(const Time& time)
 	{
 		BSF_DIAGNOSTIC_FUNC();
@@ -455,7 +445,6 @@ namespace bsf
 					m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.75f : 0.0f });
 
 					m_pPBR->UniformMatrix4f("uModel", m_Model);
-
 					switch (value)
 					{
 					case EStageObject::Ring:
@@ -532,7 +521,7 @@ namespace bsf
 		}
 
 		// Draw to deferred frame buffer
-		m_fbDeferred->Bind();
+		m_fbPBR->Bind();
 		{
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -764,7 +753,7 @@ namespace bsf
 			}
 			
 		}
-		m_fbDeferred->Unbind();
+		m_fbPBR->Unbind();
 
 
 		
@@ -785,8 +774,8 @@ namespace bsf
 
 
 			m_pDeferred->Use();
-			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", m_fbDeferred->GetColorAttachment("emission"));
+			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
+			m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 
@@ -805,7 +794,7 @@ namespace bsf
 	void GameScene::OnResize(const WindowResizedEvent& evt)
 	{
 		glViewport(0, 0, evt.Width, evt.Height);
-		m_fbDeferred->Resize(evt.Width, evt.Height);
+		m_fbPBR->Resize(evt.Width, evt.Height);
 		m_fbGroundReflections->Resize(evt.Width, evt.Height);
 	}
 

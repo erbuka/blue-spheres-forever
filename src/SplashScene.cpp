@@ -12,6 +12,7 @@
 #include "MenuScene.h"
 #include "SkyGenerator.h"
 #include "BlurFilter.h"
+#include "Color.h"
 
 namespace bsf
 {
@@ -29,21 +30,19 @@ namespace bsf
 
 
 		// Sky
-		
 		m_Sky = assets.Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({ 
 			1024,
-			glm::vec3(31.0f, 98.0f, 255.0f) / 255.0f,
-			glm::vec3(82.0f, 134.0f, 255.0f) / 255.0f
+			Colors::Blue,
+			Darken(Colors::Blue, 0.5f)
 		});
 
-
 		// Framebuffers
-		m_fbDeferred = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbDeferred->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbDeferred->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
+		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		// PP
-		m_fBlur = MakeRef<BlurFilter>(m_fbDeferred->GetColorAttachment("emission"));
+		m_fBlur = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
 
 		// Shaders
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "NO_SHADOWS", "NO_UV_OFFSET" });
@@ -105,7 +104,7 @@ namespace bsf
 		m_Sky->ApplyMatrix(glm::rotate(time.Delta, glm::vec3{ 0.0f, 1.0f, 0.0f }));
 
 		// Draw to deferred framebuffer
-		m_fbDeferred->Bind();
+		m_fbPBR->Bind();
 		{
 			GLEnableScope scope({ GL_DEPTH_TEST, GL_BLEND });
 			glEnable(GL_DEPTH_TEST);
@@ -190,10 +189,11 @@ namespace bsf
 			}
 
 		}
-		m_fbDeferred->Unbind();
+		m_fbPBR->Unbind();
+
 
 		// Post processing
-		m_fBlur->Apply(5);
+		m_fBlur->Apply(2);
 
 		// Draw to screen
 		{
@@ -207,8 +207,8 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			m_pDeferred->Use();
-			m_pDeferred->UniformTexture("uColor", m_fbDeferred->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", m_fbDeferred->GetColorAttachment("emission"));
+			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
+			m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
 		
@@ -223,7 +223,7 @@ namespace bsf
 
 	void SplashScene::OnResize(const WindowResizedEvent& evt)
 	{
-		m_fbDeferred->Resize(evt.Width, evt.Height);
+		m_fbPBR->Resize(evt.Width, evt.Height);
 	}
 
 

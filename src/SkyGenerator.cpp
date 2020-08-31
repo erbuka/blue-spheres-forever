@@ -73,7 +73,7 @@ namespace bsf
 
 		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 		
-		
+		/*
 		auto gradient = CreateGradient(16, {
 			{ 0.0f, options.BaseColor0 },
 			{ 0.3f, options.BaseColor0 },
@@ -81,8 +81,13 @@ namespace bsf
 			{ 0.6f, glm::mix(options.BaseColor1, glm::vec3(1.0f, 0.0f, 1.0f), 0.5f) },
 			{ 0.75f, options.BaseColor1 },
 			{ 1.0f, options.BaseColor1 }
-
-
+		});
+		*/
+		auto gradient = CreateGradient(128, {
+			{ 0.0f, options.BaseColor0 },
+			{ 0.3f, glm::mix(options.BaseColor0, glm::vec3(1.0f, 1.0f, 0.0f), 0.1f) },
+			{ 0.6f, glm::mix(options.BaseColor1, glm::vec3(1.0f, 0.0f, 1.0f), 0.1f) },
+			{ 1.0f, options.BaseColor1 }
 		});
 
 		// Generate stars

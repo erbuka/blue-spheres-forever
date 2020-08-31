@@ -26,7 +26,7 @@ namespace bsf
 
 	private:
 		Ref<BlurFilter> m_fBlur;
-		Ref<Framebuffer> m_fbDeferred;
+		Ref<Framebuffer> m_fbPBR;
 		Ref<ShaderProgram> m_pPBR, m_pDeferred, m_pSky;
 		Ref<Sky> m_Sky;
 

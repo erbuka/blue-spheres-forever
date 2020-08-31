@@ -150,7 +150,7 @@ namespace bsf
 		r2.Begin(glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f));
 		r2.Color(Colors::Black);
 		r2.TextShadowColor({ 0.0f, 0.0f, 0.0f, 0.25f });
-		r2.TextShadowOffset({ 0.02f, -0.02f });
+		r2.TextShadowOffset({ 0.025f, -0.025f });
 
 		r2.Push();
 		{

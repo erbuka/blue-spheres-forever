@@ -54,7 +54,7 @@ namespace bsf
 	{
 		constexpr glm::vec4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
 		constexpr glm::vec4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
-		constexpr glm::vec4 Yellow = { 1.0f, 1.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 Yellow = ToColor(0xff0ae4e8);
 		constexpr glm::vec4 Red = ToColor(0xff0000f0);
 		constexpr glm::vec4 Blue = ToColor(0xfff04820);
 		constexpr glm::vec4 Green = ToColor(0xff48f020);
@@ -62,7 +62,7 @@ namespace bsf
 
 		constexpr glm::vec4 BlueSphere = Blue;
 		constexpr glm::vec4 RedSphere = Red;
-		constexpr glm::vec4 YellowSphere = { 1.0f, 1.0f, 0.0f, 1.0f };
+		constexpr glm::vec4 YellowSphere = Yellow;
 		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f), 1.0f };
 	}
 }
