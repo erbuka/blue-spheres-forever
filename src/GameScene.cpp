@@ -658,10 +658,8 @@ namespace bsf
 				m_pPBR->UniformTexture("uReflectionsEmission", assets.Get<Texture2D>(AssetName::TexBlack));
 				m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
 
-				{
-					BSF_DIAGNOSTIC_SCOPE("Render Objects");
 
-					for (int32_t x = -12; x <= 12; x++)
+				for (int32_t x = -12; x <= 12; x++)
 					{
 						for (int32_t y = -12; y <= 12; y++)
 						{
@@ -729,7 +727,6 @@ namespace bsf
 						}
 					}
 
-				}
 				// Draw Emerald if visible
 				if(m_GameLogic->IsEmeraldVisible())
 				{
