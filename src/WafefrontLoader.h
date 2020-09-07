@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include "Ref.h"
 
 namespace bsf
@@ -12,7 +14,7 @@ namespace bsf
 	{
 	public:
 		WavefrontLoader() = default;
-		Ref<ModelDef> Load(const std::string& fileName);
+		Ref<ModelDef> Load(std::string_view fileName);
 	};
 }
 

@@ -20,20 +20,17 @@ using namespace glm;
 // TODO Move convertion functions somewhere else
 
 void ConvertSections();
-void ConvertStages();
 
 
 int main() 
 {
 
-	
-	ConvertStages();
 	ConvertSections();
 
 	//auto scene = Ref<Scene>(new DisclaimerScene());
-	//auto scene = Ref<Scene>(new StageEditorScene());
+	auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
-	auto scene = Ref<Scene>(new MenuScene());
+	//auto scene = Ref<Scene>(new MenuScene());
 	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
 	
 	Application app;
@@ -116,58 +113,6 @@ void ConvertSections()
 	os << sections.dump();
 
 	os.close();
-
-}
-
-void ConvertStages()
-{
-	namespace fs = std::filesystem;
-	std::vector<Ref<Stage>> result;
-
-	Stage stage;
-
-	auto flipStage = [](const Stage& s) {
-		Stage stage(s);
-
-		auto& data = stage.GetData();
-		auto& avoid = stage.GetAvoidSearch();
-		auto w = stage.GetWidth();
-		auto h = stage.GetHeight();
-
-		for (size_t y = 0; y < stage.GetHeight() / 2; y++)
-		{
-			for (size_t x = 0; x < stage.GetWidth(); x++)
-			{
-				std::swap(data[y * w + x], data[(h - (y + 1)) * w + x]);
-				std::swap(avoid[y * w + x], avoid[(h - (y + 1)) * w + x]);
-			}
-		}
-		stage.StartPoint.y = stage.GetHeight() - (stage.StartPoint.y + 1);
-		stage.StartDirection.y = -stage.StartDirection.y;
-
-		return stage;
-	};
-
-
-	for (auto& entry : fs::directory_iterator("assets/data"))
-	{
-		auto path = entry.path();
-		if (entry.is_regular_file() && path.extension() == ".bss")
-		{
-			stage.FromFile(path.string());
-			stage.Name = path.filename().string();
-
-			// Need to flip here
-			auto flipped = flipStage(stage);
-
-			assert((stage == flipStage(flipped)));
-
-			path.replace_extension(".bssj");
-			flipped.Save(path.string());
-
-			BSF_INFO("Converted stage: {0}", stage.Name);
-		}
-	}
 
 }
 

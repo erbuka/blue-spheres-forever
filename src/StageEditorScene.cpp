@@ -1,7 +1,5 @@
 #include "BsfPch.h"
 
-#include <regex>
-
 #include "StageEditorScene.h"
 #include "MenuScene.h"
 #include "Assets.h"
@@ -13,11 +11,11 @@
 
 namespace bsf
 {
-	static constexpr float s_uiScale = 15.0f;
-	static constexpr float s_uiPanelMargin = s_uiScale / 100.0f;
+	static constexpr float s_uiScale = 20.0f;
 	static constexpr float s_uiTopBarHeight = s_uiScale / 10.0f;
 	static constexpr float s_uiPropertiesWidth = s_uiScale / 2.0f;
-	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiPanelMargin;
+	static constexpr float s_uiToolbarMargin = s_uiScale / 100.0f;
+	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiToolbarMargin;
 	static constexpr float s_uiStageListItemWidth = s_uiScale / 4.0f;
 	static constexpr float s_uiStageListItemHeight = s_uiScale / 6.0f;
 	static constexpr float s_uiConfirmDialogBtnSize = s_uiScale / 6.0f;
@@ -95,11 +93,11 @@ namespace bsf
 		(*m_CurrentStage) = std::move(Stage(32, 32));
 	}
 
-	void StageEditorScene::LoadStage(const std::string& fileName)
+	void StageEditorScene::LoadStage(std::string_view fileName)
 	{
 		// TODO Add error checking maybe
 		m_CurrentStage->Load(fileName);
-		m_CurrentStageFile = fileName;
+		m_CurrentStageFile = (std::string)fileName;
 	}
 
 	void StageEditorScene::InitializeUI()
@@ -232,29 +230,64 @@ namespace bsf
 				properties->AddChild(stageNameInput);
 			}
 
+			{ // Max rings + stage size
+				auto panel = MakeRef<UIPanel>();
+				panel->Layout = UILayout::Horizontal;
 
-			// Max Rings input
-			{
-				UIBoundValue<std::string> val;
+				// Max Rings input
+				{
+					UIBoundValue<std::string> val;
 
-				val.Set = [&, check = std::regex("^[0-9]+$")](const std::string& val) {
-					if (std::regex_match(val, check))
-					{
-						m_CurrentStage->MaxRings = std::atoi(val.c_str());
-					}
-					else if (val.empty())
-					{
-						m_CurrentStage->MaxRings = 0;
-					}
-				};
+					val.Set = [&, check = std::regex("^[0-9]+$")](const std::string& val) {
+						if (std::regex_match(val, check))
+						{
+							m_CurrentStage->MaxRings = std::atoi(val.c_str());
+						}
+						else if (val.empty())
+						{
+							m_CurrentStage->MaxRings = 0;
+						}
+					};
 
-				val.Get = [&] { return std::to_string(m_CurrentStage->MaxRings); };
+					val.Get = [&] { return std::to_string(m_CurrentStage->MaxRings); };
 
 
-				auto maxRingsInput = MakeRef<UITextInput>();
-				maxRingsInput->Label = "Max Rings";
-				maxRingsInput->Bind(val);
-				properties->AddChild(maxRingsInput);
+					auto maxRingsInput = MakeRef<UITextInput>();
+					maxRingsInput->Label = "Max Rings";
+					maxRingsInput->Bind(val);
+					maxRingsInput->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
+					panel->AddChild(maxRingsInput);
+				}
+
+
+				{ // Stage size
+					auto stageSizePanel = MakeRef<UIPanel>();
+					stageSizePanel->Layout = UILayout::Vertical;
+					stageSizePanel->Margin = 1.0f;
+					stageSizePanel->HasShadow = true;
+					stageSizePanel->BackgroundColor = style.Palette.BackgroundVariant;
+					stageSizePanel->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
+
+					auto stageSizeLabel = MakeRef<UIText>();
+					stageSizeLabel->Text = "Size";
+					stageSizeLabel->Scale = 0.5f;
+					stageSizePanel->AddChild(stageSizeLabel);
+
+					UIBoundValue<float> sizeValue(0.0f);
+
+					//sizeValue.Get = [&] {  };
+
+					auto stageSizeSlider = MakeRef<UISlider>();
+					stageSizeSlider->ForegroundColor = style.Palette.Background;
+					stageSizeSlider->Bind(sizeValue);
+
+					stageSizePanel->AddChild(stageSizeSlider);
+
+					panel->AddChild(stageSizePanel);
+				}
+
+				properties->AddChild(panel);
+
 			}
 
 
@@ -1290,8 +1323,13 @@ namespace bsf
 
 	void UISlider::Update(const UIRoot& root, const Time& time)
 	{
-		auto& style = GetStyle();
-		MinSize = glm::vec2(style.SliderTrackThickness + style.GetMargin(4.0f));
+		const auto& style = GetStyle();
+		const float height = style.SliderTrackThickness + style.GetMargin(4.0f);
+		MinSize = glm::vec2(height);
+		if (Orientation == UISliderOrientation::Horizontal)
+			MaxSize = { std::numeric_limits<float>::max(), height };
+		else
+			MaxSize = { height, std::numeric_limits<float>::max() };
 	}
 
 	void UISlider::Render(const UIRoot& root, Renderer2D& r2, const Time& time)

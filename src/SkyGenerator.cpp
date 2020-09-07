@@ -7,6 +7,7 @@
 #include "ShaderProgram.h"
 #include "VertexArray.h"
 #include "Assets.h"
+#include "Color.h"
 
 namespace bsf
 {
@@ -25,16 +26,27 @@ namespace bsf
 		// Vertex arrays
 		m_vaCube = CreateCube();
 
-		auto vbBillboard = Ref<VertexBuffer>(new VertexBuffer({
-			{ "aPosition", AttributeType::Float3 },
-			{ "aUv", AttributeType::Float2}
-		}, s_Billboad.data(), 6));
-		m_vaBillboard = Ref<VertexArray>(new VertexArray(6, { vbBillboard }));
-
 		// Shaders
 		m_pGenBg = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen_bg.frag");
 		m_pGenStars = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_stars.vert", "assets/shaders/sky_generator/sky_gen_stars.frag");
 		m_pGenIrradiance = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_irradiance.vert", "assets/shaders/sky_generator/sky_gen_irradiance.frag");
+		
+		// Images
+		m_imNoise = LoadCubeImage(
+			"assets/textures/noise_front5.png",
+			"assets/textures/noise_back6.png",
+			"assets/textures/noise_left2.png",
+			"assets/textures/noise_right1.png",
+			"assets/textures/noise_bottom4.png",
+			"assets/textures/noise_top3.png");
+
+		m_imStars = LoadCubeImage(
+			"assets/textures/stars_front5.png",
+			"assets/textures/stars_back6.png",
+			"assets/textures/stars_left2.png",
+			"assets/textures/stars_right1.png",
+			"assets/textures/stars_bottom4.png",
+			"assets/textures/stars_top3.png");
 	}
 
 	Ref<Sky> SkyGenerator::Generate(const Options& options)
@@ -45,31 +57,35 @@ namespace bsf
 	}
 
 
+	SkyGenerator::CubeImage SkyGenerator::LoadCubeImage(std::string_view front, std::string_view back, std::string_view left, std::string_view right, std::string_view bottom, std::string_view top)
+	{
+		CubeImage result;
+
+		result[TextureCubeFace::Front] = std::move(std::get<0>(LoadPng(front, false)));
+		result[TextureCubeFace::Back] = std::move(std::get<0>(LoadPng(back, false)));
+		result[TextureCubeFace::Left] = std::move(std::get<0>(LoadPng(left, false)));
+		result[TextureCubeFace::Right] = std::move(std::get<0>(LoadPng(right, false)));
+		result[TextureCubeFace::Bottom] = std::move(std::get<0>(LoadPng(bottom, false)));
+		result[TextureCubeFace::Top] = std::move(std::get<0>(LoadPng(top, false)));
+
+		return result;
+	}
+
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
 
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
 		auto& assets = Assets::GetInstance();
 		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
-		auto bgPattern = Ref<TextureCube>(new TextureCube(
-			1024,
-			"assets/textures/noise_front5.png",
-			"assets/textures/noise_back6.png",
-			"assets/textures/noise_left2.png",
-			"assets/textures/noise_right1.png",
-			"assets/textures/noise_bottom4.png",
-			"assets/textures/noise_top3.png"
-		));
 
-		auto starsPattern = Ref<TextureCube>(new TextureCube(
-			1024,
-			"assets/textures/stars_front5.png",
-			"assets/textures/stars_back6.png",
-			"assets/textures/stars_left2.png",
-			"assets/textures/stars_right1.png",
-			"assets/textures/stars_bottom4.png",
-			"assets/textures/stars_top3.png"
-		));
+		auto bgPattern = Ref<TextureCube>(new TextureCube(1024, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE));
+		auto starsPattern = Ref<TextureCube>(new TextureCube(1024, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE));
+
+		for (auto face : TextureCubeFaces)
+		{
+			bgPattern->SetPixels(face, m_imNoise[face].data());
+			starsPattern->SetPixels(face, m_imStars[face].data());
+		}
 
 		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 		
@@ -232,6 +248,16 @@ namespace bsf
 			m_VertexArray->Draw(GL_TRIANGLES);
 
 		}
+	}
+
+	Ref<Sky> GenerateDefaultSky()
+	{
+		// Sky
+		return Assets::GetInstance().Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({
+			1024,
+			Colors::Blue,
+			Darken(Colors::Blue, 0.5f)
+		});
 	}
 
 }

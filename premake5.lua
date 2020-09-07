@@ -129,8 +129,6 @@ project "BlueSpheresForever"
         "vendor/stb/include",
         "vendor/bass/include",
         "vendor/json/include",
-        "vendor/imgui",
-        "vendor/imgui/examples",
     }
 
     pchheader "BsfPch.h"
@@ -138,11 +136,18 @@ project "BlueSpheresForever"
 
     files { "src/**.cpp", "src/**.h"  }
 
-    links { "opengl32", "Glad", "GLFW", "LodePng", "bass", "ImGui" }
+    links { "opengl32", "Glad", "GLFW", "LodePng", "bass" }
 
     postbuildcommands {
         "{COPY} ../src/assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
     }
+
+    filter "configurations:not Distribution"
+        includedirs {
+            "vendor/imgui",
+            "vendor/imgui/examples", 
+        }
+        links { "ImGui" }
 
     filter "system:windows"
         libdirs { "vendor/bass/lib/win64" }

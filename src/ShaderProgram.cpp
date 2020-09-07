@@ -22,14 +22,14 @@ namespace bsf
 	};
 
 
-	static uint32_t LoadShader(ShaderType type, const std::string& shaderSource)
+	static uint32_t LoadShader(ShaderType type, std::string_view shaderSource)
 	{
 		// Create an empty vertex shader handle
 		GLuint shader = glCreateShader(s_glShaderType[type]);
 
 		// Send the vertex shader source code to GL
 		// Note that std::string's .c_str is NULL character terminated.
-		const GLchar* source = (const GLchar*)shaderSource.c_str();
+		const GLchar* source = (const GLchar*)shaderSource.data();
 		glShaderSource(shader, 1, &source, 0);
 
 		// Compile the vertex shader
@@ -60,7 +60,7 @@ namespace bsf
 		return shader;
 	}
 
-	static uint32_t LoadProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& shaderSources)
+	static uint32_t LoadProgram(const std::initializer_list<std::pair<ShaderType, std::string_view>>& shaderSources)
 	{
 
 		GLuint program = glCreateProgram();
@@ -109,7 +109,7 @@ namespace bsf
 	}
 
 
-	Ref<ShaderProgram> ShaderProgram::FromFile(const std::string& vertex, const std::string& fragment, const std::initializer_list<std::string>& defines)
+	Ref<ShaderProgram> ShaderProgram::FromFile(std::string_view vertex, std::string_view fragment, const std::initializer_list<std::string_view>& defines)
 	{
 
 		auto vsSource = ReadTextFile(vertex);
@@ -121,12 +121,12 @@ namespace bsf
 		return MakeRef<ShaderProgram>(vsSource, fsSource);
 	}
 
-	ShaderProgram::ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource) :
+	ShaderProgram::ShaderProgram(std::string_view vertexSource, std::string_view fragmentSource) :
 		ShaderProgram({ { ShaderType::Vertex, vertexSource }, { ShaderType::Fragment, fragmentSource } })
 	{
 	}
 
-	ShaderProgram::ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& sources)
+	ShaderProgram::ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string_view>>& sources)
 	{
 		static constexpr std::array<GLenum, 2> samplerTypes = {
 			GL_SAMPLER_2D,
@@ -230,15 +230,15 @@ namespace bsf
 
 
 
-	void ShaderProgram::InjectDefines(std::string& source, const std::initializer_list<std::string>& defines)
+	void ShaderProgram::InjectDefines(std::string& source, const std::initializer_list<std::string_view>& defines)
 	{
 		if (defines.size() > 0)
 		{
 			std::string definesStr;
 
 			for (const auto& def : defines)
-				definesStr += "#define " + def + "\n";
-	
+				definesStr += Format("#define %s\n", def.data());
+
 			auto pos = source.find("#version");
 				
 			if (pos != std::string::npos)

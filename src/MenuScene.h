@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "EventEmitter.h"
 #include "StageCodeHelper.h"
+#include "MatrixStack.h"
 
 namespace bsf
 {
@@ -17,6 +18,9 @@ namespace bsf
 	class MenuRoot;
 	class Menu;
 	class Stage;
+	class Sky;
+	class Framebuffer;
+	class ShaderProgram;
 
 	class MenuNode
 	{
@@ -94,8 +98,6 @@ namespace bsf
 	{
 	public:
 
-
-
 		StageCodeMenuItem();
 
 		bool OnConfirm(MenuRoot& root) override;
@@ -158,18 +160,27 @@ namespace bsf
 	class MenuScene : public Scene
 	{
 	public:
+
+		MenuScene(const Ref<Sky>& sky = nullptr) : m_Sky(sky) {}
+
 		void OnAttach() override;
 		void OnRender(const Time& time) override;
 		void OnDetach() override;
+
+		void OnResize(const WindowResizedEvent& evt);
+
 	private:
-
+		void BuildMenus();
 		void DrawTitle(Renderer2D& r2);
-
 		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 
 		MenuRoot m_MenuRoot;
 		Ref<SelectMenuItem<std::string>> m_SelectStageMenuItem;
 		Ref<StageCodeMenuItem> m_StageCodeMenuItem;
+		Ref<Sky> m_Sky;
+		Ref<Framebuffer> m_fbSky;
+		Ref<ShaderProgram> m_pDeferred, m_pSky;
+		MatrixStack m_Projection, m_View, m_Model;
 	};
 
 

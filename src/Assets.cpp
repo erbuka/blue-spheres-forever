@@ -26,7 +26,7 @@ namespace bsf
 
 	void Assets::Load()
 	{
-		const auto loadTex2D = [](const std::string& fileName) {
+		const auto loadTex2D = [](std::string_view fileName) {
 			auto result = MakeRef<Texture2D>(fileName);
 			result->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 			return result;

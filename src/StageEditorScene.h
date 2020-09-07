@@ -7,6 +7,7 @@
 #include <chrono>
 #include <unordered_map>
 #include <sstream>
+#include <string_view>
 
 #include "Scene.h"
 #include "Stage.h"
@@ -524,12 +525,8 @@ namespace bsf
 		void OnStageListButtonClick(const MouseEvent& evt);
 
 		void NewStage();
-		void LoadStage(const std::string& fileName);
+		void LoadStage(std::string_view fileName);
 		void InitializeUI();
-
-		
-
-
 
 
 	};

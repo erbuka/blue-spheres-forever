@@ -3,7 +3,7 @@
 #include "Ref.h"
 #include "Asset.h"
 
-#include <string>
+#include <string_view>
 #include <vector>
 
 
@@ -36,6 +36,8 @@ namespace bsf
 		TextureCubeFace::Back
 	};
 
+	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(std::string_view fileName, bool flipY);
+
 	class Texture : public Asset
 	{
 	public:
@@ -59,8 +61,9 @@ namespace bsf
 	class TextureCube : public Texture
 	{
 	public:
-		TextureCube(uint32_t size, const std::string& crossImage);
-		TextureCube(uint32_t size, const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top);
+		TextureCube(uint32_t size, std::string_view crossImage);
+		TextureCube(uint32_t size, std::string_view front, std::string_view back, std::string_view left, 
+			std::string_view right, std::string_view bottom, std::string_view top);
 		TextureCube(uint32_t size, GLenum internalFormat, GLenum format, GLenum type);
 		TextureCube(TextureCube&) = delete;
 		TextureCube(TextureCube&&) = delete;
@@ -87,7 +90,7 @@ namespace bsf
 	public:
 		Texture2D(GLenum internalFormat, GLenum format, GLenum type);
 		Texture2D(uint32_t color);
-		Texture2D(const std::string& fileName);
+		Texture2D(std::string_view fileName);
 
 		Texture2D(Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
@@ -112,7 +115,7 @@ namespace bsf
 
 		GLenum m_InternalFormat, m_Format, m_Type;
 
-		bool Load(const std::string& fileName);
+		bool Load(std::string_view fileName);
 
 	};
 

@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <array>
 #include <tuple>
@@ -36,10 +37,10 @@ namespace bsf
 	public:
 
 
-		static Ref<ShaderProgram> FromFile(const std::string& vertex, const std::string& fragment, const std::initializer_list<std::string>& defines = {});
+		static Ref<ShaderProgram> FromFile(std::string_view vertex, std::string_view fragment, const std::initializer_list<std::string_view>& defines = {});
 
-		ShaderProgram(const std::string& vertexSource, const std::string& fragmentSource);
-		ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string>>& sources);
+		ShaderProgram(std::string_view vertexSource, std::string_view fragmentSource);
+		ShaderProgram(const std::initializer_list<std::pair<ShaderType, std::string_view>>& sources);
 
 		ShaderProgram(ShaderProgram&) = delete;
 		ShaderProgram(ShaderProgram&&) = delete;
@@ -89,7 +90,7 @@ namespace bsf
 			uint32_t TextureUnit;
 		};
 
-		static void InjectDefines(std::string& source, const std::initializer_list<std::string>& defines);
+		static void InjectDefines(std::string& source, const std::initializer_list<std::string_view>& defines);
 
 		uint32_t m_Id;
 		std::map<std::string, UniformInfo> m_UniformInfo;

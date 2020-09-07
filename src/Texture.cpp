@@ -9,12 +9,12 @@
 namespace bsf
 {
 
-	static std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(const std::string& fileName, bool flipY)
+	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(std::string_view fileName, bool flipY)
 	{
 		uint32_t width, height;
 
 		std::vector<unsigned char> data, flippedData;
-		unsigned error = lodepng::decode(data, width, height, fileName);
+		unsigned error = lodepng::decode(data, width, height, fileName.data());
 
 		// If there's an error, display it.
 		if (error != 0) {
@@ -35,11 +35,11 @@ namespace bsf
 					width * sizeof(uint32_t));
 			}
 
-			return { flippedData, width, height };
+			return { std::move(flippedData), width, height };
 		}
 		else
 		{
-			return { data, width, height };
+			return { std::move(data), width, height };
 
 		}
 	}
@@ -76,7 +76,7 @@ namespace bsf
 	}
 
 
-	Texture2D::Texture2D(const std::string& fileName) : Texture2D(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
+	Texture2D::Texture2D(std::string_view fileName) : Texture2D(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
 		Load(fileName);
 	}
@@ -148,7 +148,7 @@ namespace bsf
 
 
 
-	bool Texture2D::Load(const std::string& fileName)
+	bool Texture2D::Load(std::string_view fileName)
 	{
 		auto [pixels, width, height] = LoadPng(fileName, true);
 
@@ -180,7 +180,7 @@ namespace bsf
 	}
 
 
-	TextureCube::TextureCube(uint32_t size, const std::string& crossImage) :
+	TextureCube::TextureCube(uint32_t size, std::string_view crossImage) :
 		TextureCube(size, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
 		auto image = LoadPng(crossImage, false);
@@ -213,7 +213,8 @@ namespace bsf
 
 	}
 
-	TextureCube::TextureCube(uint32_t size, const std::string& front, const std::string& back, const std::string& left, const std::string& right, const std::string& bottom, const std::string& top) :
+	TextureCube::TextureCube(uint32_t size, std::string_view front, std::string_view back, std::string_view left, 
+		std::string_view right, std::string_view bottom, std::string_view top) :
 		TextureCube(size, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
 		static std::array<TextureCubeFace, 6> faces = {
@@ -225,7 +226,7 @@ namespace bsf
 			TextureCubeFace::Top
 		};
 
-		std::array<std::string, 6> files = { front, back, left, right, bottom, top };
+		std::array<std::string_view, 6> files = { front, back, left, right, bottom, top };
 
 		Initialize();
 		

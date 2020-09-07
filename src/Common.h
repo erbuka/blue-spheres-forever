@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <fstream>
 #include <vector>
 #include <array>
@@ -234,11 +235,11 @@ namespace bsf
 	}
 
 	template<typename ...Args>
-	std::string Format(const std::string& format, Args... args)
+	std::string Format(std::string_view format, Args... args)
 	{
 		static constexpr uint32_t bufSize = 1024;
 		static char buffer[bufSize];
-		std::snprintf(buffer, bufSize, format.c_str(), args...);
+		std::snprintf(buffer, bufSize, format.data(), args...);
 		return std::string(buffer);
 	}
 
@@ -286,7 +287,7 @@ namespace bsf
 	Ref<Texture2D> CreateGray(float value);
 	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps);
 
-	std::string ReadTextFile(const std::string& file);
+	std::string ReadTextFile(std::string_view file);
 
 
 	#pragma endregion

@@ -1,7 +1,6 @@
 #include "BsfPch.h"
 
 #include <bitset>
-#include <regex>
 #include <json/json.hpp>
 
 #include "Stage.h"
@@ -91,7 +90,7 @@ namespace bsf
 
 	}
 
-	bool Stage::Load(const std::string& fileName)
+	bool Stage::Load(std::string_view fileName)
 	{
 		try
 		{
@@ -119,7 +118,7 @@ namespace bsf
 		return true;
 	}
 
-	void Stage::Save(const std::string& fileName)
+	void Stage::Save(std::string_view fileName)
 	{
 
 		auto root = json::object();
@@ -140,76 +139,17 @@ namespace bsf
 		};
 
 		std::ofstream os;
-		os.open(fileName);
+		os.open(fileName.data());
 
 		if (!os.is_open())
 		{
-			BSF_ERROR("Can't open the file: {0}", fileName);
+			BSF_ERROR("Can't open the file: {0}", fileName.data());
 			return;
 		}
 
 		os << root.dump();
 
 		os.close();
-
-	}
-
-	bool Stage::FromFile(const std::string& filename)
-	{
-		std::ifstream stdIs;
-
-		stdIs.open(filename, std::ios_base::binary);
-
-		if (!stdIs.good())
-		{
-			BSF_ERROR("Bad file: {0}", filename);
-			return false;
-		}
-
-		InputStream<ByteOrder::LittleEndian> is(stdIs);
-
-		is.Read(Version);
-
-		is.Read(m_Width); // Width
-		is.Read(m_Height); // Height
-
-		is.Read(FloorRenderingMode); // uint8;
-		is.Read(BumpMappingEnabled); // uint8;
-
-		uint32_t texStrSize = is.Read<uint32_t>();
-		uint32_t bumpStrSize = is.Read<uint32_t>();
-	
-		if (texStrSize > 0)
-		{
-			Texture.resize(texStrSize);
-			is.ReadSome<char>(texStrSize, Texture.data());
-		}
-
-		if (bumpStrSize > 0)
-		{
-			NormalMap.resize(bumpStrSize);
-			is.ReadSome(bumpStrSize, NormalMap.data());
-		}
-		
-
-		is.Read(StartPoint); // ivec2
-		is.Read(StartDirection); // ivec2
-		is.Read(EmeraldColor);// vec3
-
-		is.ReadSome(2, PatternColors.data()); // 2 * vec3
-		is.ReadSome(2, SkyColors.data()); // 2 * vec3
-		is.ReadSome(2, StarColors.data()); // 2 * vec3
-
-		is.Read(MaxRings); // uint32
-		Rings = MaxRings;
-
-		m_Data.resize((size_t)m_Width * m_Height);
-		m_AvoidSearch.resize((size_t)m_Width * m_Height);
-
-		is.ReadSome(m_Data.size(), m_Data.data()); // 1024 bytes
-		is.ReadSome(m_AvoidSearch.size(), m_AvoidSearch.data()); // 1024 bytes;
-
-		stdIs.close();
 
 	}
 

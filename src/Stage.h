@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <execution>
 #include <optional>
+#include <string_view>
 
 #include "Asset.h"
 #include "Ref.h"
@@ -76,9 +77,8 @@ namespace bsf
 		static void SaveStageFiles(const std::vector<std::string>& files);
 		static std::vector<std::string> GetStageFiles();
 
-		[[nodiscard]] bool Load(const std::string& fileName);
-		void Save(const std::string& fileName);
-		bool FromFile(const std::string& filename);
+		[[nodiscard]] bool Load(std::string_view fileName);
+		void Save(std::string_view fileName);
 		void Initialize(uint32_t width, uint32_t height);
 
 		Stage();

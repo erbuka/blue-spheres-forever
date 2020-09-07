@@ -1,25 +1,31 @@
 #pragma once
 
-#ifdef BSF_ENABLE_DIAGNOSTIC
 
 #include <string>
 #include <map>
 #include <list>
 #include <chrono>
-#include <imgui.h>
 #include <unordered_map>
 
+#include <GLFW/glfw3.h>
 
-
+#ifdef BSF_ENABLE_DIAGNOSTIC
+#define BSF_DIAGNOSTIC_INIT(app, window) DiagnosticTool::Get().Initialize(app, window)
 #define BSF_DIAGNOSTIC_BEGIN() DiagnosticTool::Get().Begin()
 #define BSF_DIAGNOSTIC_FUNC() DiagnosticGuard bsf_dguard##__LINE__ (__FUNCTION__)
 #define BSF_DIAGNOSTIC_SCOPE(name) DiagnosticGuard bsf_dguard##__LINE__ (name)
 #define BSF_DIAGNOSTIC_END() DiagnosticTool::Get().End()
-#define BSF_DIAGNOSTIC_RESET() DiagnosticTool::Get().Reset()
-
+#else
+#define BSF_DIAGNOSTIC_INIT()
+#define BSF_DIAGNOSTIC_BEGIN()
+#define BSF_DIAGNOSTIC_FUNC()
+#define BSF_DIAGNOSTIC_SCOPE(name)
+#define BSF_DIAGNOSTIC_END()
+#define BSF_DIAGNOSTIC_RESET()
+#endif
 namespace bsf
 {
-
+	class Application;
 
 	struct DiagnosticToolStats
 	{
@@ -47,31 +53,18 @@ namespace bsf
 	{
 	public:
 		static DiagnosticTool& Get();
-		
-		const std::unordered_map<const char*, DiagnosticToolStats>& GetStats() const { return m_Stats; }
-
+		void Initialize(Application* app, GLFWwindow* window);
 		void Begin();
 		void End();
-
-
-		void Reset() { m_Stats.clear(); }
+		void Reset();
 
 	private:
 		friend class DiagnosticGuard;
-		DiagnosticTool() = default;
-		std::unordered_map<const char*, DiagnosticToolStats> m_Stats;
+		struct Impl;
+		DiagnosticTool();
+		std::unique_ptr<Impl> m_Impl;
+
 	};
-
-
-
-
 
 }
 
-#else
-#define BSF_DIAGNOSTIC_BEGIN()
-#define BSF_DIAGNOSTIC_FUNC()
-#define BSF_DIAGNOSTIC_SCOPE(name)
-#define BSF_DIAGNOSTIC_END()
-#define BSF_DIAGNOSTIC_RESET()
-#endif

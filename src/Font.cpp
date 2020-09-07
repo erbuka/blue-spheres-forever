@@ -20,7 +20,7 @@ namespace bsf
 	struct Font::Impl
 	{
 
-		static Impl* Pack(const std::string& fileName, float fontSize, uint32_t fromCharacter, uint32_t toCharacter, uint32_t packWidth, uint32_t packHeight)
+		static Impl* Pack(std::string_view fileName, float fontSize, uint32_t fromCharacter, uint32_t toCharacter, uint32_t packWidth, uint32_t packHeight)
 		{
 			std::ifstream is;
 
@@ -144,7 +144,7 @@ namespace bsf
 			return it->second;
 		}
 
-		float GetStringWidth(const std::string& s) const
+		float GetStringWidth(std::string_view s) const
 		{
 			float result = 0.0f;
 
@@ -163,7 +163,7 @@ namespace bsf
 
 
 	
-	Font::Font(const std::string& fileName, float fontSize)
+	Font::Font(std::string_view fileName, float fontSize)
 	{
 		m_Impl = std::unique_ptr<Impl>(Impl::Pack(fileName, fontSize, s_FirstChar, s_LastChar, s_BitmapSize, s_BitmapSize));
 	}
@@ -178,7 +178,7 @@ namespace bsf
 		return m_Impl->m_FontTex;
 	}
 
-	float Font::GetStringWidth(const std::string& s) const
+	float Font::GetStringWidth(std::string_view s) const
 	{
 		return m_Impl->GetStringWidth(s);
 	}

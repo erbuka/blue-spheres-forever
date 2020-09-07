@@ -1,9 +1,5 @@
 #include "BsfPch.h"
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
 #include "Application.h"
 #include "Log.h"
 #include "Assets.h"
@@ -133,9 +129,6 @@ namespace bsf
 
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-        // Initialize ImGui
-        InitImGui();
-
         // Setup GLFW callbacks
         glfwSetWindowUserPointer(m_Window, this);
 
@@ -146,15 +139,13 @@ namespace bsf
         glfwSetKeyCallback(m_Window, &GLFW_Key);
         glfwSetCharCallback(m_Window, &GLFW_Char);
 
-        auto startTime = std::chrono::high_resolution_clock::now();
-        auto prevTime = std::chrono::high_resolution_clock::now();
-        auto currTime = std::chrono::high_resolution_clock::now();
-
         glfwSwapInterval(0);
+
+        // Init diagnostic
+        BSF_DIAGNOSTIC_INIT(this, m_Window);
 
         m_CurrentScene = std::make_shared<Scene>();
         m_CurrentScene->m_App = this;
-
 
         // Init Renderer 2D
         m_Renderer2D = MakeRef<Renderer2D>();
@@ -165,6 +156,10 @@ namespace bsf
         // Load Assets 
         Assets::GetInstance().Load();
 
+        auto startTime = std::chrono::high_resolution_clock::now();
+        auto prevTime = std::chrono::high_resolution_clock::now();
+        auto currTime = std::chrono::high_resolution_clock::now();
+
         m_Running = true;
 
         while (!glfwWindowShouldClose(m_Window) && m_Running)
@@ -172,8 +167,6 @@ namespace bsf
             BSF_DIAGNOSTIC_BEGIN();
 
             {
-                BSF_DIAGNOSTIC_FUNC();
-
                 if (m_NextScene != nullptr)
                 {
                     m_CurrentScene->ClearSubscriptions();
@@ -205,65 +198,6 @@ namespace bsf
             }
 
             BSF_DIAGNOSTIC_END();
-
-#ifdef BSF_ENABLE_DIAGNOSTIC
-            {
-                auto windowSize = GetWindowSize();
-                bool show = true;
-
-                ImGui_ImplOpenGL3_NewFrame();
-                ImGui_ImplGlfw_NewFrame();
-                ImGui::NewFrame();
-
-
-                ImGui::Begin("Diagnostic Tool");
-                if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    if (ImGui::Button("Reset")) {
-                        BSF_DIAGNOSTIC_RESET();
-                    };
-
-                    ImGui::Columns(4);
-                    ImGui::SetColumnWidth(0, 400.0f);
-                    ImGui::SetColumnWidth(1, 100.0f);
-                    ImGui::SetColumnWidth(2, 100.0f);
-                    ImGui::SetColumnWidth(3, 100.0f);
-
-                    ImGui::Text("Function/Scope");
-                    ImGui::NextColumn();
-                    ImGui::Text("Avg Time");
-                    ImGui::NextColumn();
-                    ImGui::Text("Max Time");
-                    ImGui::NextColumn();
-                    ImGui::Text("Calls");
-                    ImGui::NextColumn();
-
-                    ImGui::Separator();
-
-                    for (const auto& [name, stats] : DiagnosticTool::Get().GetStats())
-                    {;
-                        ImGui::Text(name);
-                        ImGui::NextColumn();
-                        ImGui::Text("%.3f ms", stats.MeanExecutionTime);
-                        ImGui::NextColumn();
-                        ImGui::Text("%.3f ms", stats.MaxExecutionTime);
-                        ImGui::NextColumn();
-                        ImGui::Text("%d", stats.Calls);
-                        ImGui::NextColumn();
-                    }
-
-                    ImGui::Separator();
-
-                }
-                ImGui::End();
-
-                //ImGui::ShowDemoWindow(&show);
-
-                glViewport(0, 0, windowSize.x, windowSize.y);
-                ImGui::Render();
-                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-            }
-#endif
 
 
             glfwSwapBuffers(m_Window);
@@ -297,21 +231,6 @@ namespace bsf
     {
         return *(m_AudioDevice.get());
     }
-
-	void bsf::Application::InitImGui()
-	{
-        
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-        ImGui::StyleColorsDark();
-
-        ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
-        ImGui_ImplOpenGL3_Init("#version 130");
-        
-	}
 
 
 	void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)

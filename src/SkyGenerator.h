@@ -4,6 +4,7 @@
 
 #include "Ref.h"
 #include "Asset.h"
+#include "Texture.h"
 
 namespace bsf
 {
@@ -52,11 +53,21 @@ namespace bsf
 
 	private:
 
+		using CubeImage = std::unordered_map<TextureCubeFace, std::vector<unsigned char>>;
+
+		CubeImage m_imNoise, m_imStars;
+
+		CubeImage LoadCubeImage(std::string_view front, std::string_view back, std::string_view left,
+			std::string_view right, std::string_view bottom, std::string_view top);
+
+
 		Ref<TextureCube> GenerateEnvironment(const Options& options);
 		Ref<TextureCube> GenerateIrradiance(const Ref<TextureCube>& sky, uint32_t size);
 
-		Ref<VertexArray> m_vaCube, m_vaBillboard;
+		Ref<VertexArray> m_vaCube;
 		Ref<ShaderProgram> m_pGenBg, m_pGenStars, m_pGenIrradiance;
 	};
+
+	Ref<Sky> GenerateDefaultSky();
 }
 

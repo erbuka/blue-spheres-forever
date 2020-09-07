@@ -43,10 +43,10 @@ namespace bsf
 		m_Impl = nullptr;
 	}
 
-	Audio::Audio(const std::string& fileName)
+	Audio::Audio(std::string_view fileName)
 	{
 		m_Impl = std::make_unique<Impl>();
-		if ((m_Impl->m_Stream = BASS_StreamCreateFile(FALSE, fileName.c_str(), 0, 0, 0)) == 0)
+		if ((m_Impl->m_Stream = BASS_StreamCreateFile(FALSE, fileName.data(), 0, 0, 0)) == 0)
 		{
 			BSF_ERROR("Can't create stream from file: {0}", fileName);
 			return;

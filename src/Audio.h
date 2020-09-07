@@ -2,7 +2,7 @@
 
 #include "Asset.h"
 
-#include <string>
+#include <string_view>
 #include <memory>
 
 namespace bsf
@@ -22,7 +22,7 @@ namespace bsf
 	class Audio : public Asset
 	{
 	public:
-		Audio(const std::string& fileName);
+		Audio(std::string_view fileName);
 		~Audio();
 
 		void SetVolume(float volume);

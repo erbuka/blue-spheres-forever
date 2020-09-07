@@ -5,19 +5,15 @@
 #include "Log.h"
 #include "Common.h"
 
-#include <sstream>
-#include <string_view>
-
-
 namespace bsf
 {
 
 	// TODO try to parse with regex
-	Ref<ModelDef> WavefrontLoader::Load(const std::string& fileName)
+	Ref<ModelDef> WavefrontLoader::Load(std::string_view fileName)
 	{
 		std::ifstream stdIs;
 
-		stdIs.open(fileName, std::ios_base::in);
+		stdIs.open(fileName.data(), std::ios_base::in);
 
 		if (!stdIs.is_open())
 		{

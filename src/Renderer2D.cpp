@@ -1,7 +1,5 @@
 #include "BsfPch.h"
 
-
-
 #include "Renderer2D.h"
 #include "VertexArray.h"
 #include "ShaderProgram.h"
@@ -10,9 +8,6 @@
 #include "Log.h"
 #include "Font.h"
 #include "Profiler.h"
-
-
-
 
 static constexpr uint32_t s_MaxTriangleVertices = 30000 * 3;
 static constexpr uint32_t s_MaxTextureUnits = 32;

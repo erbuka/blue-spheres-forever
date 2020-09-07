@@ -28,13 +28,8 @@ namespace bsf
 		auto& app = GetApplication();
 		auto windowSize = app.GetWindowSize();
 
-
 		// Sky
-		m_Sky = assets.Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({ 
-			1024,
-			Colors::Blue,
-			Darken(Colors::Blue, 0.5f)
-		});
+		m_Sky = GenerateDefaultSky();
 
 		// Framebuffers
 		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
@@ -56,6 +51,7 @@ namespace bsf
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f);
 		ScheduleTask(ESceneTaskEvent::PostRender, fadeIn);
 
+
 		// fadeOut
 		auto waitFadeOut = MakeRef<WaitForTask>(s_FadeOutTime);
 		waitFadeOut->SetDoneFunction([&](SceneTask& self) {
@@ -63,10 +59,7 @@ namespace bsf
 				glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, 
 				s_FadeOutDuration);
 
-			fadeOut->SetDoneFunction([&](SceneTask& self) {
-				// Goto empty scene for now
-				app.GotoScene(MakeRef<MenuScene>());
-			});
+			fadeOut->SetDoneFunction([&](SceneTask& self) { app.GotoScene(MakeRef<MenuScene>(m_Sky)); });
 
 			ScheduleTask(ESceneTaskEvent::PostRender, fadeOut);
 		});

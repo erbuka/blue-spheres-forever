@@ -1,8 +1,5 @@
 #include "BsfPch.h"
 
-#include <sstream>
-#include <chrono>
-
 #include "Common.h"
 #include "Color.h"
 #include "Log.h"
@@ -78,7 +75,7 @@ namespace bsf
 
 	}
 
-	std::string ReadTextFile(const std::string& file)
+	std::string ReadTextFile(std::string_view file)
 	{
 		std::ifstream is;
 
