@@ -690,16 +690,16 @@ namespace bsf
 		glm::vec2 pos = p;
 
 		while (pos.x < 0.0f)
-			pos.x += m_Stage.GetWidth();
+			pos.x += m_Stage.GetSize();
 
 		while (pos.y <= 0.0f)
-			pos.y += m_Stage.GetHeight();
+			pos.y += m_Stage.GetSize();
 
-		if (pos.x > m_Stage.GetWidth())
-			pos.x = std::fmodf(pos.x, m_Stage.GetWidth());
+		if (pos.x > m_Stage.GetSize())
+			pos.x = std::fmodf(pos.x, m_Stage.GetSize());
 
-		if (pos.y > m_Stage.GetHeight())
-			pos.y = std::fmodf(pos.y, m_Stage.GetHeight());
+		if (pos.y > m_Stage.GetSize())
+			pos.y = std::fmodf(pos.y, m_Stage.GetSize());
 
 		return pos;
 

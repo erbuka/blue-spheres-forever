@@ -1128,8 +1128,10 @@ namespace bsf
 
 	void GameScene::RotateSky(const glm::vec2& deltaPosition)
 	{
-		float du = deltaPosition.x / m_Stage->GetWidth();
-		float dv = deltaPosition.y / m_Stage->GetHeight();
+		static constexpr float s_Scale = 32.0f;
+
+		float du = deltaPosition.x / s_Scale;
+		float dv = deltaPosition.y / s_Scale;
 		
 		glm::mat4 rotateZ = glm::rotate(glm::identity<glm::mat4>(), du * glm::pi<float>() * 2.0f, { 0.0f, 0.0f, 1.0f });
 		glm::mat4 rotateX = glm::rotate(glm::identity<glm::mat4>(), dv * glm::pi<float>() * 2.0f, { 1.0f, 0.0f, 0.0f });

@@ -7,6 +7,7 @@
 #include "Renderer2D.h"
 #include "Application.h"
 #include "Font.h"
+#include "Common.h"
 
 
 namespace bsf
@@ -19,6 +20,13 @@ namespace bsf
 	static constexpr float s_uiStageListItemWidth = s_uiScale / 4.0f;
 	static constexpr float s_uiStageListItemHeight = s_uiScale / 6.0f;
 	static constexpr float s_uiConfirmDialogBtnSize = s_uiScale / 6.0f;
+
+	static constexpr uint32_t s_MinStageSize = 32;
+	static constexpr uint32_t s_MaxStageSize = 256;
+
+	static constexpr uint32_t s_MinStageSizePower = Log2(s_MinStageSize);
+	static constexpr uint32_t s_MaxStageSizePower = Log2(s_MaxStageSize);
+
 
 	void StageEditorScene::OnAttach()
 	{
@@ -90,7 +98,7 @@ namespace bsf
 	void StageEditorScene::NewStage()
 	{
 		m_CurrentStageFile = std::nullopt;
-		(*m_CurrentStage) = std::move(Stage(32, 32));
+		(*m_CurrentStage) = std::move(Stage(32));
 	}
 
 	void StageEditorScene::LoadStage(std::string_view fileName)
@@ -275,10 +283,16 @@ namespace bsf
 
 					UIBoundValue<float> sizeValue(0.0f);
 
-					//sizeValue.Get = [&] {  };
+
+					sizeValue.Get = [&] { return (float)m_CurrentStage->GetSize(); };
+					sizeValue.Set = [&](const float& v) { m_CurrentStage->Resize((int32_t)v); };
+					sizeValue.Format = [&] {return std::to_string(m_CurrentStage->GetSize()); };
 
 					auto stageSizeSlider = MakeRef<UISlider>();
+					stageSizeSlider->Min = s_MinStageSize;
+					stageSizeSlider->Max = s_MaxStageSize;
 					stageSizeSlider->ForegroundColor = style.Palette.Background;
+					stageSizeSlider->ShowValue = true;
 					stageSizeSlider->Bind(sizeValue);
 
 					stageSizePanel->AddChild(stageSizeSlider);
@@ -787,6 +801,7 @@ namespace bsf
 		});
 
 		AddSubscription(app.MouseReleased, [&](const MouseEvent& evt) {
+
 			if (m_Layers.empty())
 				return;
 
@@ -833,15 +848,19 @@ namespace bsf
 
 		m_LayersToPop = 0;
 
+		m_Style.Recompute();
+
 		r2.Begin(m_Projection);
-		for (auto& l = m_Layers.begin(); l != m_Layers.end(); l++)
+		r2.TextShadowColor(m_Style.ShadowColor);
+		r2.TextShadowOffset({ m_Style.TextShadowOffset, -m_Style.TextShadowOffset });
+		for (auto& layer : m_Layers)
 		{
-			(*l)->Traverse([&](UIElement& el) { el.m_Style = &m_Style; });
-			(*l)->Update(*this, time);
-			(*l)->UpdateBounds(*this, { 0.0f, 0.0f }, viewport);
-			(*l)->Render(*this, r2, time);
+			layer->Traverse([&](UIElement& el) { el.m_Style = &m_Style; });
+			layer->Update(*this, time);
+			layer->UpdateBounds(*this, { 0.0f, 0.0f }, viewport);
+			layer->Render(*this, r2, time);
 #ifdef BSF_ENABLE_DIAGNOSTIC
-			(*l)->Traverse([&](UIElement& el) { el.RenderDebugInfo(*this, r2, time); });
+			//layer->Traverse([&](UIElement& el) { el.RenderDebugInfo(*this, r2, time); });
 #endif
 		}
 		r2.End();
@@ -995,8 +1014,8 @@ namespace bsf
 		{
 			auto& style = GetStyle();
 			auto& assets = Assets::GetInstance();
-			auto size = glm::vec2(m_Stage->GetWidth(), m_Stage->GetHeight()) * m_Zoom;
-			auto tiling = glm::vec2(m_Stage->GetWidth(), m_Stage->GetHeight()) / 2.0f;
+			auto size = glm::vec2(m_Stage->GetSize(), m_Stage->GetSize()) * m_Zoom;
+			auto tiling = glm::vec2(m_Stage->GetSize(), m_Stage->GetSize()) / 2.0f;
 			auto texWhite = assets.Get<Texture2D>(AssetName::TexWhite);
 
 			r2.Push();
@@ -1013,8 +1032,8 @@ namespace bsf
 			r2.DrawQuad(WorldToScreen({ 0, 0 }), size, tiling, { -0.25f, -0.25f });
 
 
-			glm::uvec2 bl = glm::clamp(glm::floor(ScreenToWorld(Bounds.Position)), 0.0f, (float)m_Stage->GetWidth());
-			glm::uvec2 tr = glm::clamp(glm::ceil(ScreenToWorld(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetHeight());
+			glm::uvec2 bl = glm::clamp(glm::floor(ScreenToWorld(Bounds.Position)), 0.0f, (float)m_Stage->GetSize());
+			glm::uvec2 tr = glm::clamp(glm::ceil(ScreenToWorld(Bounds.Position + Bounds.Size)), 0.0f, (float)m_Stage->GetSize());
 
 			for (uint32_t x = bl.x; x < tr.x; ++x)
 			{
@@ -1152,8 +1171,8 @@ namespace bsf
 	{
 		glm::ivec2 localPos = glm::floor(ScreenToWorld(screenPos));
 
-		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetWidth() 
-			&& localPos.y >= 0 && localPos.y < m_Stage->GetHeight())
+		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetSize() 
+			&& localPos.y >= 0 && localPos.y < m_Stage->GetSize())
 			return localPos;
 		else
 			return std::nullopt;
@@ -1324,7 +1343,7 @@ namespace bsf
 	void UISlider::Update(const UIRoot& root, const Time& time)
 	{
 		const auto& style = GetStyle();
-		const float height = style.SliderTrackThickness + style.GetMargin(4.0f);
+		const float height = style.GetMargin(4.0f);
 		MinSize = glm::vec2(height);
 		if (Orientation == UISliderOrientation::Horizontal)
 			MaxSize = { std::numeric_limits<float>::max(), height };
@@ -1334,8 +1353,9 @@ namespace bsf
 
 	void UISlider::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
 	{
+		auto& assets = Assets::GetInstance();
 		auto& style = GetStyle();
-		auto texture = Assets::GetInstance().Get<Texture2D>(AssetName::TexUISphere);
+		auto texture = assets.Get<Texture2D>(AssetName::TexUISphere);
 		auto contentBounds = GetContentBounds();
 		float margin = style.GetMargin();
 
@@ -1386,6 +1406,17 @@ namespace bsf
 		r2.Color(color);
 		r2.Texture(texture);
 		r2.DrawQuad(handlePosition, handleSize);
+
+		if (ShowValue && Hovered)
+		{
+			std::string display = m_Value.Format ? std::move(m_Value.Format()) : std::to_string(m_Value.Get());
+			auto font = assets.Get<Font>(AssetName::FontMain);
+			r2.Pivot(EPivot::Center);
+			r2.Color(Colors::White);
+			r2.Translate(handlePosition);
+			r2.Scale(style.LabelFontScale);
+			r2.DrawStringShadow(font, display);
+		}
 
 
 		r2.Pop();

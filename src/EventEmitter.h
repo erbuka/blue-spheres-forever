@@ -15,7 +15,7 @@ namespace bsf
 		Left, Right, Up, Down
 	};
 
-	enum class MouseButton : int
+	enum class MouseButton : int32_t
 	{
 		None, Left, Right, Middle
 	};

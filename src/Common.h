@@ -188,6 +188,22 @@ namespace bsf
 	};
 
 
+	template<typename T>
+	constexpr T Log2(T n)
+	{
+		//static_assert((T)n > 0 && !(n & (n - 1)));
+		T result = 0;
+
+		while ((n & T(1)) == 0)
+		{
+			++result;
+			n >>= 1;
+		}
+
+		return result;
+
+	}
+
 	template <typename T>
 	typename std::enable_if<std::is_unsigned<T>::value, int>::type
 		inline constexpr Sign(T const x) 

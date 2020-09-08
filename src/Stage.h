@@ -79,10 +79,10 @@ namespace bsf
 
 		[[nodiscard]] bool Load(std::string_view fileName);
 		void Save(std::string_view fileName);
-		void Initialize(uint32_t width, uint32_t height);
+		void Initialize(int32_t size);
 
 		Stage();
-		Stage(uint32_t width, uint32_t height);
+		Stage(int32_t size);
 
 		uint32_t GetCollectedRings() const { return MaxRings - Rings; }
 		void CollectRing(const glm::ivec2& position);
@@ -99,9 +99,6 @@ namespace bsf
 		void SetAvoidSearchAt(int32_t x, int32_t y, EAvoidSearch val);
 		void SetAvoidSearchAt(const glm::ivec2& pos, EAvoidSearch val) { SetAvoidSearchAt(pos.x, pos.y, val); }
 
-		int32_t GetWidth() const { return m_Width; }
-		int32_t GetHeight() const { return m_Height; }
-
 		uint32_t Count(EStageObject object) const;
 
 		bool IsPerfect() const { return Rings == 0; }
@@ -109,16 +106,19 @@ namespace bsf
 		std::vector<EStageObject>& GetData() { return m_Data; }
 		std::vector<EAvoidSearch>& GetAvoidSearch() { return m_AvoidSearch; }
 		
-		glm::ivec2 WrapCoordinates(glm::ivec2 pos) { WrapX(pos.x); WrapY(pos.y); return pos; }
+		glm::ivec2 WrapCoordinates(glm::ivec2 pos) { Wrap(pos.x); Wrap(pos.y); return pos; }
+
+		int32_t GetSize() const { return m_Size; }
+
+		bool Resize(int32_t size);
 
 		bool operator==(const Stage& other) const;
 
 	private:
 
-		int32_t m_Width, m_Height;
+		int32_t m_Size;
 	
-		void WrapX(int32_t& x) const;
-		void WrapY(int32_t& y) const;
+		void Wrap(int32_t& coord) const;
 
 		std::vector<EStageObject> m_Data;
 		std::vector<EAvoidSearch> m_AvoidSearch;

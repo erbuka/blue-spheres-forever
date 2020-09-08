@@ -76,6 +76,7 @@ namespace bsf
 		UIBoundValue(const T& def) : m_Default(def) {}
 		std::function<void(const T&)> Set = [&](const T& val) { m_Default = val; };
 		std::function<T(void)> Get = [&] { return m_Default; };
+		std::function<std::string(void)> Format = nullptr;
 
 		explicit operator T() { return Get(); }
 		void operator=(const T& val) { Set(val); }
@@ -180,6 +181,7 @@ namespace bsf
 		uint32_t m_Id;
 	};
 
+
 	class UIRoot : public EventReceiver
 	{
 	public:
@@ -193,6 +195,7 @@ namespace bsf
 		void Render(const glm::vec2& windowSize, const glm::vec2& viewport, Renderer2D& renderer, const Time& time);
 		void PushLayer(const Ref<UILayer>& layer) { m_Layers.push_back(layer); }
 		void PopLayer() { m_LayersToPop++; }
+
 
 		glm::vec2 GetMousePosition() const { return m_MouseState.Position; }
 
@@ -451,6 +454,7 @@ namespace bsf
 		std::string Label = "Color Picker";
 		float Min = 0.0f, Max = 1.0f;
 		UISliderOrientation Orientation = UISliderOrientation::Horizontal;
+		bool ShowValue = false;
 
 		UISlider();
 

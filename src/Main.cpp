@@ -24,7 +24,6 @@ void ConvertSections();
 
 int main() 
 {
-
 	ConvertSections();
 
 	//auto scene = Ref<Scene>(new DisclaimerScene());
@@ -38,7 +37,6 @@ int main()
 	app.Start();
 
 }
-
 
 
 template<typename T, size_t N>

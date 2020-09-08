@@ -98,8 +98,7 @@ namespace bsf
 
 			Version = root.at("version").get<uint32_t>();
 			Name = root.at("name").get<std::string>();
-			m_Width = root.at("width").get<int32_t>();
-			m_Height = root.at("height").get<int32_t>();
+			m_Size = root.at("size").get<int32_t>();
 			StartPoint = root.at("startPoint").get<glm::vec2>();
 			StartDirection = root.at("startDirection").get<glm::vec2>();
 			Rings = MaxRings = root.at("maxRings").get<uint32_t>();
@@ -120,14 +119,12 @@ namespace bsf
 
 	void Stage::Save(std::string_view fileName)
 	{
-
 		auto root = json::object();
 
 		root = {
 			{ "version", Version },
 			{ "name", Name },
-			{ "width", m_Width },
-			{ "height", m_Height },
+			{ "size", m_Size },
 			{ "startPoint", StartPoint },
 			{ "startDirection", StartDirection },
 			{ "maxRings" , MaxRings },
@@ -153,24 +150,22 @@ namespace bsf
 
 	}
 
-	void Stage::Initialize(uint32_t width, uint32_t height)
+	void Stage::Initialize(int32_t size)
 	{
-
-		m_Width = (int32_t)width;
-		m_Height = (int32_t)height;
-		m_Data.resize((size_t)m_Width * m_Height);
-		m_AvoidSearch.resize((size_t)m_Width * m_Height);
+		m_Size = size;
+		m_Data.resize((size_t)size * size);
+		m_AvoidSearch.resize((size_t)size * size);
 		std::fill(m_Data.begin(), m_Data.end(), EStageObject::None);
 		std::fill(m_AvoidSearch.begin(), m_AvoidSearch.end(), EAvoidSearch::No);
 	}
 
-	Stage::Stage() : Stage(32, 32)
+	Stage::Stage() : Stage(32)
 	{
 	}
 
-	Stage::Stage(uint32_t width, uint32_t height)
+	Stage::Stage(int32_t size)
 	{
-		Initialize(width, height);
+		Initialize(size);
 	}
 
 	void Stage::CollectRing(const glm::ivec2& position)
@@ -185,24 +180,24 @@ namespace bsf
 
 	EStageObject Stage::GetValueAt(int32_t x, int32_t y) const
 	{
-		WrapX(x); WrapY(y);
-		return m_Data[(size_t)y * m_Width + x];
+		Wrap(x); Wrap(y);
+		return m_Data[(size_t)y * m_Size + x];
 	}
 	void Stage::SetValueAt(int32_t x, int32_t y, EStageObject obj)
 	{
-		WrapX(x); WrapY(y);
-		m_Data[(size_t)y * m_Width + x] = obj;
+		Wrap(x); Wrap(y);
+		m_Data[(size_t)y * m_Size + x] = obj;
 	}
 	
 	EAvoidSearch Stage::GetAvoidSearchAt(int32_t x, int32_t y) const
 	{
-		WrapX(x); WrapY(y);
-		return m_AvoidSearch[(size_t)y * m_Width + x];
+		Wrap(x); Wrap(y);
+		return m_AvoidSearch[(size_t)y * m_Size + x];
 	}
 	void Stage::SetAvoidSearchAt(int32_t x, int32_t y, EAvoidSearch val)
 	{
-		WrapX(x); WrapY(y);
-		m_AvoidSearch[(size_t)y * m_Width + x] = val;
+		Wrap(x); Wrap(y);
+		m_AvoidSearch[(size_t)y * m_Size + x] = val;
 	}
 
 	uint32_t Stage::Count(EStageObject object) const
@@ -210,6 +205,33 @@ namespace bsf
 		return std::count(std::execution::par_unseq, m_Data.begin(), m_Data.end(), object);
 	}
 
+
+	bool Stage::Resize(int32_t size)
+	{
+		if (size == m_Size)
+			return false;
+
+		std::vector<EStageObject> newData((size_t)size * size);
+		std::vector<EAvoidSearch> newAvoidSearch((size_t)size * size);
+
+		auto oldSize = m_Size;
+		auto minSize = std::min(oldSize, size);
+
+		for (int32_t x = 0; x < minSize; x++)
+		{
+			for (int32_t y = 0; y < minSize; y++)
+			{
+				newData[y * size + x] = m_Data[y * oldSize + x];
+				newAvoidSearch[y * size + x] = m_AvoidSearch[y * oldSize + x];
+			}
+		}
+
+		m_Size = size;
+		m_Data = std::move(newData);
+		m_AvoidSearch = std::move(newAvoidSearch);
+
+
+	}
 
 	bool Stage::operator==(const Stage& other) const
 	{
@@ -224,20 +246,15 @@ namespace bsf
 
 	}
 
-	void Stage::WrapX(int32_t& x) const
+	void Stage::Wrap(int32_t& coord) const
 	{
-		while (x < 0)
-			x += m_Width;
+		while (coord < 0)
+			coord += m_Size;
 
-		x %= m_Width;
+		coord %= m_Size;
 	}
-	void Stage::WrapY(int32_t& y) const
-	{
-		while (y < 0)
-			y += m_Height;
 
-		y %= m_Width;
-	}
+
 	
 	#pragma region Stage Generator
 
@@ -376,7 +393,7 @@ namespace bsf
 
 		auto result = MakeRef<Stage>();
 
-		result->Initialize(s_SectionSize * 2, s_SectionSize * 2);
+		result->Initialize(s_SectionSize * 2);
 
 		// Auto version number
 		result->Version = 300;
