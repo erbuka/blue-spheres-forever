@@ -1,6 +1,5 @@
 #pragma once
 
-#include <list>
 #include <vector>
 #include <memory>
 #include <functional>
@@ -153,7 +152,7 @@ namespace bsf
 		EventEmitter<KeyPressedEvent> KeyPressed;
 		EventEmitter<KeyReleasedEvent> KeyReleased;
 		EventEmitter<CharacterTypedEvent> CharacterTyped;
-		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked, MousePressed, MouseReleased;
+		EventEmitter<MouseEvent> MouseDragged, MouseMoved, MouseClicked, MouseDblClicked, MousePressed, MouseReleased;
 		EventEmitter<MouseEvent> GlobalMouseReleased;
 		EventEmitter<WheelEvent> Wheel;
 
@@ -193,7 +192,7 @@ namespace bsf
 		void Detach(Application& app);
 
 		void Render(const glm::vec2& windowSize, const glm::vec2& viewport, Renderer2D& renderer, const Time& time);
-		void PushLayer(const Ref<UILayer>& layer) { m_Layers.push_back(layer); }
+		void PushLayer(const Ref<UILayer>& layer) { m_LayersToPush.push_back(layer); }
 		void PopLayer() { m_LayersToPop++; }
 
 
@@ -201,11 +200,13 @@ namespace bsf
 
 	private:
 
+		static constexpr auto s_ClickDelay = std::chrono::milliseconds(250);
+
 		UIStyle m_Style;
 
 		glm::vec2 m_Viewport, m_WindowSize;
 		glm::mat4 m_Projection, m_InverseProjection;
-		std::list<Ref<UILayer>> m_Layers;
+		std::vector<Ref<UILayer>> m_Layers, m_LayersToPush;
 		uint32_t m_LayersToPop = 0;
 
 		struct MouseButtonState
@@ -215,6 +216,7 @@ namespace bsf
 			MouseButtonState(MouseButtonState&&) = delete;
 			bool Pressed = false;
 			std::chrono::system_clock::time_point TimePressed;
+			std::chrono::system_clock::time_point TimeLastClicked;
 		};
 		
 		struct {

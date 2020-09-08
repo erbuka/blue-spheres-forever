@@ -821,9 +821,17 @@ namespace bsf
 			{
 				intersection->MouseReleased.Emit({ pos.x, pos.y, 0, 0, evt.Button });
 
-				if (std::chrono::system_clock::now() - buttonState.TimePressed < std::chrono::milliseconds(250))
+				const auto now = std::chrono::system_clock::now();
+
+				if (now - buttonState.TimePressed < s_ClickDelay)
 				{
 					intersection->MouseClicked.Emit({ pos.x, pos.y, 0, 0, evt.Button });
+
+					if (now - buttonState.TimeLastClicked < s_ClickDelay)
+						intersection->MouseDblClicked.Emit({ pos.x, pos.y, 0, 0, evt.Button });
+
+					buttonState.TimeLastClicked = now;
+
 				}
 			}
 		});
@@ -845,8 +853,10 @@ namespace bsf
 
 		for (uint32_t i = 0; i < m_LayersToPop; ++i)
 			m_Layers.pop_back();
-
 		m_LayersToPop = 0;
+
+		std::copy(m_LayersToPush.begin(), m_LayersToPush.end(), std::back_inserter(m_Layers));
+		m_LayersToPush.clear();
 
 		m_Style.Recompute();
 
@@ -1693,7 +1703,7 @@ namespace bsf
 			}
 		});
 
-		AddSubscription(MouseClicked, [&](const MouseEvent& evt) {
+		AddSubscription(MouseDblClicked, [&](const MouseEvent& evt) {
 			
 			if (evt.Button == MouseButton::Left)
 			{
@@ -1721,7 +1731,6 @@ namespace bsf
 
 	void UIStageList::SetFiles(const std::vector<std::string>& files)
 	{
-		uint32_t visibleItems = m_Rows * m_Columns;
 		m_Files = files;
 		m_StagesInfo.clear();
 		m_StagesInfo.resize(files.size());
