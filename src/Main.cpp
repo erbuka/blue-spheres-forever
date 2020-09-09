@@ -19,13 +19,11 @@ using namespace glm;
 
 // TODO Move convertion functions somewhere else
 
-void ConvertSections();
+//void ConvertSections();
 
 
 int main() 
 {
-	ConvertSections();
-
 	//auto scene = Ref<Scene>(new DisclaimerScene());
 	auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
@@ -35,7 +33,7 @@ int main()
 	Application app;
 	app.GotoScene(std::move(scene));
 	app.Start();
-
+	return 0;
 }
 
 
@@ -56,6 +54,7 @@ std::vector<T> Flip(const std::vector<T>& v)
 }
 
 // Load sections as binary and save as json
+/*
 void ConvertSections()
 {
 
@@ -113,5 +112,4 @@ void ConvertSections()
 	os.close();
 
 }
-
-// Convert the stages to JSON
+*/

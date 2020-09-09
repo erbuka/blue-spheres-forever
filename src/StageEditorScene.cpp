@@ -861,8 +861,10 @@ namespace bsf
 		m_Style.Recompute();
 
 		r2.Begin(m_Projection);
+
 		r2.TextShadowColor(m_Style.ShadowColor);
 		r2.TextShadowOffset({ m_Style.TextShadowOffset, -m_Style.TextShadowOffset });
+		
 		for (auto& layer : m_Layers)
 		{
 			layer->Traverse([&](UIElement& el) { el.m_Style = &m_Style; });
@@ -1236,7 +1238,6 @@ namespace bsf
 		auto& style = GetStyle();
 		auto value = m_Value.Get();
 		const float margin = style.GetMargin(Margin);
-		glm::vec2 shadowOffset = { style.TextShadowOffset, -style.TextShadowOffset };
 		Rect innerBounds = Bounds;
 		innerBounds.Shrink(margin); 
 
@@ -1247,9 +1248,6 @@ namespace bsf
 
 		r2.Color(style.GetBackgroundColor(*this, style.Palette.BackgroundVariant));
 		r2.DrawQuad(innerBounds.Position, innerBounds.Size);
-
-		r2.TextShadowColor(style.ShadowColor);
-		r2.TextShadowOffset(shadowOffset);
 
 		r2.Translate(innerBounds.Position);
 
@@ -1321,8 +1319,6 @@ namespace bsf
 		r2.Pivot(EPivot::BottomLeft);
 		r2.Translate(contentBounds.Position);
 		r2.Scale(Scale);
-		r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
-		r2.TextShadowColor(style.ShadowColor);
 		r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
 		r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), Text);
 		r2.Pop();
@@ -1581,8 +1577,6 @@ namespace bsf
 
 		r2.Pivot(EPivot::Center);
 		r2.Translate(contentBounds.Size / 2.0f);
-		r2.TextShadowColor(style.ShadowColor);
-		r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
 		r2.Color(Hovered ? style.Palette.Secondary : style.GetForegroundColor(*this, style.Palette.Foreground));
 		r2.DrawStringShadow(font, Label);
 
@@ -1893,8 +1887,6 @@ namespace bsf
 				r2.Translate({ innerBounds.Left(), innerBounds.Bottom() });
 				r2.Scale(0.75f);
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
-				r2.TextShadowColor(style.ShadowColor);
-				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
 				r2.DrawStringShadow(font, info.Name);
 				r2.Pop();
 			}
@@ -1914,8 +1906,6 @@ namespace bsf
 				r2.DrawQuad();
 
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
-				r2.TextShadowColor(style.ShadowColor);
-				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
 				r2.DrawStringShadow(font, Format("%d", info.BlueSpheres), { 1.0f + margin, 0.0f });
 
 				r2.Pop();
@@ -1936,8 +1926,6 @@ namespace bsf
 				r2.DrawQuad();
 
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
-				r2.TextShadowColor(style.ShadowColor);
-				r2.TextShadowOffset({ style.TextShadowOffset, -style.TextShadowOffset });
 				r2.DrawStringShadow(font, Format("%d", info.MaxRings), { -1.0f - margin, 0.0f });
 
 				r2.Pop();

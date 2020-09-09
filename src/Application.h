@@ -44,7 +44,8 @@ namespace bsf {
 		AudioDevice& GetAudioDevice();
 
 		void Start();
-		void GotoScene(const std::shared_ptr<Scene> scene);
+		void GotoScene(const std::shared_ptr<Scene>& scene);
+		void GotoScene(std::shared_ptr<Scene>&& scene);
 
 		void Exit();
 

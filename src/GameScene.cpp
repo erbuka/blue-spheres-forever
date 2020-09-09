@@ -385,7 +385,7 @@ namespace bsf
 		}
 
 		// Render shadow map
-		RenderShadowMap(time);
+		//RenderShadowMap(time);
 
 		// Begin scene
 		glViewport(0, 0, windowSize.x, windowSize.y);

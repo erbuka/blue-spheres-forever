@@ -212,7 +212,12 @@ namespace bsf
 
     }
 
-    void Application::GotoScene(const std::shared_ptr<Scene> scene)
+    void bsf::Application::GotoScene(std::shared_ptr<Scene>&& scene)
+    {
+        m_NextScene = std::move(scene);
+    }
+
+    void Application::GotoScene(const std::shared_ptr<Scene>& scene)
     {
         m_NextScene = scene;
     }
