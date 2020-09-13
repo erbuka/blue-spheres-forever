@@ -8,9 +8,68 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glad/glad.h>
+#include <json/json.hpp>
 
 #include "Log.h"
 #include "Ref.h"
+
+
+namespace glm
+{
+	using namespace nlohmann;
+
+	// Matrices
+	template<template<length_t, length_t, typename T, qualifier Q> typename M, length_t C, length_t R, typename T, qualifier Q>
+	void to_json(json& json, const M<C, R, T, Q>& m)
+	{
+		const T* ptr = glm::value_ptr<T>(m);
+		json = json::array();
+		for (size_t i = 0; i < C * R; i++)
+			json[i] = *(ptr + i);
+	}
+
+	template<template<length_t, length_t, typename T, qualifier Q> typename M, length_t C, length_t R, typename T, qualifier Q>
+	void from_json(const json& json, M<C, R, T, Q>& m)
+	{
+		T* ptr = glm::value_ptr<T>(m);
+		for (size_t i = 0; i < C * R; i++)
+			*(ptr + i) = json[i].get<T>();
+	}
+	
+	// Quaternions
+	template<template<typename, glm::qualifier> typename V, typename T, qualifier Q>
+	void to_json(json& json, const V<T, Q>& v)
+	{
+		const T* ptr = glm::value_ptr<T>(v);
+		json = json::array();
+		for (size_t i = 0; i < 4; i++)
+			json[i] = *(ptr + i);
+	}
+
+	template<template<typename, glm::qualifier> typename V, typename T, glm::qualifier Q>
+	void from_json(const json& j, V<T, Q>& v) {
+		T* ptr = glm::value_ptr<T>(v);
+		for (size_t i = 0; i < 4; i++)
+			*(ptr + i) = j[i].get<T>();
+	}
+
+	// Vectors
+	template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
+	void to_json(json& json, const V<N, T, Q>& v)
+	{
+		const T* ptr = glm::value_ptr<T>(v);
+		json = json::array();
+		for (size_t i = 0; i < N; i++)
+			json[i] = *(ptr + i);
+	}
+
+	template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
+	void from_json(const json& j, V<N, T, Q>& v) {
+		T* ptr = glm::value_ptr<T>(v);
+		for (size_t i = 0; i < N; i++)
+			*(ptr + i) = j[i].get<T>();
+	}
+}
 
 namespace bsf
 {
@@ -77,6 +136,8 @@ namespace bsf
 		std::unordered_map<GLenum, GLboolean> m_SavedState;
 	};
 
+
+	bool Base64Decode(std::string_view str, std::vector<uint8_t>& result);
 
 
 	struct Rect

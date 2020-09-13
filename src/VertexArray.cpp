@@ -14,18 +14,23 @@ namespace bsf
 	};
 
 	static std::map<AttributeType, GLAttribDescriptor> s_GLAttrDescr = {
-		{ AttributeType::Float,  { GL_FLOAT, 1, 4 } },
-		{ AttributeType::Float2, { GL_FLOAT, 2, 4 } },
-		{ AttributeType::Float3, { GL_FLOAT, 3, 4 } },
-		{ AttributeType::Float4, { GL_FLOAT, 4, 4 } },
-		{ AttributeType::Int,	{ GL_INT, 1, 4 } },
-		{ AttributeType::Int2,	{ GL_INT, 2, 4 } },
-		{ AttributeType::Int3,	{ GL_INT, 3, 4 } },
-		{ AttributeType::Int4,	{ GL_INT, 4, 4 } },
-		{ AttributeType::UInt,	{ GL_UNSIGNED_INT, 1, 4 } },
-		{ AttributeType::UInt2,	{ GL_UNSIGNED_INT, 2, 4 } },
-		{ AttributeType::UInt3,	{ GL_UNSIGNED_INT, 3, 4 } },
-		{ AttributeType::UInt4,	{ GL_UNSIGNED_INT, 4, 4 } }
+		{ AttributeType::Float,		{ GL_FLOAT, 1, 4 } },
+		{ AttributeType::Float2,	{ GL_FLOAT, 2, 4 } },
+		{ AttributeType::Float3,	{ GL_FLOAT, 3, 4 } },
+		{ AttributeType::Float4,	{ GL_FLOAT, 4, 4 } },
+		{ AttributeType::Int,		{ GL_INT, 1, 4 } },
+		{ AttributeType::Int2,		{ GL_INT, 2, 4 } },
+		{ AttributeType::Int3,		{ GL_INT, 3, 4 } },
+		{ AttributeType::Int4,		{ GL_INT, 4, 4 } },
+		{ AttributeType::UInt,		{ GL_UNSIGNED_INT, 1, 4 } },
+		{ AttributeType::UInt2,		{ GL_UNSIGNED_INT, 2, 4 } },
+		{ AttributeType::UInt3,		{ GL_UNSIGNED_INT, 3, 4 } },
+		{ AttributeType::UInt4,		{ GL_UNSIGNED_INT, 4, 4 } },
+		{ AttributeType::UShort,	{ GL_UNSIGNED_SHORT, 1, 2 } },
+		{ AttributeType::UShort2,	{ GL_UNSIGNED_SHORT, 2, 2 } },
+		{ AttributeType::UShort3,	{ GL_UNSIGNED_SHORT, 3, 2 } },
+		{ AttributeType::UShort4,	{ GL_UNSIGNED_SHORT, 4, 2 } },
+
 	};
 
 
@@ -79,7 +84,7 @@ namespace bsf
 
 				glEnableVertexAttribArray(index);
 
-				if (attrib.Type == GL_INT || attrib.Type == GL_UNSIGNED_INT)
+				if (attrib.Type == GL_INT || attrib.Type == GL_UNSIGNED_INT || attrib.Type == GL_UNSIGNED_SHORT)
 				{
 					BSF_GLCALL(glVertexAttribIPointer(index, attrib.Count, attrib.Type, vertexSize, (const void*)attrib.Pointer));
 				}
@@ -95,15 +100,28 @@ namespace bsf
 
 	}
 
-	void VertexArray::Draw(GLenum mode)
+	void VertexArray::DrawArrays(GLenum mode)
 	{
-		Draw(mode, m_VertexCount);
+		DrawArrays(mode, m_VertexCount);
 	}
 
-	void VertexArray::Draw(GLenum mode, uint32_t count)
+	void VertexArray::DrawArrays(GLenum mode, uint32_t count)
 	{
 		Bind();
 		glDrawArrays(mode, 0, count);
+	}
+
+	void VertexArray::DrawIndexed(GLenum mode)
+	{
+		assert(m_IndexBuffer != nullptr);
+		Bind();
+		m_IndexBuffer->Bind();
+		glDrawElements(mode, m_IndexBuffer->GetCount(), s_GLAttrDescr.at(m_IndexBuffer->GetType()).Type, 0);
+	}
+
+	void VertexArray::Draw(GLenum mode)
+	{
+		m_IndexBuffer ? DrawIndexed(mode) : DrawArrays(mode);
 	}
 
 	void VertexArray::SetVertexBuffer(uint32_t index, const Ref<VertexBuffer>& buffer)
@@ -163,5 +181,26 @@ namespace bsf
 	{
 		Bind();
 		glBufferSubData(GL_ARRAY_BUFFER, offset * m_VertexSize, count * m_VertexSize, data);
+	}
+
+	IndexBuffer::IndexBuffer(const void* data, AttributeType type, size_t count) : m_Count(count)
+	{
+
+		assert(type == AttributeType::UInt || type == AttributeType::UShort);
+
+		m_Type = type;
+
+		BSF_GLCALL(glGenBuffers(1, &m_Id));
+		BSF_GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Id));
+		BSF_GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * s_GLAttrDescr[type].ElementSize, data, GL_STATIC_DRAW));
+	}
+
+	IndexBuffer::~IndexBuffer()
+	{
+		BSF_GLCALL(glDeleteBuffers(1, &m_Id));
+	}
+	void IndexBuffer::Bind()
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Id);
 	}
 }

@@ -123,7 +123,7 @@ namespace bsf
 				m_pSky->UniformMatrix4f("uView", m_View);
 				m_pSky->UniformMatrix4f("uModel", m_Model);
 				m_pSky->UniformTexture("uSkyBox", m_Sky->GetEnvironment());
-				assets.Get<VertexArray>(AssetName::ModSkyBox)->Draw(GL_TRIANGLES);
+				assets.Get<VertexArray>(AssetName::ModSkyBox)->DrawArrays(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
 			}
 
@@ -173,7 +173,7 @@ namespace bsf
 					m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
 					m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(colors[i]));
 
-					emerald->Draw(GL_TRIANGLES);
+					emerald->DrawArrays(GL_TRIANGLES);
 
 					m_Model.Pop();
 
@@ -203,7 +203,7 @@ namespace bsf
 			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
 			m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
-			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
+			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 		
 
 		}

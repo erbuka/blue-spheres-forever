@@ -48,7 +48,7 @@ namespace bsf
 			m_pBlur->Use();
 			m_pBlur->UniformTexture("uSource", src);
 			m_pBlur->Uniform1i("uHorizontal", { (int32_t)horizonal });
-			Assets::GetInstance().Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
+			Assets::GetInstance().Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 			horizonal = !horizonal;
 			std::swap(src, dst);

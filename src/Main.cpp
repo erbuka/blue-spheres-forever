@@ -13,6 +13,11 @@
 #include "StageEditorScene.h"
 
 #include "Renderer2D.h"
+#include "GLTF.h"
+#include "Assets.h"
+#include "ShaderProgram.h"
+#include "VertexArray.h"
+#include "Texture.h"
 
 using namespace bsf;
 using namespace glm;
@@ -22,10 +27,71 @@ using namespace glm;
 //void ConvertSections();
 
 
+class TestScene : public Scene
+{
+
+
+	Ref<GLTF> gltf;
+	Ref<ShaderProgram> prog;
+
+	MatrixStack m_Projection, m_Model, m_View;
+
+
+	void OnAttach() override 
+	{
+		gltf = MakeRef<GLTF>();
+		gltf->Load("assets/models/sonic.gltf", { GLTFAttributes::Position, GLTFAttributes::Normal, GLTFAttributes::Uv });
+
+		prog = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag");
+
+	}
+
+	void OnRender(const Time& time) override
+	{
+		auto& assets = Assets::GetInstance();
+		auto windowSize = GetApplication().GetWindowSize();
+
+		glEnable(GL_DEPTH_TEST);
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		m_Projection.Reset();
+		m_Projection.Perspective(glm::radians(45.0f), windowSize.x / windowSize.y, 0.1f, 100.0f);
+
+		m_View.Reset();
+		m_View.LookAt({ 0.0f, -3.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f });
+
+		m_Model.Reset();
+		m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, time.Elapsed);
+
+		prog->Use();
+
+		prog->UniformMatrix4f("uProjection", m_Projection);
+		prog->UniformMatrix4f("uView", m_View);
+		prog->UniformMatrix4f("uModel", m_Model);
+
+		GLTFRenderConfig config;
+
+		config.Program = prog;
+		config.BaseColorUniform = "uColor";
+		config.BaseColorTextureUniform = "uMap";
+		config.ModelMatrixUniform = "uModel";
+
+		gltf->Render(time, config);
+
+
+
+		
+	}
+};
+
+
 int main() 
 {
-	//auto scene = Ref<Scene>(new DisclaimerScene());
-	auto scene = Ref<Scene>(new StageEditorScene());
+
+	//auto scene = MakeRef<TestScene>();
+	auto scene = Ref<Scene>(new DisclaimerScene());
+	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
 	//auto scene = Ref<Scene>(new MenuScene());
 	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);

@@ -129,7 +129,7 @@ namespace bsf
 				//m_pGenBg->Uniform3fv("uColor1", 1, glm::value_ptr(options.BaseColor1));
 				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern);
 				m_pGenBg->UniformTexture("uGradient", gradient);
-				m_vaCube->Draw(GL_TRIANGLES);
+				m_vaCube->DrawArrays(GL_TRIANGLES);
 			}
 
 
@@ -140,7 +140,7 @@ namespace bsf
 				m_pGenStars->UniformMatrix4f("uView", camera.GetViewMatrix());
 				m_pGenStars->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
 				m_pGenStars->UniformTexture("uStarsPattern", starsPattern);
-				m_vaCube->Draw(GL_TRIANGLES);
+				m_vaCube->DrawArrays(GL_TRIANGLES);
 			}
 		}
 
@@ -176,7 +176,7 @@ namespace bsf
 			m_pGenIrradiance->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
 			m_pGenIrradiance->UniformMatrix4f("uView", camera->GetViewMatrix());
 			m_pGenIrradiance->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-			modSkyBox->Draw(GL_TRIANGLES);
+			modSkyBox->DrawArrays(GL_TRIANGLES);
 
 		}
 
@@ -245,7 +245,7 @@ namespace bsf
 			m_pSky->UniformMatrix4f("uView", camera->GetViewMatrix());
 			m_pSky->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
 			m_pSky->UniformTexture("uSkyBox", source);
-			m_VertexArray->Draw(GL_TRIANGLES);
+			m_VertexArray->DrawArrays(GL_TRIANGLES);
 
 		}
 	}

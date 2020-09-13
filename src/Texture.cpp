@@ -13,12 +13,39 @@ namespace bsf
 	{
 		uint32_t width, height;
 
+		std::ifstream is;
+
+		is.open(fileName, std::ios_base::binary);
+
+		if (!is.is_open())
+		{
+			BSF_ERROR("There was en error while opengin file '{0}'", fileName);
+			return { };
+		}
+
+		is.seekg(0, std::ios_base::end);
+		auto length = is.tellg();
+		is.seekg(0, std::ios_base::beg);
+
+		std::vector<uint8_t> fileData;
+		fileData.resize(length);
+
+		is.read((char*)fileData.data(), length);
+
+		return LoadPng(fileData.data(), fileData.size(), flipY);
+
+	}
+
+	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(const void* ptr, size_t length, bool flipY)
+	{
+		uint32_t width, height;
+
 		std::vector<unsigned char> data, flippedData;
-		unsigned error = lodepng::decode(data, width, height, fileName.data());
+		unsigned error = lodepng::decode(data, width, height, (const unsigned char*)ptr, length);
 
 		// If there's an error, display it.
 		if (error != 0) {
-			BSF_ERROR("There was en error while loading file '{0}': {1}", fileName, lodepng_error_text(error));
+			BSF_ERROR("There was en error while loading png");
 			return { };
 		}
 
@@ -87,7 +114,7 @@ namespace bsf
 		std::swap(m_Id, other.m_Id);
 	}
 
-	void Texture2D::SetPixels(void* pixels, uint32_t width, uint32_t height)
+	void Texture2D::SetPixels(const void* pixels, uint32_t width, uint32_t height)
 	{
 		Bind(0);
 		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, m_InternalFormat, width, height, 0, m_Format, m_Type, pixels));

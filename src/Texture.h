@@ -36,6 +36,7 @@ namespace bsf
 		TextureCubeFace::Back
 	};
 
+	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(const void* ptr, size_t length, bool flipY);
 	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(std::string_view fileName, bool flipY);
 
 	class Texture : public Asset
@@ -95,7 +96,7 @@ namespace bsf
 		Texture2D(Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
 
-		void SetPixels(void * pixels, uint32_t width, uint32_t height);
+		void SetPixels(const void * pixels, uint32_t width, uint32_t height);
 
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
 

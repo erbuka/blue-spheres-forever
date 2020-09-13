@@ -20,6 +20,7 @@ namespace bsf
 	class Renderer2D;
 	class CubeCamera;
 	class Sky;
+	class GLTF;
 
 	struct GameStateChangedEvent;
 	struct GameActionEvent;
@@ -50,7 +51,6 @@ namespace bsf
 		void OnResize(const WindowResizedEvent& evt);
 
 	private:
-
 
 		float m_GameOverObjectsHeight = 0.0f;
 

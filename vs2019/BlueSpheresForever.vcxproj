@@ -172,6 +172,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\Framebuffer.h" />
     <ClInclude Include="..\src\GameLogic.h" />
     <ClInclude Include="..\src\GameScene.h" />
+    <ClInclude Include="..\src\GLTF.h" />
     <ClInclude Include="..\src\Log.h" />
     <ClInclude Include="..\src\MatrixStack.h" />
     <ClInclude Include="..\src\MenuScene.h" />
@@ -210,6 +211,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\Framebuffer.cpp" />
     <ClCompile Include="..\src\GameLogic.cpp" />
     <ClCompile Include="..\src\GameScene.cpp" />
+    <ClCompile Include="..\src\GLTF.cpp" />
     <ClCompile Include="..\src\Main.cpp" />
     <ClCompile Include="..\src\MatrixStack.cpp" />
     <ClCompile Include="..\src\MenuScene.cpp" />

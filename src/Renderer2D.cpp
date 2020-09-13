@@ -532,7 +532,7 @@ namespace bsf
 			
 			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurVertexIndex);
 
-			m_Triangles->Draw(GL_TRIANGLES, m_CurVertexIndex);
+			m_Triangles->DrawArrays(GL_TRIANGLES, m_CurVertexIndex);
 
 			m_CurVertexIndex = 0;
 

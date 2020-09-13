@@ -14,13 +14,32 @@ namespace bsf
 	{
 		Float, Float2, Float3, Float4,
 		Int, Int2, Int3, Int4,
-		UInt, UInt2, UInt3, UInt4
+		UInt, UInt2, UInt3, UInt4,
+		UShort, UShort2, UShort3, UShort4
 	};
 
 	struct VertexAttribute
 	{
 		std::string Name;
 		AttributeType Type;
+	};
+
+	class IndexBuffer : public Asset
+	{
+	public:
+		IndexBuffer(const void* data, AttributeType type, size_t Count);
+		~IndexBuffer();
+
+		void Bind();
+
+		size_t GetCount() const { return m_Count; }
+
+		AttributeType GetType() const { return m_Type; }
+
+	private:
+		size_t m_Count;
+		uint32_t m_Id;
+		AttributeType m_Type;
 	};
 
 
@@ -70,11 +89,15 @@ namespace bsf
 
 		void Bind();
 		
+		void DrawArrays(GLenum mode);
+		void DrawArrays(GLenum mode, uint32_t count);
+		void DrawIndexed(GLenum mode);
 		void Draw(GLenum mode);
-		void Draw(GLenum mode, uint32_t count);
 
 		void SetVertexBuffer(uint32_t index, const Ref<VertexBuffer>& buffer);
 		Ref<VertexBuffer>& GetVertexBuffer(uint32_t index) { assert(index < m_Vbs.size()); return m_Vbs[index]; }
+
+		void SetIndexBuffer(const Ref<IndexBuffer>& ib) { m_IndexBuffer = ib; }
 
 		uint32_t GetVertexCount() const { return m_VertexCount; }
 
@@ -83,6 +106,7 @@ namespace bsf
 		uint32_t m_Id;
 		uint32_t m_VertexCount;
 		std::vector<Ref<VertexBuffer>> m_Vbs;
+		Ref<IndexBuffer> m_IndexBuffer = nullptr;
 	};
 }
 

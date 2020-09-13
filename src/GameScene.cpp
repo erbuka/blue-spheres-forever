@@ -22,7 +22,7 @@
 #include "BlurFilter.h"
 #include "StageClearScene.h"
 #include "Profiler.h"
-
+#include "GLTF.h"
 
 #pragma region Shaders
 
@@ -429,6 +429,7 @@ namespace bsf
 
 			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 			m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
+
 			
 			// Stage objects
 			for (int32_t x = -12; x <= 12; x++)
@@ -463,35 +464,35 @@ namespace bsf
 						m_pPBR->UniformTexture("uMetallic", texRingMetallic); // Sphere metallic
 						m_pPBR->UniformTexture("uRoughness", texRingRoughness); // Sphere roughness
 						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::Ring));
-						modRing->GetMesh(0)->Draw(GL_TRIANGLES);
+						modRing->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 						break;
 					case EStageObject::RedSphere:
 						m_pPBR->UniformTexture("uMap", texWhite);
 						m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 						m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::RedSphere));
-						modSphere->Draw(GL_TRIANGLES);
+						modSphere->DrawArrays(GL_TRIANGLES);
 						break;
 					case EStageObject::BlueSphere:
 						m_pPBR->UniformTexture("uMap", texWhite);
 						m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 						m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::BlueSphere));
-						modSphere->Draw(GL_TRIANGLES);
+						modSphere->DrawArrays(GL_TRIANGLES);
 						break;
 					case EStageObject::YellowSphere:
 						m_pPBR->UniformTexture("uMap", texWhite);
 						m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 						m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::YellowSphere));
-						modSphere->Draw(GL_TRIANGLES);
+						modSphere->DrawArrays(GL_TRIANGLES);
 						break;
 					case EStageObject::Bumper:
 						m_pPBR->UniformTexture("uMap", texBumper);
 						m_pPBR->UniformTexture("uMetallic", texBumperMetallic);
 						m_pPBR->UniformTexture("uRoughness", texBumperRoughness);
 						m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
-						modSphere->Draw(GL_TRIANGLES);
+						modSphere->DrawArrays(GL_TRIANGLES);
 
 						break;
 					}
@@ -521,7 +522,7 @@ namespace bsf
 					m_Model.Multiply(tbn);
 					m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
 					m_pPBR->UniformMatrix4f("uModel", m_Model);
-					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
+					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 					m_Model.Pop();
 				}
 
@@ -556,7 +557,7 @@ namespace bsf
 				m_pSkyBox->UniformMatrix4f("uView", m_View);
 				m_pSkyBox->UniformMatrix4f("uModel", m_Model);
 				m_pSkyBox->UniformTexture("uSkyBox", m_Sky->GetEnvironment());
-				assets.Get<VertexArray>(AssetName::ModSkyBox)->Draw(GL_TRIANGLES);
+				assets.Get<VertexArray>(AssetName::ModSkyBox)->DrawArrays(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
 
 			}
@@ -620,25 +621,19 @@ namespace bsf
 
 				
 				for (auto va : modSonic->GetModel()->GetMeshes())
-					va->Draw(GL_TRIANGLES);
-
+					va->DrawArrays(GL_TRIANGLES);
+				
 				m_Model.Pop();
 
 				// Draw ground
 				
 				m_pPBR->Use();
-
+				
 				m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
 				m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
 				m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
 
 				m_pPBR->Uniform2fv("uResolution", 1, glm::value_ptr(windowSize));
-				
-				/*
-				m_pPBR->UniformMatrix4f("uShadowProjection", m_ShadowProjection.GetMatrix());
-				m_pPBR->UniformMatrix4f("uShadowView", m_ShadowView.GetMatrix());
-				m_pPBR->Uniform2f("uShadowMapTexelSize", { 1.0f / m_fbShadow->GetWidth(), 1.0f / m_fbShadow->GetHeight() });
-				*/
 
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
@@ -660,7 +655,7 @@ namespace bsf
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 				m_pPBR->Uniform2f("uUvOffset", { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
 
-				assets.Get<VertexArray>(AssetName::ModGround)->Draw(GL_TRIANGLES);
+				assets.Get<VertexArray>(AssetName::ModGround)->DrawArrays(GL_TRIANGLES);
 
 				// Draw spheres and rings
 				m_pPBR->UniformTexture("uAo", texWhite);
@@ -699,35 +694,35 @@ namespace bsf
 								m_pPBR->UniformTexture("uMetallic", texRingMetallic);
 								m_pPBR->UniformTexture("uRoughness", texRingRoughness);
 								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::Ring));
-								modRing->GetMesh(0)->Draw(GL_TRIANGLES);
+								modRing->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 								break;
 							case EStageObject::RedSphere:
 								m_pPBR->UniformTexture("uMap", texWhite);
 								m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 								m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::RedSphere));
-								modSphere->Draw(GL_TRIANGLES);
+								modSphere->DrawArrays(GL_TRIANGLES);
 								break;
 							case EStageObject::BlueSphere:
 								m_pPBR->UniformTexture("uMap", texWhite);
 								m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 								m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::BlueSphere));
-								modSphere->Draw(GL_TRIANGLES);
+								modSphere->DrawArrays(GL_TRIANGLES);
 								break;
 							case EStageObject::YellowSphere:
 								m_pPBR->UniformTexture("uMap", texWhite);
 								m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 								m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::YellowSphere));
-								modSphere->Draw(GL_TRIANGLES);
+								modSphere->DrawArrays(GL_TRIANGLES);
 								break;
 							case EStageObject::Bumper:
 								m_pPBR->UniformTexture("uMap", texBumper);
 								m_pPBR->UniformTexture("uMetallic", texBumperMetallic);
 								m_pPBR->UniformTexture("uRoughness", texBumperRoughness);
 								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
-								modSphere->Draw(GL_TRIANGLES);
+								modSphere->DrawArrays(GL_TRIANGLES);
 
 								break;
 							}
@@ -755,7 +750,7 @@ namespace bsf
 					m_Model.Multiply(tbn);
 					m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
 					m_pPBR->UniformMatrix4f("uModel", m_Model);
-					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
+					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 					m_Model.Pop();
 
 
@@ -788,7 +783,7 @@ namespace bsf
 			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
 			m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
-			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
+			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 		}
 
@@ -864,13 +859,13 @@ namespace bsf
 				switch (value)
 				{
 				case EStageObject::Ring:
-					modRing->GetMesh(0)->Draw(GL_TRIANGLES);
+					modRing->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 					break;
 				case EStageObject::RedSphere:
 				case EStageObject::BlueSphere:
 				case EStageObject::YellowSphere:
 				case EStageObject::Bumper:
-					modSphere->Draw(GL_TRIANGLES);
+					modSphere->DrawArrays(GL_TRIANGLES);
 					break;
 				}
 
@@ -1064,7 +1059,7 @@ namespace bsf
 			ScheduleTask(ESceneTaskEvent::PreRender, liftObjectsTask);
 
 			auto playEmeraldSound = MakeRef<SceneTask>();
-
+			/*
 			playEmeraldSound->SetUpdateFunction([&, emeraldTime = MakeRef<float>()](SceneTask& self, const Time& time) {
 				
 				if ((*emeraldTime) > 2.0f)
@@ -1074,6 +1069,18 @@ namespace bsf
 				}
 
 				(*emeraldTime) += time.Delta;
+
+			});
+			*/
+			playEmeraldSound->SetUpdateFunction([&, emeraldTime = 0.0f](SceneTask& self, const Time& time) mutable {
+
+				if (emeraldTime > 2.0f)
+				{
+					assets.Get<Audio>(AssetName::SfxEmerald)->Play();
+					self.SetDone();
+				}
+
+				emeraldTime += time.Delta;
 
 			});
 
@@ -1151,7 +1158,7 @@ namespace bsf
 		model.Multiply(tbn);
 		model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
 		currentProgram->UniformMatrix4f("uModel", model);
-		Assets::GetInstance().Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->Draw(GL_TRIANGLES);
+		Assets::GetInstance().Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 		model.Pop();
 	}
 }

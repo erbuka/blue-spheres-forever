@@ -142,7 +142,7 @@ namespace bsf
 			m_pSky->UniformMatrix4f("uView", m_View);
 			m_pSky->UniformMatrix4f("uModel", m_Model);
 			m_pSky->UniformTexture("uSkyBox", m_Sky->GetEnvironment());
-			assets.Get<VertexArray>(AssetName::ModSkyBox)->Draw(GL_TRIANGLES);
+			assets.Get<VertexArray>(AssetName::ModSkyBox)->DrawArrays(GL_TRIANGLES);
 			glDepthMask(GL_TRUE);
 		}
 		m_fbSky->Unbind();
@@ -162,7 +162,7 @@ namespace bsf
 			m_pDeferred->UniformTexture("uColor", m_fbSky->GetColorAttachment("color"));
 			m_pDeferred->UniformTexture("uEmission", assets.Get<Texture2D>(AssetName::TexBlack));
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
-			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->Draw(GL_TRIANGLES);
+			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 		}
 

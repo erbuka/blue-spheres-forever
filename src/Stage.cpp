@@ -7,30 +7,10 @@
 #include "Log.h";
 #include "Common.h"
 
-namespace glm
-{
-	using namespace nlohmann;
 
-	template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
-	void to_json(json& json, const V<N, T, Q>& v)
-	{
-		const T* ptr = glm::value_ptr<T>(v);
-		json = json::array();
-		for (size_t i = 0; i < N; i++)
-			json[i] = *(ptr + i);
-	}
-
-	template<template<int, typename, glm::qualifier> typename V, int N, typename T, glm::qualifier Q>
-	void from_json(const json& j, V<N, T, Q>& v) {
-		T* ptr = glm::value_ptr<T>(v);
-		for (size_t i = 0; i < N; i++)
-			*(ptr + i) = j[i].get<T>();
-	}
-}
 
 namespace bsf
 {
-	using namespace nlohmann;
 
 	static constexpr char* s_SortedStagesFile = "assets/data/stages.json";
 
@@ -46,8 +26,8 @@ namespace bsf
 			BSF_ERROR("Cannot save stages ordering");
 			return;
 		}
-
-		os << json(files).dump();
+		
+		os << nlohmann::json(files).dump();
 
 		os.close();
 	}
@@ -62,7 +42,7 @@ namespace bsf
 
 		if (fs::is_regular_file(s_SortedStagesFile))
 		{
-			auto files = json::parse(ReadTextFile(s_SortedStagesFile));
+			auto files = nlohmann::json::parse(ReadTextFile(s_SortedStagesFile));
 
 			for (auto& item : files)
 			{
@@ -92,6 +72,8 @@ namespace bsf
 
 	bool Stage::Load(std::string_view fileName)
 	{
+		using namespace nlohmann;
+
 		try
 		{
 			auto root = json::parse(ReadTextFile(fileName));
@@ -119,7 +101,7 @@ namespace bsf
 
 	void Stage::Save(std::string_view fileName)
 	{
-		auto root = json::object();
+		auto root = nlohmann::json::object();
 
 		root = {
 			{ "version", Version },
