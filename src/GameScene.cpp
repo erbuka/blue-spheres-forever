@@ -1059,19 +1059,7 @@ namespace bsf
 			ScheduleTask(ESceneTaskEvent::PreRender, liftObjectsTask);
 
 			auto playEmeraldSound = MakeRef<SceneTask>();
-			/*
-			playEmeraldSound->SetUpdateFunction([&, emeraldTime = MakeRef<float>()](SceneTask& self, const Time& time) {
-				
-				if ((*emeraldTime) > 2.0f)
-				{
-					assets.Get<Audio>(AssetName::SfxEmerald)->Play();
-					self.SetDone();
-				}
 
-				(*emeraldTime) += time.Delta;
-
-			});
-			*/
 			playEmeraldSound->SetUpdateFunction([&, emeraldTime = 0.0f](SceneTask& self, const Time& time) mutable {
 
 				if (emeraldTime > 2.0f)
