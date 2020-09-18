@@ -2,6 +2,7 @@
 
 #include "VertexArray.h"
 #include "Log.h"
+#include "Table.h"
 
 namespace bsf
 {
@@ -13,24 +14,23 @@ namespace bsf
 		uint32_t ElementSize;
 	};
 
-	static std::map<AttributeType, GLAttribDescriptor> s_GLAttrDescr = {
-		{ AttributeType::Float,		{ GL_FLOAT, 1, 4 } },
-		{ AttributeType::Float2,	{ GL_FLOAT, 2, 4 } },
-		{ AttributeType::Float3,	{ GL_FLOAT, 3, 4 } },
-		{ AttributeType::Float4,	{ GL_FLOAT, 4, 4 } },
-		{ AttributeType::Int,		{ GL_INT, 1, 4 } },
-		{ AttributeType::Int2,		{ GL_INT, 2, 4 } },
-		{ AttributeType::Int3,		{ GL_INT, 3, 4 } },
-		{ AttributeType::Int4,		{ GL_INT, 4, 4 } },
-		{ AttributeType::UInt,		{ GL_UNSIGNED_INT, 1, 4 } },
-		{ AttributeType::UInt2,		{ GL_UNSIGNED_INT, 2, 4 } },
-		{ AttributeType::UInt3,		{ GL_UNSIGNED_INT, 3, 4 } },
-		{ AttributeType::UInt4,		{ GL_UNSIGNED_INT, 4, 4 } },
-		{ AttributeType::UShort,	{ GL_UNSIGNED_SHORT, 1, 2 } },
-		{ AttributeType::UShort2,	{ GL_UNSIGNED_SHORT, 2, 2 } },
-		{ AttributeType::UShort3,	{ GL_UNSIGNED_SHORT, 3, 2 } },
-		{ AttributeType::UShort4,	{ GL_UNSIGNED_SHORT, 4, 2 } },
-
+	static constexpr Table<16, AttributeType, GLAttribDescriptor> s_GLAttrDescr = {
+		std::make_tuple(AttributeType::Float,		GLAttribDescriptor{ GL_FLOAT, 1, 4 }),
+		std::make_tuple(AttributeType::Float2,		GLAttribDescriptor{ GL_FLOAT, 2, 4 }),
+		std::make_tuple(AttributeType::Float3,		GLAttribDescriptor{ GL_FLOAT, 3, 4 }),
+		std::make_tuple(AttributeType::Float4,		GLAttribDescriptor{ GL_FLOAT, 4, 4 }),
+		std::make_tuple(AttributeType::Int,			GLAttribDescriptor{ GL_INT, 1, 4 }),
+		std::make_tuple(AttributeType::Int2,		GLAttribDescriptor{ GL_INT, 2, 4 }),
+		std::make_tuple(AttributeType::Int3,		GLAttribDescriptor{ GL_INT, 3, 4 }),
+		std::make_tuple(AttributeType::Int4,		GLAttribDescriptor{ GL_INT, 4, 4 }),
+		std::make_tuple(AttributeType::UInt,		GLAttribDescriptor{ GL_UNSIGNED_INT, 1, 4 }),
+		std::make_tuple(AttributeType::UInt2,		GLAttribDescriptor{ GL_UNSIGNED_INT, 2, 4 }),
+		std::make_tuple(AttributeType::UInt3,		GLAttribDescriptor{ GL_UNSIGNED_INT, 3, 4 }),
+		std::make_tuple(AttributeType::UInt4,		GLAttribDescriptor{ GL_UNSIGNED_INT, 4, 4 }),
+		std::make_tuple(AttributeType::UShort,		GLAttribDescriptor{ GL_UNSIGNED_SHORT, 1, 2 }),
+		std::make_tuple(AttributeType::UShort2,		GLAttribDescriptor{ GL_UNSIGNED_SHORT, 2, 2 }),
+		std::make_tuple(AttributeType::UShort3,		GLAttribDescriptor{ GL_UNSIGNED_SHORT, 3, 2 }),
+		std::make_tuple(AttributeType::UShort4,		GLAttribDescriptor{ GL_UNSIGNED_SHORT, 4, 2 }),
 	};
 
 
@@ -116,7 +116,7 @@ namespace bsf
 		assert(m_IndexBuffer != nullptr);
 		Bind();
 		m_IndexBuffer->Bind();
-		glDrawElements(mode, m_IndexBuffer->GetCount(), s_GLAttrDescr.at(m_IndexBuffer->GetType()).Type, 0);
+		glDrawElements(mode, m_IndexBuffer->GetCount(), s_GLAttrDescr.Get<0, 1>(m_IndexBuffer->GetType()).Type, 0);
 	}
 
 	void VertexArray::Draw(GLenum mode)
@@ -141,13 +141,8 @@ namespace bsf
 
 		for (const auto& attr : layout)
 		{
-			if (s_GLAttrDescr.find(attr.Type) == s_GLAttrDescr.end())
-			{
-				BSF_ERROR("Vertex array attribute type is not mapped: {0}", attr.Type);
-				return;
-			}
 
-			const auto& descr = s_GLAttrDescr[attr.Type];
+			const auto& descr = s_GLAttrDescr.Get<0, 1>(attr.Type);
 
 			m_VertexSize += descr.ElementSize * descr.ElementCount;
 
@@ -192,7 +187,7 @@ namespace bsf
 
 		BSF_GLCALL(glGenBuffers(1, &m_Id));
 		BSF_GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Id));
-		BSF_GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * s_GLAttrDescr[type].ElementSize, data, GL_STATIC_DRAW));
+		BSF_GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * s_GLAttrDescr.Get<0, 1>(type).ElementSize, data, GL_STATIC_DRAW));
 	}
 
 	IndexBuffer::~IndexBuffer()

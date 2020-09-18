@@ -71,13 +71,9 @@ namespace bsf
 		EventEmitter(EventEmitter&) = delete;
 		EventEmitter(EventEmitter&&) = delete;
 
-		inline Unsubscribe Subscribe(HandlerFnPtr fnPtr)
-		{
-			return Subscribe([fnPtr](const Event& evt) { fnPtr(evt); });
-		}
 
 		template<typename T>
-		inline Unsubscribe Subscribe(T* instance, MemberHandlerFnPtr<T> fnPtr)
+		Unsubscribe Subscribe(T* instance, MemberHandlerFnPtr<T> fnPtr)
 		{
 			return Subscribe([instance, fnPtr](const Event& evt) { (instance->*fnPtr)(evt); });
 		}
@@ -85,6 +81,12 @@ namespace bsf
 		Unsubscribe Subscribe(const HandlerFn& handler)
 		{
 			auto handlerIt = m_Handlers.insert(m_Handlers.end(), handler);
+			return [&, handlerIt] { m_Handlers.erase(handlerIt); };
+		}
+
+		Unsubscribe Subscribe(HandlerFn&& handler)
+		{
+			auto handlerIt = m_Handlers.insert(m_Handlers.end(), std::move(handler));
 			return [&, handlerIt] { m_Handlers.erase(handlerIt); };
 		}
 
@@ -113,8 +115,8 @@ namespace bsf
 		}
 
 		template<typename Event>
-		void AddSubscription(EventEmitter<Event>& evt, const typename EventEmitter<Event>::HandlerFn& handler) { 
-			m_Subscriptions.push_back(evt.Subscribe(handler));
+		void AddSubscription(EventEmitter<Event>& evt, typename EventEmitter<Event>::HandlerFn&& handler) { 
+			m_Subscriptions.push_back(evt.Subscribe(std::forward<EventEmitter<Event>::HandlerFn>(handler)));
 		}
 		
 		

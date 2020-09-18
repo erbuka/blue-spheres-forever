@@ -2,6 +2,7 @@
 
 #include "Texture.h"
 #include "Log.h"
+#include "Table.h"
 
 #include <lodepng.h>
 
@@ -71,20 +72,19 @@ namespace bsf
 		}
 	}
 
-
-	static std::unordered_map<TextureFilter, GLenum> s_glTextureFilter = {
-		{ TextureFilter::Linear, GL_LINEAR },
-		{ TextureFilter::LinearMipmapLinear, GL_LINEAR_MIPMAP_LINEAR },
-		{ TextureFilter::Nearest, GL_NEAREST },
+	static constexpr Table<3, TextureFilter, GLenum> s_glTextureFilter = {
+		std::make_tuple(TextureFilter::Linear,				GL_LINEAR),
+		std::make_tuple(TextureFilter::LinearMipmapLinear,	GL_LINEAR_MIPMAP_LINEAR),
+		std::make_tuple(TextureFilter::Nearest,				GL_NEAREST),
 	};
 
-	static std::unordered_map<TextureCubeFace, GLenum> s_glTexCubeFace = {
-		{ TextureCubeFace::Front, GL_TEXTURE_CUBE_MAP_POSITIVE_Z  },
-		{ TextureCubeFace::Back, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,  },
-		{ TextureCubeFace::Left, GL_TEXTURE_CUBE_MAP_NEGATIVE_X  },
-		{ TextureCubeFace::Right, GL_TEXTURE_CUBE_MAP_POSITIVE_X  },
-		{ TextureCubeFace::Top, GL_TEXTURE_CUBE_MAP_POSITIVE_Y  },
-		{ TextureCubeFace::Bottom, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y  },
+	static constexpr Table<6, TextureCubeFace, GLenum> s_glTexCubeFace = {
+		std::make_tuple(TextureCubeFace::Front,			GL_TEXTURE_CUBE_MAP_POSITIVE_Z),
+		std::make_tuple(TextureCubeFace::Back,			GL_TEXTURE_CUBE_MAP_NEGATIVE_Z),
+		std::make_tuple(TextureCubeFace::Left,			GL_TEXTURE_CUBE_MAP_NEGATIVE_X),
+		std::make_tuple(TextureCubeFace::Right,			GL_TEXTURE_CUBE_MAP_POSITIVE_X),
+		std::make_tuple(TextureCubeFace::Top,			GL_TEXTURE_CUBE_MAP_POSITIVE_Y),
+		std::make_tuple(TextureCubeFace::Bottom,		GL_TEXTURE_CUBE_MAP_NEGATIVE_Y),
 	};
 
 	Texture2D::Texture2D(GLenum internalFormat, GLenum format, GLenum type) :
@@ -124,8 +124,8 @@ namespace bsf
 	{
 
 		Bind(0);
-		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, s_glTextureFilter[minFilter]));
-		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, s_glTextureFilter[magFilter]));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, s_glTextureFilter.Get<0, 1>(minFilter)));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, s_glTextureFilter.Get<0, 1>(magFilter)));
 
 		if (minFilter == TextureFilter::LinearMipmapLinear)
 		{
@@ -177,7 +177,7 @@ namespace bsf
 
 	bool Texture2D::Load(std::string_view fileName)
 	{
-		auto [pixels, width, height] = LoadPng(fileName, true);
+		auto [pixels, width, height] = std::move(LoadPng(fileName, true));
 
 		//BSF_GLCALL(glGenTextures(1, &m_Id));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
@@ -259,7 +259,7 @@ namespace bsf
 		
 		for (uint32_t i = 0; i < files.size(); i++)
 		{
-			auto [pixels, width, height] = LoadPng(files[i], false);
+			auto [pixels, width, height] = std::move(LoadPng(files[i], false));
 
 			if (width != m_Size || height != m_Size)
 			{
@@ -294,7 +294,7 @@ namespace bsf
 	void TextureCube::SetPixels(TextureCubeFace face, const void* pixels)
 	{
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Id));
-		BSF_GLCALL(glTexImage2D(s_glTexCubeFace[face], 0, m_InternalFormat, m_Size, m_Size, 0, m_Format, m_Type, pixels));
+		BSF_GLCALL(glTexImage2D(s_glTexCubeFace.Get<0, 1>(face), 0, m_InternalFormat, m_Size, m_Size, 0, m_Format, m_Type, pixels));
 	}
 
 	void TextureCube::Bind(uint32_t textureUnit) const
@@ -307,8 +307,8 @@ namespace bsf
 	{
 
 		Bind(0);
-		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, s_glTextureFilter[minFilter]));
-		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, s_glTextureFilter[magFilter]));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, s_glTextureFilter.Get<0, 1>(minFilter)));
+		BSF_GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, s_glTextureFilter.Get<0, 1>(magFilter)));
 
 		if (minFilter == TextureFilter::LinearMipmapLinear)
 		{

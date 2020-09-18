@@ -40,7 +40,8 @@ class TestScene : public Scene
 	void OnAttach() override 
 	{
 		gltf = MakeRef<GLTF>();
-		gltf->Load("assets/models/sonic.gltf", { GLTFAttributes::Position, GLTFAttributes::Normal, GLTFAttributes::Uv });
+		gltf->Load("assets/models/sonic.gltf", { GLTFAttributes::Position, GLTFAttributes::Normal, GLTFAttributes::Uv, 
+			GLTFAttributes::Joints_0, GLTFAttributes::Weights_0 });
 
 		prog = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag");
 
@@ -66,6 +67,7 @@ class TestScene : public Scene
 
 		prog->Use();
 
+
 		prog->UniformMatrix4f("uProjection", m_Projection);
 		prog->UniformMatrix4f("uView", m_View);
 		prog->UniformMatrix4f("uModel", m_Model);
@@ -88,9 +90,8 @@ class TestScene : public Scene
 
 int main() 
 {
-
-	//auto scene = MakeRef<TestScene>();
-	auto scene = Ref<Scene>(new DisclaimerScene());
+	auto scene = MakeRef<TestScene>();
+	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
 	//auto scene = Ref<Scene>(new MenuScene());

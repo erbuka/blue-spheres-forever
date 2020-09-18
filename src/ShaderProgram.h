@@ -47,9 +47,10 @@ namespace bsf
 
 		~ShaderProgram();
 
-		int32_t GetUniformLocation(const std::string& name);
+		int32_t GetUniformLocation(const std::string& name) const;
 
 		void UniformMatrix4f(const std::string& name, const glm::mat4& matrix);
+		void UniformMatrix4fv(const std::string& name, size_t count, const float* ptr);
 
 		void Use();
 
@@ -93,7 +94,7 @@ namespace bsf
 		static void InjectDefines(std::string& source, const std::initializer_list<std::string_view>& defines);
 
 		uint32_t m_Id;
-		std::map<std::string, UniformInfo> m_UniformInfo;
+		std::unordered_map<std::string, UniformInfo> m_UniformInfo;
 	};
 
 }

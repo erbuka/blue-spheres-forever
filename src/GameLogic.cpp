@@ -286,7 +286,7 @@ namespace bsf
 
 					if (floodFillDir != s_AllDirections.end())
 					{
-						// If the search is successfull, this is a valid path and we have to convert inot rings
+						// If the search is successfull, this is a valid path and we have to convert into rings
 						floodFillPos = *floodFillDir + m_StartingPoint;
 						path = std::move(current.CurrentPath);
 						pathFound = true;

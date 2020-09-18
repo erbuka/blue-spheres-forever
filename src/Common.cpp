@@ -416,7 +416,7 @@ namespace bsf
 
 	}
 
-	bool Base64Decode(std::string_view str, std::vector<uint8_t>& result)
+	bool Base64Decode(std::string_view str, std::vector<std::byte>& result)
 	{
 		static constexpr uint8_t kDecodingTable[] = {
 		  64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
@@ -452,9 +452,9 @@ namespace bsf
 				(kDecodingTable[static_cast<uint32_t>(str[i + 2])] << 6) |
 				(kDecodingTable[static_cast<uint32_t>(str[i + 3])] << 0);
 
-			result.push_back((data & 0xff0000) >> 16);
-			result.push_back((data & 0x00ff00) >> 8);
-			result.push_back((data & 0x0000ff) >> 0);
+			result.push_back(static_cast<std::byte>((data & 0xff0000) >> 16));
+			result.push_back(static_cast<std::byte>((data & 0x00ff00) >> 8));
+			result.push_back(static_cast<std::byte>((data & 0x0000ff) >> 0));
 
 		}
 

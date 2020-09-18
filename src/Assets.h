@@ -2,6 +2,7 @@
 
 #include "Log.h"
 #include "Ref.h"
+#include "Profiler.h"
 #include <unordered_map>
 
 namespace bsf
@@ -90,24 +91,7 @@ namespace bsf
 		template<typename T>
 		Ref<typename std::enable_if_t<std::is_base_of_v<Asset, T>, T>> Get(AssetName name)
 		{
-
-			auto r = m_Assets.find(name);
-			if (r == m_Assets.end())
-			{
-				BSF_ERROR("Asset not found: {0}", name);
-				return nullptr;
-			}
-
-			auto ptr = std::dynamic_pointer_cast<T>(r->second);
-
-			if (ptr == nullptr)
-			{
-
-				BSF_ERROR("Invalid type for asset {0}", name);
-				return nullptr;
-			}
-
-			return ptr;
+			return std::dynamic_pointer_cast<T>(m_Assets[name]);
 		}
 
 		~Assets();

@@ -137,7 +137,7 @@ namespace bsf
 	};
 
 
-	bool Base64Decode(std::string_view str, std::vector<uint8_t>& result);
+	bool Base64Decode(std::string_view str, std::vector<std::byte>& result);
 
 
 	struct Rect
@@ -186,14 +186,14 @@ namespace bsf
 
 	template <typename T>
 	typename std::enable_if<std::is_unsigned<T>::value, int>::type
-		inline constexpr Sign(T const x) 
+	constexpr Sign(T const x) 
 	{
 		return T(0) < x;
 	}
 
 	template <typename T>
 	typename std::enable_if<std::is_signed<T>::value, int>::type
-		inline constexpr Sign(T const x) {
+	constexpr Sign(T const x) {
 		return (T(0) < x) - (x < T(0));
 	}
 
@@ -212,7 +212,7 @@ namespace bsf
 
 	
 	template<typename T, typename K>
-	T MoveTowards(const T& from, const T& target, K k)
+	constexpr T MoveTowards(const T& from, const T& target, K k)
 	{
 		static_assert(std::is_arithmetic_v<T>, "T is not arithmetic");
 		static_assert(std::is_arithmetic_v<K>, "K is not arithmetic");
@@ -223,7 +223,7 @@ namespace bsf
 	}
 
 	template<template<int, typename, glm::qualifier> typename V, int N, typename T>
-	V<N, T, glm::defaultp> MoveTowards(const V<N, T, glm::defaultp>& from, const V<N, T, glm::defaultp>& target, T t)
+	constexpr V<N, T, glm::defaultp> MoveTowards(const V<N, T, glm::defaultp>& from, const V<N, T, glm::defaultp>& target, T t)
 	{
 		auto diff = target - from;
 		T length = glm::length(diff);

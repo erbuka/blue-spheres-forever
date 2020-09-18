@@ -4,7 +4,7 @@
 #include "Log.h"
 #include "Common.h"
 #include "Texture.h"
-
+#include "Table.h"
 
 #define UNIFORM_IMPL(type, varType, size) \
 	void ShaderProgram::Uniform ## size ## type ## v(const std::string& name, uint32_t count, const varType * ptr) { \
@@ -15,17 +15,17 @@
 namespace bsf
 {
 
-	static std::unordered_map<ShaderType, GLenum> s_glShaderType = {
-		{ ShaderType::Vertex, GL_VERTEX_SHADER },
-		{ ShaderType::Geometry, GL_GEOMETRY_SHADER },
-		{ ShaderType::Fragment, GL_FRAGMENT_SHADER }
+	static constexpr Table<3, ShaderType, GLenum> s_glShaderType = {
+		std::make_tuple(ShaderType::Vertex, GL_VERTEX_SHADER),
+		std::make_tuple(ShaderType::Geometry, GL_GEOMETRY_SHADER),
+		std::make_tuple(ShaderType::Fragment, GL_FRAGMENT_SHADER)
 	};
 
 
 	static uint32_t LoadShader(ShaderType type, std::string_view shaderSource)
 	{
 		// Create an empty vertex shader handle
-		GLuint shader = glCreateShader(s_glShaderType[type]);
+		GLuint shader = glCreateShader(s_glShaderType.Get<0, 1>(type));
 
 		// Send the vertex shader source code to GL
 		// Note that std::string's .c_str is NULL character terminated.
@@ -178,7 +178,7 @@ namespace bsf
 		BSF_GLCALL(glDeleteProgram(m_Id));
 	}
 
-	int32_t ShaderProgram::GetUniformLocation(const std::string& name)
+	int32_t ShaderProgram::GetUniformLocation(const std::string& name) const
 	{
 
 		auto it = m_UniformInfo.find(name);
@@ -212,6 +212,11 @@ namespace bsf
 	void ShaderProgram::UniformMatrix4f(const std::string& name, const glm::mat4& matrix)
 	{
 		BSF_GLCALL(glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix)));
+	}
+
+	void ShaderProgram::UniformMatrix4fv(const std::string& name, size_t count, const float* ptr)
+	{
+		BSF_GLCALL(glUniformMatrix4fv(GetUniformLocation(name), count, GL_FALSE, ptr));
 	}
 
 	void ShaderProgram::Use()

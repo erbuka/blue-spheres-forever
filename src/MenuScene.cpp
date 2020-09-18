@@ -17,6 +17,7 @@
 
 namespace bsf
 {
+
 	static constexpr float s_VirtualHeight = 10;
 
 	static constexpr glm::vec4 s_SelectedMenuColor = Colors::Yellow;
