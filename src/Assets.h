@@ -55,6 +55,8 @@ namespace bsf
 		ModClipSpaceQuad,
 		ModSkyBox,
 
+		ChrSonic,
+
 		SfxBlueSphere,
 		SfxYellowSphere,
 		SfxGameOver,

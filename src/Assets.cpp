@@ -13,6 +13,7 @@
 #include "Audio.h"
 #include "Stage.h"
 #include "SkyGenerator.h"
+#include "Character.h"
 
 namespace bsf
 {
@@ -143,6 +144,22 @@ namespace bsf
 			
 		}
 		
+
+		// Sonic character
+		{
+			auto sonic = MakeRef<Character>();
+
+			sonic->Model.Load("assets/models/sonic.gltf", {
+				GLTFAttributes::Position,
+				GLTFAttributes::Normal,
+				GLTFAttributes::Uv,
+				GLTFAttributes::Joints_0,
+				GLTFAttributes::Weights_0
+				});
+
+			m_Assets[AssetName::ChrSonic] = sonic;
+
+		}
 		
 
 	}

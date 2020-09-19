@@ -95,11 +95,11 @@ class TestScene : public Scene
 
 int main() 
 {
-	auto scene = MakeRef<TestScene>();
+	//auto scene = MakeRef<TestScene>();
 	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
-	//auto scene = Ref<Scene>(new MenuScene());
+	auto scene = Ref<Scene>(new MenuScene());
 	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
 	
 	Application app;

@@ -33,6 +33,10 @@ namespace bsf
 		GLTF();
 		~GLTF();
 
+		GLTF(const GLTF&) = delete;
+		GLTF& operator=(const GLTF&) = delete;
+
+			 
 		bool Load(std::string_view fileName, const std::initializer_list<GLTFAttributes>& attribs);
 		void Render(const Time& time, const GLTFRenderConfig& config);
 

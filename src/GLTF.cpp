@@ -762,6 +762,7 @@ namespace bsf
 
 	bool GLTF::Load(std::string_view fileName, const std::initializer_list<GLTFAttributes>& attribs)
 	{
+		BSF_INFO("Loading GLTF: {0}", fileName.data());
 		return m_Impl->Load(fileName, attribs);
 	}
 
