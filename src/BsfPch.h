@@ -17,6 +17,8 @@
 #include <limits>
 #include <numeric>
 #include <regex>
+#include <variant>
+#include <optional>
 
 #include <sstream>
 #include <iostream>

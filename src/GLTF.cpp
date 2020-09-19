@@ -10,13 +10,32 @@
 #include "ShaderProgram.h"
 #include "Common.h"
 #include "Table.h"
-
+#include "Time.h"
+#include "MatrixStack.h"
 
 
 namespace bsf
 {
 	using namespace std::string_view_literals;
 	using GLTFBuffer = std::vector<std::byte>;
+
+	enum class GLTFType
+	{
+		Scalar,
+		Vec2,
+		Vec3,
+		Vec4,
+		Mat2,
+		Mat3,
+		Mat4
+	};
+
+	enum class GLTFPath
+	{
+		Translation,
+		Rotation,
+		Scale
+	};
 
 	static constexpr Table<5, GLTFAttributes, std::string_view, GLTFType, GLenum, AttributeType> s_Attributes = {
 		std::make_tuple(GLTFAttributes::Position,	"POSITION"sv,		GLTFType::Vec3,		GL_FLOAT,			AttributeType::Float3),
@@ -55,6 +74,9 @@ namespace bsf
 		std::make_tuple(GL_UNSIGNED_SHORT, 2)
 	};
 
+	struct GLTFNode;
+	struct GLTFPrimitive;
+	struct GLTFJoint;
 
 	struct GLTFBufferView
 	{
@@ -87,6 +109,155 @@ namespace bsf
 
 		const std::byte* Data() const { return BufferView.Data() + ByteOffset; }
 
+	};
+
+
+	struct GLTFMaterial
+	{
+		glm::vec3 BaseColor = { 1.0f, 1.0f, 1.0f };
+		Ref<Texture2D> BaseColorTexture = nullptr;
+
+		GLTFMaterial() = default;
+		GLTFMaterial(GLTFMaterial&&) = default;
+
+		GLTFMaterial(const GLTFMaterial&) = delete;
+		GLTFMaterial& operator=(const GLTFMaterial&) = delete;
+	};
+
+	struct GLTFPrimitive
+	{
+		Ref<VertexArray> Geometry;
+		Ref<GLTFMaterial> Material;
+	};
+
+	using GLTFMesh = std::vector<GLTFPrimitive>;
+
+	struct GLTFJoint
+	{
+	private:
+		glm::mat4* m_Ibm = nullptr;
+		glm::mat4* m_JointTransform = nullptr;
+	public:
+
+		Ref<GLTFNode> Root = nullptr;
+
+		GLTFJoint() = default;
+		GLTFJoint(const Ref<GLTFNode>& root, glm::mat4* ibm, glm::mat4* joint) :
+			Root(root), m_Ibm(ibm), m_JointTransform(joint) {}
+
+		const glm::mat4& GetInverseBindTransform() const { return *m_Ibm; }
+		void SetJointTransform(const glm::mat4& jt) { *m_JointTransform = jt; }
+
+	};
+
+	struct GLTFSkin
+	{
+		std::vector<Ref<GLTFNode>> Joints;
+		std::vector<glm::mat4> InverseBindTransform;
+		std::vector<glm::mat4> JointTransform;
+	};
+
+	struct GLTFNode
+	{
+		std::string Name = "";
+		glm::mat4 GlobalTransform = glm::identity<glm::mat4>();
+		glm::mat4 InverseGlobalTransform = glm::identity<glm::mat4>();
+		glm::mat4 LocalTransform = glm::identity<glm::mat4>();
+		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
+		glm::quat Rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glm::vec3 Scale = { 1.0f, 1.0f, 1.0f };
+
+		Ref<GLTFSkin> Skin = nullptr;
+		std::optional<GLTFJoint> Joint = std::nullopt;
+
+		Ref<GLTFMesh> Mesh = nullptr;
+
+		std::vector<Ref<GLTFNode>> Children;
+		Ref<GLTFNode> Parent = nullptr;
+
+		void ComputeLocalTransform() { LocalTransform = glm::translate(Translation) * glm::mat4_cast(Rotation) * glm::scale(Scale); }
+
+		void PreTraverse(const std::function<void(GLTFNode&)> action)
+		{
+			for (auto& child : Children)
+				child->PreTraverse(action);
+
+			action(*this);
+		}
+
+		void PostTraverse(const std::function<void(GLTFNode&)> action)
+		{
+			action(*this);
+
+			for (auto& child : Children)
+				child->PostTraverse(action);
+		}
+
+	};
+
+	struct GLTFScene : public GLTFNode
+	{
+		void Update()
+		{
+			for (auto& child : Children)
+			{
+				child->PostTraverse([](GLTFNode& self) {
+					self.ComputeLocalTransform();
+					self.GlobalTransform = self.Parent->GlobalTransform * self.LocalTransform;
+
+					if (self.Skin)
+						self.InverseGlobalTransform = glm::inverse(self.GlobalTransform);
+
+					if (self.Joint.has_value())
+					{
+						auto& joint = self.Joint.value();
+						joint.SetJointTransform(joint.Root->InverseGlobalTransform * self.GlobalTransform * joint.GetInverseBindTransform());
+					}
+				});
+			}
+		}
+	};
+
+	struct GLTFAnimationChannel
+	{
+		float MinTime = 0.0f;
+		float MaxTime = 0.0f;
+		GLTFPath Path = GLTFPath::Translation;
+		Ref<GLTFNode> Target = nullptr;
+		std::vector<float> Time;
+		std::variant<std::vector<glm::vec3>, std::vector<glm::quat>> Data;
+
+		template<typename T>
+		T Interpolate(float t) const
+		{
+			const auto& values = std::get<std::vector<T>>(Data);
+
+			if (t < MinTime) return values[0];
+
+			for (size_t i = 0; i < Time.size() - 1; ++i)
+			{
+				if (t >= Time[i] && t < Time[i + 1])
+				{
+					const float delta = (t - Time[i]) / (Time[i + 1] - Time[i]);
+					if constexpr (std::is_same_v<T, glm::vec3>) glm::lerp(values[i], values[i + 1], delta);
+					else if constexpr (std::is_same_v<T, glm::quat>) return glm::slerp(values[i], values[i + 1], delta);
+					else BSF_ERROR("Invalid interpolated type: {0}", typeid(T).name());
+				}
+			}
+
+
+			return values[values.size() - 1];
+
+		}
+
+	};
+
+	struct GLTFAnimation
+	{
+		float MinTime = 0.0f;
+		float MaxTime = 0.0f;
+		std::string Name = "";
+		std::vector<GLTFAnimationChannel> Channels;
 	};
 
 	struct GLTF::Impl
@@ -606,42 +777,6 @@ namespace bsf
 	void GLTF::FadeToAnimation(std::string_view next, float fadeTime, bool loop, float timeWarp)
 	{
 		m_Impl->FadeToAnimation(next, fadeTime, loop, timeWarp);
-	}
-
-	void GLTFNode::PreTraverse(const std::function<void(GLTFNode&)> action)
-	{
-		for (auto& child : Children)
-			child->PreTraverse(action);
-
-		action(*this);
-	}
-
-	void GLTFNode::PostTraverse(const std::function<void(GLTFNode&)> action)
-	{
-		action(*this);
-
-		for (auto& child : Children)
-			child->PostTraverse(action);
-	}
-
-	void GLTFScene::Update()
-	{
-		for (auto& child : Children)
-		{
-			child->PostTraverse([](GLTFNode& self) {
-				self.ComputeLocalTransform();
-				self.GlobalTransform = self.Parent->GlobalTransform * self.LocalTransform;
-
-				if (self.Skin)
-					self.InverseGlobalTransform = glm::inverse(self.GlobalTransform);
-
-				if (self.Joint.has_value())
-				{
-					auto& joint = self.Joint.value();
-					joint.SetJointTransform(joint.Root->InverseGlobalTransform * self.GlobalTransform * joint.GetInverseBindTransform());
-				}
-			});
-		}
 	}
 
 }
