@@ -10,6 +10,7 @@
 #include "Ref.h"
 #include "Time.h"
 #include "MatrixStack.h"
+#include "Log.h"
 
 namespace bsf
 {
@@ -120,16 +121,43 @@ namespace bsf
 
 	struct GLTFAnimationChannel
 	{
+		float MinTime = 0.0f;
+		float MaxTime = 0.0f;
 		GLTFPath Path = GLTFPath::Translation;
 		Ref<GLTFNode> Target = nullptr;
 		std::vector<float> Time;
-		std::variant<std::vector<glm::vec3>, std::vector<glm::vec4>> Data;
-	};
+		std::variant<std::vector<glm::vec3>, std::vector<glm::quat>> Data;
 
+		template<typename T>
+		T Interpolate(float t) const
+		{
+			const auto& values = std::get<std::vector<T>>(Data);
+
+			if (t < MinTime) return values[0];
+			
+			for (size_t i = 0; i < Time.size() - 1; ++i)
+			{
+				if (t >= Time[i] && t < Time[i + 1])
+				{
+					const float delta = (t - Time[i]) / (Time[i + 1] - Time[i]);
+					if constexpr (std::is_same_v<T, glm::vec3>) glm::lerp(values[i], values[i + 1], delta);
+					else if constexpr (std::is_same_v<T, glm::quat>) return glm::slerp(values[i], values[i + 1], delta);
+					else BSF_ERROR("Invalid interpolated type: {0}", typeid(T).name());
+				}
+			}
+			
+
+			return values[values.size() - 1];
+
+		}
+
+	};
 
 
 	struct GLTFAnimation
 	{
+		float MinTime = 0.0f;
+		float MaxTime = 0.0f;
 		std::string Name = "";
 		std::vector<GLTFAnimationChannel> Channels;
 	};
@@ -156,15 +184,27 @@ namespace bsf
 	{
 	public:
 		bool Load(std::string_view fileName, const std::initializer_list<GLTFAttributes>& attribs);
-
 		void Render(const Time& time, const GLTFRenderConfig& config);
 
-		const std::vector<Ref<GLTFScene>>& GetScenes() const { return m_Scenes; }
-
+		void PlayAnimation(std::string_view name, bool loop = true, float timeWarp = 1.0f);
+		void FadeToAnimation(std::string_view next, float fadeTime, bool loop = true, float timeWarp = 1.0f);
 
 	private:
 
 		MatrixStack m_ModelStack;
+
+		struct AnimationState
+		{
+			Ref<GLTFAnimation> Animation = nullptr;
+			float Time = 0.0f;
+			float TimeWarp = 1.0f;
+			bool Loop = true;
+		};
+
+		std::optional<AnimationState> m_CurrentAnimation = std::nullopt;
+		std::optional<AnimationState> m_NextAnimation = std::nullopt;
+		float m_AnimationTransition = 0.0f;
+		float m_AnimationTransitionDuration = 0.0f;
 
 		std::vector<Ref<Texture2D>> m_Textures;
 		std::vector<Ref<GLTFMaterial>> m_Materials;
@@ -173,5 +213,8 @@ namespace bsf
 		std::vector<Ref<GLTFScene>> m_Scenes;
 		std::vector<Ref<GLTFAnimation>> m_Animations;
 		std::vector<Ref<GLTFSkin>> m_Skins;
+
+		void UpdateAnimationState(AnimationState& state, const Time& time);
+		void UpdateAnimations(const Time& time);
 	};
 }

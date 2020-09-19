@@ -191,22 +191,6 @@ namespace bsf
 
 		return it->second.Location;
 
-
-		/*
-		auto cachedLoc = m_UniformLocations.find(name);
-
-		if (cachedLoc != m_UniformLocations.end())
-		{
-			return cachedLoc->second;
-		}
-
-		uint32_t location = BSF_GLCALL(glGetUniformLocation(m_Id, name.c_str()));
-
-		if (location != -1)
-			m_UniformLocations[name] = location;
-
-		return location;
-		*/
 	}
 
 	void ShaderProgram::UniformMatrix4f(const std::string& name, const glm::mat4& matrix)

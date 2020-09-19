@@ -43,6 +43,12 @@ class TestScene : public Scene
 		gltf->Load("assets/models/sonic.gltf", { GLTFAttributes::Position, GLTFAttributes::Normal, GLTFAttributes::Uv, 
 			GLTFAttributes::Joints_0, GLTFAttributes::Weights_0 });
 
+		gltf->PlayAnimation("idle0");
+
+		AddSubscription(GetApplication().KeyPressed, [&](const KeyPressedEvent& evt) {
+			gltf->FadeToAnimation("run", 0.5f);
+		});
+
 		prog = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag");
 
 	}
@@ -66,7 +72,6 @@ class TestScene : public Scene
 		m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, time.Elapsed);
 
 		prog->Use();
-
 
 		prog->UniformMatrix4f("uProjection", m_Projection);
 		prog->UniformMatrix4f("uView", m_View);

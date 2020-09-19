@@ -375,7 +375,7 @@ namespace bsf
 				std::memcpy(channel.Time.data(), input.Data(), input.ByteLength());
 
 				if (output.Type == GLTFType::Vec3) channel.Data = std::vector<glm::vec3>();
-				else if (output.Type == GLTFType::Vec4) channel.Data = std::vector<glm::vec4>();
+				else if (output.Type == GLTFType::Vec4) channel.Data = std::vector<glm::quat>();
 				else throw std::range_error("Invalid animation output type");
 
 				std::visit([&](auto&& data) -> void {
@@ -383,11 +383,29 @@ namespace bsf
 					std::memcpy(data.data(), output.Data(), output.ByteLength());
 				}, channel.Data);
 
+				auto [minTime, maxTime] = std::minmax_element(channel.Time.begin(), channel.Time.end());
+
+				channel.MinTime = *minTime;
+				channel.MaxTime = *maxTime;
+
 				animation->Channels.push_back(std::move(channel));
 			}
 
+			animation->Name = animDef["name"].get<std::string>();
+
+			animation->MinTime = std::numeric_limits<float>::infinity();
+			animation->MaxTime = -std::numeric_limits<float>::infinity();
+
+			for (const auto& c : animation->Channels)
+			{
+				animation->MinTime = std::min(c.MinTime, animation->MinTime);
+				animation->MaxTime = std::max(c.MaxTime, animation->MaxTime);
+			}
+			
 			m_Animations.push_back(std::move(animation));
 		});
+
+
 
 		return true;
 	}
@@ -402,6 +420,8 @@ namespace bsf
 
 		m_ModelStack.Reset();
 		m_ModelStack.Multiply(current);
+
+		UpdateAnimations(time);
 
 		scene->Update();
 		scene->PostTraverse([&](GLTFNode& node) {
@@ -429,6 +449,111 @@ namespace bsf
 			}
 		});
 
+
+	}
+
+
+	void GLTF::PlayAnimation(std::string_view name, bool loop, float timeWarp)
+	{
+		const auto it = std::find_if(m_Animations.begin(), m_Animations.end(), [name](const auto& anim) { return anim->Name == name; });
+		m_CurrentAnimation = { 
+			*it, 
+			0.0f,
+			timeWarp,
+			loop 
+		};
+		m_NextAnimation = std::nullopt;
+	}
+
+	void GLTF::FadeToAnimation(std::string_view next, float fadeTime, bool loop, float timeWarp)
+	{
+		if (!m_CurrentAnimation.has_value())
+		{
+			PlayAnimation(next, loop, timeWarp);
+			return;
+		}
+
+		const auto it = std::find_if(m_Animations.begin(), m_Animations.end(), [next](const auto& anim) {return anim->Name == next; });
+
+		m_NextAnimation = {
+			*it,
+			0.0f,
+			timeWarp,
+			loop
+		};
+
+		m_AnimationTransition = 0.0f;
+		m_AnimationTransitionDuration = fadeTime;
+
+	}
+
+	void GLTF::UpdateAnimationState(AnimationState& state, const Time& time)
+	{
+		state.Time += time.Delta * state.TimeWarp;
+
+		while (state.Loop && state.Time > state.Animation->MaxTime)
+			state.Time -= state.Animation->MaxTime;
+
+		state.Time = std::clamp(state.Time, state.Animation->MinTime, state.Animation->MaxTime);
+	}
+
+	void GLTF::UpdateAnimations(const Time& time)
+	{
+		if (!m_CurrentAnimation.has_value())
+			return;
+
+		auto& current = m_CurrentAnimation.value();
+
+		UpdateAnimationState(current, time);
+
+		for (const auto& channel : current.Animation->Channels)
+		{
+			switch (channel.Path)
+			{
+			case GLTFPath::Translation:
+				channel.Target->Translation = channel.Interpolate<glm::vec3>(current.Time);
+				break;
+			case GLTFPath::Rotation:
+				channel.Target->Rotation = channel.Interpolate<glm::quat>(current.Time);
+				break;
+			case GLTFPath::Scale:
+				channel.Target->Scale = channel.Interpolate<glm::vec3>(current.Time);
+				break;
+			}
+		}
+
+		if (m_NextAnimation.has_value())
+		{
+			auto& next = m_NextAnimation.value();
+
+			m_AnimationTransition = std::min(m_AnimationTransitionDuration, m_AnimationTransition + time.Delta);
+			float delta = m_AnimationTransition / m_AnimationTransitionDuration;
+
+			UpdateAnimationState(next, time);
+
+			for (const auto& channel : next.Animation->Channels)
+			{
+				switch (channel.Path)
+				{
+				case GLTFPath::Translation:
+					channel.Target->Translation = glm::lerp(channel.Target->Translation, channel.Interpolate<glm::vec3>(next.Time), delta);
+					break;
+				case GLTFPath::Rotation:
+					channel.Target->Rotation = glm::slerp(channel.Target->Rotation, channel.Interpolate<glm::quat>(next.Time), delta);
+					break;
+				case GLTFPath::Scale:
+					channel.Target->Scale = glm::lerp(channel.Target->Scale, channel.Interpolate<glm::vec3>(next.Time), delta);
+					break;
+				}
+			}
+
+			if (delta >= 1.0f)
+			{
+				m_CurrentAnimation = m_NextAnimation;
+				m_NextAnimation = std::nullopt;
+			}
+
+		}
 
 	}
 
@@ -462,7 +587,7 @@ namespace bsf
 				if (self.Joint.has_value())
 				{
 					auto& joint = self.Joint.value();
-					joint.SetJointTransform(self.Joint->Root->InverseGlobalTransform * self.GlobalTransform * joint.GetInverseBindTransform());
+					joint.SetJointTransform(joint.Root->InverseGlobalTransform * self.GlobalTransform * joint.GetInverseBindTransform());
 				}
 			});
 		}

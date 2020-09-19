@@ -212,6 +212,7 @@ namespace bsf
 		m_Data = std::move(newData);
 		m_AvoidSearch = std::move(newAvoidSearch);
 
+		return true;
 
 	}
 
