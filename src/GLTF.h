@@ -4,6 +4,7 @@
 #include <vector>
 #include <optional>
 #include <utility>
+#include <memory>
 
 #include <glm/glm.hpp>
 
@@ -183,38 +184,17 @@ namespace bsf
 	class GLTF
 	{
 	public:
+
+		GLTF();
+		~GLTF();
+
 		bool Load(std::string_view fileName, const std::initializer_list<GLTFAttributes>& attribs);
 		void Render(const Time& time, const GLTFRenderConfig& config);
 
 		void PlayAnimation(std::string_view name, bool loop = true, float timeWarp = 1.0f);
 		void FadeToAnimation(std::string_view next, float fadeTime, bool loop = true, float timeWarp = 1.0f);
-
 	private:
-
-		MatrixStack m_ModelStack;
-
-		struct AnimationState
-		{
-			Ref<GLTFAnimation> Animation = nullptr;
-			float Time = 0.0f;
-			float TimeWarp = 1.0f;
-			bool Loop = true;
-		};
-
-		std::optional<AnimationState> m_CurrentAnimation = std::nullopt;
-		std::optional<AnimationState> m_NextAnimation = std::nullopt;
-		float m_AnimationTransition = 0.0f;
-		float m_AnimationTransitionDuration = 0.0f;
-
-		std::vector<Ref<Texture2D>> m_Textures;
-		std::vector<Ref<GLTFMaterial>> m_Materials;
-		std::vector<Ref<GLTFMesh>> m_Meshes;
-		std::vector<Ref<GLTFNode>> m_Nodes;
-		std::vector<Ref<GLTFScene>> m_Scenes;
-		std::vector<Ref<GLTFAnimation>> m_Animations;
-		std::vector<Ref<GLTFSkin>> m_Skins;
-
-		void UpdateAnimationState(AnimationState& state, const Time& time);
-		void UpdateAnimations(const Time& time);
+		struct Impl;
+		std::unique_ptr<Impl> m_Impl;
 	};
 }
