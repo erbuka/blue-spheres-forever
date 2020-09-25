@@ -23,6 +23,7 @@ namespace bsf
 		std::string ModelMatrixUniform = "uModel";
 		std::string BaseColorTextureUniform = "uTexture";
 		std::string BaseColorUniform = "uColor";
+		std::string JointTransformUniform = "uJointTransform[0]";
 	};
 
 
@@ -35,13 +36,17 @@ namespace bsf
 
 		GLTF(const GLTF&) = delete;
 		GLTF& operator=(const GLTF&) = delete;
-
 			 
 		bool Load(std::string_view fileName, const std::initializer_list<GLTFAttributes>& attribs);
 		void Render(const Time& time, const GLTFRenderConfig& config);
+		void Update(const Time& time);
 
+		void StopAllAnimations();
 		void PlayAnimation(std::string_view name, bool loop = true, float timeWarp = 1.0f);
 		void FadeToAnimation(std::string_view next, float fadeTime, bool loop = true, float timeWarp = 1.0f);
+
+		void SetAnimationGlobalTimeWarp(float timeWarp);
+
 	private:
 		struct Impl;
 		std::unique_ptr<Impl> m_Impl;

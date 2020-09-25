@@ -138,6 +138,7 @@ project "BlueSpheresForever"
 
     links { "opengl32", "Glad", "GLFW", "LodePng", "bass" }
 
+
     postbuildcommands {
         "{COPY} ../src/assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
     }

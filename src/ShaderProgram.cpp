@@ -6,6 +6,8 @@
 #include "Texture.h"
 #include "Table.h"
 
+
+
 #define UNIFORM_IMPL(type, varType, size) \
 	void ShaderProgram::Uniform ## size ## type ## v(const std::string& name, uint32_t count, const varType * ptr) { \
 		BSF_GLCALL(glUniform ## size ## type ## v(GetUniformLocation(name), count, ptr)); \

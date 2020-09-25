@@ -11,15 +11,6 @@
 
 namespace bsf
 {
-	static constexpr std::array<float, 6 * 5> s_Billboad = {
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f
-	};
 
 	SkyGenerator::SkyGenerator()
 	{
@@ -99,6 +90,7 @@ namespace bsf
 			{ 1.0f, options.BaseColor1 }
 		});
 		*/
+
 		auto gradient = CreateGradient(128, {
 			{ 0.0f, options.BaseColor0 },
 			{ 0.3f, glm::mix(options.BaseColor0, glm::vec3(1.0f, 1.0f, 0.0f), 0.1f) },
@@ -161,6 +153,7 @@ namespace bsf
 
 		GLEnableScope scope({ GL_DEPTH_TEST });
 		glEnable(GL_DEPTH_TEST);
+
 
 		auto modSkyBox = Assets::GetInstance().Get<VertexArray>(AssetName::ModSkyBox);
 

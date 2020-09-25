@@ -109,7 +109,7 @@ namespace bsf
 
 		m_Assets[AssetName::ModChaosEmerald] = 
 			CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
-		
+		/*
 		{ 
 			std::array<std::string, 14> files = {
 				"assets/models/sonic0.obj",
@@ -143,11 +143,20 @@ namespace bsf
 			m_Assets[AssetName::ModSonic] = sonicAnimator;
 			
 		}
-		
+		*/
+
 
 		// Sonic character
 		{
 			auto sonic = MakeRef<Character>();
+
+			sonic->RunTimeWarp = 2.0f;
+
+
+			sonic->Matrix = 
+				glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
+				glm::rotate(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+				glm::scale(glm::vec3{ 0.5f, 0.5f, 0.5f });
 
 			sonic->Model.Load("assets/models/sonic.gltf", {
 				GLTFAttributes::Position,

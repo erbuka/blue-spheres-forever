@@ -27,11 +27,6 @@ namespace bsf
 
 	struct GameMessage
 	{
-		static constexpr float s_SlideDuration = 0.5f;
-		static constexpr float s_MessageDuration = 2.0f;
-		static constexpr float s_SlideInTime = s_SlideDuration;
-		static constexpr float s_MessageTime = s_SlideDuration + s_MessageDuration;
-		static constexpr float s_SlideOutTime = s_SlideDuration * 2.0f + s_MessageDuration;
 		
 		GameMessage(const std::string& message) : Message(message), Time(0.0f) {}
 		std::string Message;
@@ -51,16 +46,17 @@ namespace bsf
 		void OnResize(const WindowResizedEvent& evt);
 
 	private:
+		bool m_Paused = false;
 
 		float m_GameOverObjectsHeight = 0.0f;
 
 		MatrixStack m_Model, m_View, m_Projection;
-		MatrixStack m_ShadowView, m_ShadowProjection, m_ShadowModel;
+		MatrixStack m_ShadowProjection, m_ShadowModel;
 
-		Ref<Framebuffer> m_fbPBR, m_fbShadow, m_fbGroundReflections;
+		Ref<Framebuffer> m_fbPBR, m_fbGroundReflections;
 		Ref<BlurFilter> m_fBloom;
 
-		Ref<ShaderProgram> m_pPBR, m_pMorphPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox, m_pShadow;
+		Ref<ShaderProgram> m_pPBR, m_pSkeletalPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox;
 		
 		Ref<Sky> m_Sky;
 		Ref<Texture2D> m_txGroundMap;
@@ -71,8 +67,6 @@ namespace bsf
 		std::list<GameMessage> m_GameMessages;
 
 		const GameInfo m_GameInfo;
-
-		void RenderShadowMap(const Time& time);
 
 		void RenderGameUI(const Time& time);
 		

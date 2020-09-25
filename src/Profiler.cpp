@@ -44,6 +44,10 @@ namespace bsf
 				item.second.ExecutionTime = 0.0f;
 				item.second.Calls = 0;
 			}
+
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
 		}
 
 		void End()
@@ -63,9 +67,6 @@ namespace bsf
 			}
 
 
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
 
 
 			ImGui::Begin("Diagnostic Tool");

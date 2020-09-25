@@ -11,6 +11,7 @@ namespace bsf
 {
 	struct Character : public Asset
 	{
+		float RunTimeWarp = 1.0f;
 		glm::mat4 Matrix = glm::identity<glm::mat4>();
 		GLTF Model;
 	};

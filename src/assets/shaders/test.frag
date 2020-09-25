@@ -2,7 +2,7 @@
 
 uniform sampler2D uMap;
 
-uniform vec3 uColor;
+uniform vec4 uColor;
 
 uniform mat4 uProjection;
 uniform mat4 uView;
@@ -22,5 +22,5 @@ void main()
 
     float factor = max(0.0, dot(normal, vec3(0.0, 0.0, 1.0)));
 
-    oColor = vec4(texture(uMap, fUv).rgb * uColor * factor, 1.0);
+    oColor = texture(uMap, fUv) * uColor * factor;
 }

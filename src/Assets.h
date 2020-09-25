@@ -48,7 +48,6 @@ namespace bsf
 		FontText,
 
 		ModRing,
-		ModSonic,
 		ModChaosEmerald,
 		ModSphere,
 		ModGround,

@@ -67,7 +67,7 @@ namespace bsf
 		template<typename T>
 		using MemberHandlerFnPtr = void(T::*)(const Event&);
 
-		EventEmitter() {}
+		EventEmitter() = default;
 		EventEmitter(EventEmitter&) = delete;
 		EventEmitter(EventEmitter&&) = delete;
 

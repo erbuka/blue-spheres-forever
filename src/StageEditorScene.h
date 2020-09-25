@@ -16,10 +16,7 @@
 
 /*
 TODO:
-- Add double click to select stage from list
 - Add some sort of notification/messages for when the user saves, or maybe for errors
-- Go back from stage editor
-- Adjust subscriptions
 */
 
 namespace bsf
@@ -142,7 +139,7 @@ namespace bsf
 		glm::vec2 Position = { 0.0f, 0.0f };
 		glm::vec2 PreferredSize = { 0.0f, 0.0f };
 		glm::vec2 MaxSize = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
-		glm::vec2 MinSize = { 0.0f, 0.0f }; // TODO Maybe move as protected, don't want to mess around with it
+		glm::vec2 MinSize = { 0.0f, 0.0f };
 		bool Hovered = false;
 		bool Focused = false;
 

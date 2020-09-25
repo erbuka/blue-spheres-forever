@@ -274,6 +274,45 @@ namespace bsf
 		(1.0f / 255.0f) * glm::vec3(0, 192, 224),		(1.0f / 255.0f) * glm::vec3(192, 32, 160),
 		(1.0f / 255.0f) * glm::vec3(0, 0, 192),			(1.0f / 255.0f) * glm::vec3(192, 192, 192)
 	};
+	/*
+	static constexpr std::array<glm::vec3, 16> s_SkyColor = {
+		ToColor(0xFFE84100),
+		ToColor(0xFF420000),
+		ToColor(0xFF000000),
+		ToColor(0xFF630042),
+		ToColor(0xFFE86100),
+		ToColor(0xFFE8A300),
+		ToColor(0xFFE84100),
+		ToColor(0xFFE8C400),
+		ToColor(0xFF210000),
+		ToColor(0xFFA60021),
+		ToColor(0xFF210000),
+		ToColor(0xFFE84100),
+		ToColor(0xFF840000),
+		ToColor(0xFF000000),
+		ToColor(0xFFE84100),
+		ToColor(0xFFE88221),
+	};
+	*/
+
+	static constexpr std::array<glm::vec3, 16> s_SkyColor = {
+		ToColor(0xFFE84100), // 7
+		ToColor(0xFF630042), // 4
+		ToColor(0xFFE84100), // 1
+		ToColor(0xFF000000), // 14
+		ToColor(0xFF210000), // 11
+		ToColor(0xFFE8C400), // 8
+		ToColor(0xFFE86100), // 5
+		ToColor(0xFF420000), // 2
+		ToColor(0xFFE84100), // 15
+		ToColor(0xFFE84100), // 12
+		ToColor(0xFF210000), // 9
+		ToColor(0xFFE8A300), // 6
+		ToColor(0xFF000000), // 3
+		ToColor(0xFFE88221), // 16
+		ToColor(0xFF840000), // 13
+		ToColor(0xFFA60021), // 10
+	};
 
 	struct StageSection
 	{
@@ -420,9 +459,11 @@ namespace bsf
 		};
 		
 		result->SkyColors = {
-			glm::vec3(0, 23, 178) / 255.0f,
-			glm::vec3(84, 176, 255) / 255.0f
+			s_SkyColor[tl % 16],
+			(glm::vec3)Lighten(glm::vec4(s_SkyColor[tl % 16], 1.0f), 0.2f)
 		};
+
+		BSF_ERROR("Sky: {0:x}", ToHexColor(s_SkyColor[tl % 16]));
 
 		result->StarColors = {
 			glm::vec3(255, 255, 255) / 255.0f,

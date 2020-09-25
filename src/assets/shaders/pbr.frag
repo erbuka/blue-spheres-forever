@@ -4,13 +4,6 @@ uniform mat4 uProjection;
 uniform mat4 uView;
 uniform mat4 uModel;
 
-uniform vec2 uResolution;
-
-uniform mat4 uShadowView;
-uniform mat4 uShadowProjection;
-uniform vec2 uShadowMapTexelSize;
-
-
 uniform vec3 uCameraPos;
 uniform vec3 uLightPos;
 
@@ -37,8 +30,6 @@ in vec2 fUv;
 
 layout(location = 0) out vec4 oColor;
 layout(location = 1) out vec4 oEmission;
-
-const int cShadowQuality = 1;
 
 const float PI = 3.14159265359;
 
@@ -96,8 +87,9 @@ void main() {
     fragment += (kD * irradiance * albedo) * ao;
 
     // Sky reflections
-    vec3 reflections = texture(uReflections, gl_FragCoord.xy / uResolution).rgb * F;
-    vec3 reflectionsEmission = texture(uReflectionsEmission, gl_FragCoord.xy / uResolution).rgb * F;
+    ivec2 resolution = textureSize(uReflections, 0);
+    vec3 reflections = texture(uReflections, gl_FragCoord.xy / resolution).rgb * F;
+    vec3 reflectionsEmission = texture(uReflectionsEmission, gl_FragCoord.xy / resolution).rgb * F;
     fragment += reflections * ao;
 
     if(length(reflections) == 0.0) { 

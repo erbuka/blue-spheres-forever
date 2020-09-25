@@ -129,7 +129,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>BSF_ENABLE_FILE_LOG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;BSF_ENABLE_FILE_LOG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\lodepng\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -171,9 +171,9 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\EventEmitter.h" />
     <ClInclude Include="..\src\Font.h" />
     <ClInclude Include="..\src\Framebuffer.h" />
+    <ClInclude Include="..\src\GLTF.h" />
     <ClInclude Include="..\src\GameLogic.h" />
     <ClInclude Include="..\src\GameScene.h" />
-    <ClInclude Include="..\src\GLTF.h" />
     <ClInclude Include="..\src\Log.h" />
     <ClInclude Include="..\src\MatrixStack.h" />
     <ClInclude Include="..\src\MenuScene.h" />
@@ -201,8 +201,6 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\Audio.cpp" />
     <ClCompile Include="..\src\BlurFilter.cpp" />
     <ClCompile Include="..\src\BsfPch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\CharacterAnimator.cpp" />
@@ -211,9 +209,9 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\DisclaimerScene.cpp" />
     <ClCompile Include="..\src\Font.cpp" />
     <ClCompile Include="..\src\Framebuffer.cpp" />
+    <ClCompile Include="..\src\GLTF.cpp" />
     <ClCompile Include="..\src\GameLogic.cpp" />
     <ClCompile Include="..\src\GameScene.cpp" />
-    <ClCompile Include="..\src\GLTF.cpp" />
     <ClCompile Include="..\src\Main.cpp" />
     <ClCompile Include="..\src\MatrixStack.cpp" />
     <ClCompile Include="..\src\MenuScene.cpp" />

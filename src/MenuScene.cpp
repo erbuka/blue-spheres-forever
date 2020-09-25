@@ -48,6 +48,7 @@ namespace bsf
 		}
 
 		m_SelectedOption = newOption;
+		return true;
 	}
 
 	template<typename T>

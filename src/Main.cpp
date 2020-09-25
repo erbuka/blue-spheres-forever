@@ -1,5 +1,7 @@
 #include "BsfPch.h"
 
+#include <thread>
+
 #include <json/json.hpp>
 
 #include "Application.h"
@@ -19,6 +21,9 @@
 #include "VertexArray.h"
 #include "Texture.h"
 
+#include <glm/gtc/noise.hpp>
+#include <imgui.h>
+
 using namespace bsf;
 using namespace glm;
 
@@ -26,80 +31,149 @@ using namespace glm;
 
 //void ConvertSections();
 
-
 class TestScene : public Scene
 {
+	static constexpr size_t size = 512;
+
+	float zoom = 1.0f;
+	
+	float starsPow = 8.0f;
+	float starsMultipler = 1.0f;
+	float starsBrightnessNoiseScale = 1.0f;
+	float starsNoiseScale = 2.0f;
+
+	float bgNoiseScale = 100.0f;
+	float bgDarkenFactor = 0.75f;
+	glm::vec3 bgBaseColor = Colors::Blue;
+
+	Ref<Texture2D> noiseTex;
+	std::vector<uint32_t> pixels;
+	std::vector<glm::vec3> colors;
+
+	void UpdateNoise()
+	{
+		constexpr size_t numThreads = 4;
+		constexpr size_t sliceSize = size / numThreads;
+		std::array<std::thread, numThreads> threads;
+		auto baseColor2 = (glm::vec3)Darken(glm::vec4(bgBaseColor, 1.0f), bgDarkenFactor);
+
+		auto updateSlice = [&](size_t xMin, size_t xMax) {
+			for (size_t x = xMin; x < xMax; ++x)
+			{
+				for (size_t y = 0; y < size; ++y)
+				{
+					float val = glm::simplex(glm::vec3(x, y, 0.0) / (float)bgNoiseScale) * 0.5f + 0.5f;
+					colors[y * size + x] = glm::lerp(bgBaseColor, baseColor2, val);
+				}
+			}
+
+			for (size_t x = xMin; x < xMax; ++x)
+			{
+				for (size_t y = 0; y < size; ++y)
+				{
+					float brightness = glm::simplex(glm::vec3(x, y, 0.0) / (float)starsBrightnessNoiseScale) * 0.5f + 0.5f;
+					float val = glm::simplex(glm::vec3(x, y, 0.0) / (float)starsNoiseScale) * 0.5f + 0.5f;
+					val = glm::pow(val * brightness, starsPow);
+					colors[y * size + x] += glm::vec3(val) *starsMultipler;
+				}
+			}
 
 
-	Ref<GLTF> gltf;
-	Ref<ShaderProgram> prog;
+			// Normalize + transfer
+			for (size_t x = xMin; x < xMax; ++x)
+			{
+				for (size_t y = 0; y < size; ++y)
+				{
+					colors[y * size + x] /= (colors[y * size + x] + 1.0f);
+					pixels[y * size + x] = ToHexColor(colors[y * size + x]);
+				}
+			}
+		};
 
-	MatrixStack m_Projection, m_Model, m_View;
+		for (size_t i = 0; i < numThreads; ++i)
+			threads[i] = std::thread(updateSlice, i * sliceSize, (i + 1) * sliceSize);
+		
+		for (size_t i = 0; i < numThreads; ++i)
+			threads[i].join();
 
+
+		noiseTex->SetPixels(pixels.data(), size, size);
+
+	}
 
 	void OnAttach() override 
 	{
-		gltf = MakeRef<GLTF>();
-		gltf->Load("assets/models/sonic.gltf", { GLTFAttributes::Position, GLTFAttributes::Normal, GLTFAttributes::Uv, 
-			GLTFAttributes::Joints_0, GLTFAttributes::Weights_0 });
+		pixels.reserve(size * size);
+		colors.reserve(size * size);
 
-		gltf->PlayAnimation("idle0");
+		noiseTex = MakeRef<Texture2D>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 
-		AddSubscription(GetApplication().KeyPressed, [&](const KeyPressedEvent& evt) {
-			gltf->FadeToAnimation("run", 0.5f);
-		});
-
-		prog = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag");
+		UpdateNoise();
 
 	}
 
 	void OnRender(const Time& time) override
 	{
-		auto& assets = Assets::GetInstance();
-		auto windowSize = GetApplication().GetWindowSize();
+		auto size = GetApplication().GetWindowSize();
+		auto& r2 = GetApplication().GetRenderer2D();
 
-		glEnable(GL_DEPTH_TEST);
-		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glViewport(0, 0, size.x, size.y);
 
-		m_Projection.Reset();
-		m_Projection.Perspective(glm::radians(45.0f), windowSize.x / windowSize.y, 0.1f, 100.0f);
+		float aspect = size.x / size.y;
 
-		m_View.Reset();
-		m_View.LookAt({ 0.0f, -3.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f });
+		r2.Begin(glm::ortho(-1.0f * aspect, 1.0f * aspect, -1.0f, 1.0f, -1.0f, 1.0f));
 
-		m_Model.Reset();
-		m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, time.Elapsed);
+		r2.Pivot(EPivot::Center);
 
-		prog->Use();
+		r2.Color(Colors::White);
+		r2.Texture(noiseTex);
+		r2.DrawQuad({}, { zoom,zoom });
 
-		prog->UniformMatrix4f("uProjection", m_Projection);
-		prog->UniformMatrix4f("uView", m_View);
-		prog->UniformMatrix4f("uModel", m_Model);
+		r2.End();
 
-		GLTFRenderConfig config;
-
-		config.Program = prog;
-		config.BaseColorUniform = "uColor";
-		config.BaseColorTextureUniform = "uMap";
-		config.ModelMatrixUniform = "uModel";
-
-		gltf->Render(time, config);
-
-
-
+		ImGui::Begin("Test");
 		
+		if (ImGui::DragFloat("Zoom", &zoom, 0.01f, 1.0f, 10.0f))
+			UpdateNoise();
+
+		if (ImGui::DragFloat("Bg Darken Factor", &bgDarkenFactor, 0.01f, 0.0f, 1.0f))
+			UpdateNoise();
+
+		if (ImGui::DragFloat("Bg Noise Scale", &bgNoiseScale, 1.0f, 1.0f, 500.0f))
+			UpdateNoise();
+
+		if (ImGui::DragFloat("Stars Noise Scale", &starsNoiseScale, 0.1f, 1.0f, 10.0f))
+			UpdateNoise();
+
+		if (ImGui::DragFloat("Stars Brighness Noise Scale", &starsBrightnessNoiseScale, 0.1f, 1.0f, 10.0f))
+			UpdateNoise();
+
+		if (ImGui::DragFloat("Stars Multipler", &starsMultipler, 0.1f, 1.0f, 100.0f))
+			UpdateNoise();
+
+		if (ImGui::DragFloat("Stars Power", &starsPow, 0.1f, 1.0f, 1.0f))
+			UpdateNoise();
+
+		if (ImGui::ColorEdit3("Base Color", glm::value_ptr(bgBaseColor)))
+			UpdateNoise();
+		
+		ImGui::End();
+
+
+
 	}
 };
 
 
 int main() 
 {
+
 	//auto scene = MakeRef<TestScene>();
-	//auto scene = Ref<Scene>(new DisclaimerScene());
+	auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
-	auto scene = Ref<Scene>(new MenuScene());
+	//auto scene = Ref<Scene>(new MenuScene());
 	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
 	
 	Application app;
@@ -107,7 +181,6 @@ int main()
 	app.Start();
 	return 0;
 }
-
 
 template<typename T, size_t N>
 std::vector<T> Flip(const std::vector<T>& v)

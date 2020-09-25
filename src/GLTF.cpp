@@ -66,7 +66,7 @@ namespace bsf
 		std::make_tuple("MAT4"sv,	 16,	GLTFType::Mat4)
 	};
 
-	static constexpr Table<7, GLenum, size_t> s_GLTFComponentTypes = {
+	static constexpr Table<5, GLenum, size_t> s_GLTFComponentTypes = {
 		std::make_tuple(GL_INT, 4),
 		std::make_tuple(GL_UNSIGNED_INT, 4),
 		std::make_tuple(GL_FLOAT, 4),
@@ -114,7 +114,7 @@ namespace bsf
 
 	struct GLTFMaterial
 	{
-		glm::vec3 BaseColor = { 1.0f, 1.0f, 1.0f };
+		glm::vec4 BaseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 		Ref<Texture2D> BaseColorTexture = nullptr;
 
 		GLTFMaterial() = default;
@@ -164,7 +164,7 @@ namespace bsf
 		glm::mat4 InverseGlobalTransform = glm::identity<glm::mat4>();
 		glm::mat4 LocalTransform = glm::identity<glm::mat4>();
 		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
-		glm::quat Rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glm::quat Rotation = glm::identity<glm::quat>();
 		glm::vec3 Scale = { 1.0f, 1.0f, 1.0f };
 
 		Ref<GLTFSkin> Skin = nullptr;
@@ -179,6 +179,7 @@ namespace bsf
 
 		void PreTraverse(const std::function<void(GLTFNode&)> action)
 		{
+
 			for (auto& child : Children)
 				child->PreTraverse(action);
 
@@ -276,6 +277,7 @@ namespace bsf
 		std::optional<AnimationState> m_NextAnimation = std::nullopt;
 		float m_AnimationTransition = 0.0f;
 		float m_AnimationTransitionDuration = 0.0f;
+		float m_AnimationGlobalTimeWarp = 1.0f;
 
 		std::vector<Ref<Texture2D>> m_Textures;
 		std::vector<Ref<GLTFMaterial>> m_Materials;
@@ -287,10 +289,15 @@ namespace bsf
 
 		void UpdateAnimationState(AnimationState& state, const Time& time)
 		{
-			state.Time += time.Delta * state.TimeWarp;
+			state.Time += time.Delta * state.TimeWarp * m_AnimationGlobalTimeWarp;
+
+			const float duration = state.Animation->MaxTime - state.Animation->MinTime;
 
 			while (state.Loop && state.Time > state.Animation->MaxTime)
-				state.Time -= state.Animation->MaxTime;
+				state.Time -= duration;
+
+			while (state.Loop && state.Time < state.Animation->MinTime)
+				state.Time += duration;
 
 			state.Time = std::clamp(state.Time, state.Animation->MinTime, state.Animation->MaxTime);
 		}
@@ -456,7 +463,7 @@ namespace bsf
 				const auto& pbr = matSpec["pbrMetallicRoughness"];
 
 				material->BaseColor = pbr.contains("baseColorFactor") ?
-					pbr["baseColorFactor"].get<glm::vec3>() :
+					pbr["baseColorFactor"].get<glm::vec4>() :
 					Colors::White;
 
 				material->BaseColorTexture = pbr.contains("baseColorTexture") ?
@@ -670,9 +677,14 @@ namespace bsf
 				m_Animations.push_back(std::move(animation));
 			});
 
-
-
 			return true;
+		}
+
+		void Update(const Time& time)
+		{
+			auto& scene = m_Scenes[0];
+			UpdateAnimations(time);
+			scene->Update();
 		}
 
 		void Render(const Time& time, const GLTFRenderConfig& config)
@@ -686,9 +698,6 @@ namespace bsf
 			m_ModelStack.Reset();
 			m_ModelStack.Multiply(current);
 
-			UpdateAnimations(time);
-
-			scene->Update();
 			scene->PostTraverse([&](GLTFNode& node) {
 				if (node.Mesh)
 				{
@@ -699,12 +708,12 @@ namespace bsf
 					program->UniformMatrix4f(config.ModelMatrixUniform, m_ModelStack);
 
 					if (node.Skin)
-						program->UniformMatrix4fv("uJointTransform[0]", node.Skin->JointTransform.size(),
+						program->UniformMatrix4fv(config.JointTransformUniform, node.Skin->JointTransform.size(),
 							glm::value_ptr(node.Skin->JointTransform[0]));
 
 					for (auto& primitive : *(node.Mesh))
 					{
-						program->Uniform3fv(config.BaseColorUniform, 1, glm::value_ptr(primitive.Material->BaseColor));
+						program->Uniform4fv(config.BaseColorUniform, 1, glm::value_ptr(primitive.Material->BaseColor));
 						program->UniformTexture(config.BaseColorTextureUniform, primitive.Material->BaseColorTexture);
 						primitive.Geometry->Draw(GL_TRIANGLES);
 					}
@@ -715,6 +724,12 @@ namespace bsf
 			});
 
 
+		}
+
+		void StopAllAnimations()
+		{
+			m_CurrentAnimation = std::nullopt;
+			m_NextAnimation = std::nullopt;
 		}
 
 		void PlayAnimation(std::string_view name, bool loop, float timeWarp)
@@ -751,6 +766,10 @@ namespace bsf
 
 		}
 
+		void SetAnimationGlobalTimeWarp(float timeWarp) {
+			m_AnimationGlobalTimeWarp = timeWarp;
+		}
+
 	};
 
 	GLTF::GLTF()
@@ -770,6 +789,14 @@ namespace bsf
 	{
 		m_Impl->Render(time, config);
 	}
+	void GLTF::Update(const Time& time)
+	{
+		m_Impl->Update(time);
+	}
+	void GLTF::StopAllAnimations()
+	{
+		m_Impl->StopAllAnimations();
+	}
 	void GLTF::PlayAnimation(std::string_view name, bool loop, float timeWarp)
 	{
 		m_Impl->PlayAnimation(name, loop, timeWarp);
@@ -778,6 +805,11 @@ namespace bsf
 	void GLTF::FadeToAnimation(std::string_view next, float fadeTime, bool loop, float timeWarp)
 	{
 		m_Impl->FadeToAnimation(next, fadeTime, loop, timeWarp);
+	}
+
+	void GLTF::SetAnimationGlobalTimeWarp(float timeWarp)
+	{
+		m_Impl->SetAnimationGlobalTimeWarp(timeWarp);
 	}
 
 }
