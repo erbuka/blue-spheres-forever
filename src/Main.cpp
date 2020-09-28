@@ -22,7 +22,6 @@
 #include "Texture.h"
 
 #include <glm/gtc/noise.hpp>
-#include <imgui.h>
 
 using namespace bsf;
 using namespace glm;
@@ -31,6 +30,7 @@ using namespace glm;
 
 //void ConvertSections();
 
+/*
 class TestScene : public Scene
 {
 	static constexpr size_t size = 512;
@@ -164,8 +164,7 @@ class TestScene : public Scene
 
 	}
 };
-
-
+*/
 int main() 
 {
 

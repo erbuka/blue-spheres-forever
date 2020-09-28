@@ -95,6 +95,7 @@ namespace bsf
 	};
 	
 	constexpr float s_GroundRadius = 12.5f;
+	constexpr int32_t s_SightRadius = 12;
 	constexpr glm::vec3 s_GroundCenter = { 0.0f, 0.0f, -s_GroundRadius };
 	
 	std::tuple<bool, glm::vec3, glm::mat4> Reflect(const glm::vec3& cameraPosition, const glm::vec3& position, float radius);

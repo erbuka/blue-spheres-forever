@@ -192,6 +192,7 @@ namespace bsf
 		// Draw ground reflections
 		m_fbGroundReflections->Bind();
 		{
+
 			GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE });
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -272,11 +273,10 @@ namespace bsf
 				m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::White));
 				m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
 
-
 				// Stage objects
-				for (int32_t x = -12; x <= 12; x++)
+				for (int32_t x = -s_SightRadius; x <= s_SightRadius; x++)
 				{
-					for (int32_t y = -12; y <= 12; y++)
+					for (int32_t y = -s_SightRadius; y <= s_SightRadius; y++)
 					{
 						auto value = m_Stage->GetValueAt(x + ix, y + iy);
 
@@ -375,6 +375,7 @@ namespace bsf
 		// Draw to deferred frame buffer
 		m_fbPBR->Bind();
 		{
+
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -492,9 +493,9 @@ namespace bsf
 				m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
 
 
-				for (int32_t x = -12; x <= 12; x++)
+				for (int32_t x = -s_SightRadius; x <= s_SightRadius; x++)
 					{
-						for (int32_t y = -12; y <= 12; y++)
+						for (int32_t y = -s_SightRadius; y <= s_SightRadius; y++)
 						{
 							auto value = m_Stage->GetValueAt(x + ix, y + iy);
 
@@ -592,10 +593,8 @@ namespace bsf
 
 		// Apply post processing
 		m_fBloom->Apply(2);
-
 		// Draw to default frame buffer
 		{
-
 			GLEnableScope scope({ GL_FRAMEBUFFER_SRGB });
 
 			glEnable(GL_FRAMEBUFFER_SRGB);
