@@ -15,13 +15,15 @@ void main() {
 
     vec2 texelSize = 1.0 / textureSize(uSource, 0);
     vec3 color = vec3(0.0);
-    float offset = float(kernel.length / 2);
+    int kernelSize = kernel.length();
+    float offset = float(kernelSize / 2);
 
     if(uHorizontal) {
-        for(int i = 0; i < kernel.length; i++)
+        for(int i = 0; i < kernelSize; i++)
             color += texture(uSource, fUv + vec2(texelSize.x, 0.0) * (float(i) - offset)).rgb * kernel[i];
+
     } else {
-        for(int i = 0; i < kernel.length; i++)
+        for(int i = 0; i < kernelSize; i++)
             color += texture(uSource, fUv + vec2(0.0, texelSize.y) * (float(i) - offset)).rgb * kernel[i];
     }
 

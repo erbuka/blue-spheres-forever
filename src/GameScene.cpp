@@ -60,7 +60,7 @@ namespace bsf
 
 		
 		// Post processing
-		//m_fBloom = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
+		m_fBloom = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
 
 		// Programs
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
@@ -590,11 +590,8 @@ namespace bsf
 		m_fbPBR->Unbind();
 
 
-		
-
 		// Apply post processing
-		//m_fBloom->Apply(2);
-
+		m_fBloom->Apply(2);
 
 		// Draw to default frame buffer
 		{
