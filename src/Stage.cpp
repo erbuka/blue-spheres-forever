@@ -463,8 +463,6 @@ namespace bsf
 			(glm::vec3)Lighten(glm::vec4(s_SkyColor[tl % 16], 1.0f), 0.2f)
 		};
 
-		BSF_ERROR("Sky: {0:x}", ToHexColor(s_SkyColor[tl % 16]));
-
 		result->StarColors = {
 			glm::vec3(255, 255, 255) / 255.0f,
 			glm::vec3(255, 255, 128) / 255.0f

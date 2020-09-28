@@ -21,7 +21,7 @@ namespace bsf
 	{
 		Ref<ShaderProgram> Program;
 		std::string ModelMatrixUniform = "uModel";
-		std::string BaseColorTextureUniform = "uTexture";
+		std::string BaseColorTextureUniform = "uMap";
 		std::string BaseColorUniform = "uColor";
 		std::string JointTransformUniform = "uJointTransform[0]";
 	};

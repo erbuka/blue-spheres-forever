@@ -37,7 +37,7 @@ namespace bsf
 		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		// PP
-		m_fBlur = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
+		//m_fBlur = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
 
 		// Shaders
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "NO_SHADOWS", "NO_UV_OFFSET" });
@@ -186,7 +186,7 @@ namespace bsf
 
 
 		// Post processing
-		m_fBlur->Apply(2);
+		//m_fBlur->Apply(2);
 
 		// Draw to screen
 		{

@@ -58,7 +58,7 @@ namespace bsf
 		void UniformTexture(const std::string name, const Ref<T>& texture)
 		{
 			static_assert(std::is_base_of_v<Texture, T>);
-			uint32_t texUnit = m_UniformInfo[name].TextureUnit;
+			uint32_t texUnit = m_UniformInfo.at(name).TextureUnit;
 			Uniform1i(name, { (int32_t)texUnit });
 			texture->Bind(texUnit);
 		}
