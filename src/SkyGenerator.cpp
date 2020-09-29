@@ -212,20 +212,7 @@ namespace bsf
 
 	void Sky::Update(Ref<CubeCamera>& camera, Ref<TextureCube>& source)
 	{
-
-		auto& assets = Assets::GetInstance();
-
-		static std::array<TextureCubeFace, 6> faces = {
-			TextureCubeFace::Right,
-			TextureCubeFace::Left,
-			TextureCubeFace::Top,
-			TextureCubeFace::Bottom,
-			TextureCubeFace::Front,
-			TextureCubeFace::Back
-		};
-
-
-		for (auto face : faces) {
+		for (auto face : TextureCubeFaces) {
 			camera->BindForRender(face);
 
 			glClearColor(0, 0, 0, 1);

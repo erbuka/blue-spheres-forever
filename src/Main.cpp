@@ -22,6 +22,7 @@
 #include "Texture.h"
 
 #include <glm/gtc/noise.hpp>
+#include <imgui.h>
 
 using namespace bsf;
 using namespace glm;
@@ -30,7 +31,7 @@ using namespace glm;
 
 //void ConvertSections();
 
-/*
+
 class TestScene : public Scene
 {
 	static constexpr size_t size = 512;
@@ -63,7 +64,7 @@ class TestScene : public Scene
 				for (size_t y = 0; y < size; ++y)
 				{
 					float val = glm::simplex(glm::vec3(x, y, 0.0) / (float)bgNoiseScale) * 0.5f + 0.5f;
-					colors[y * size + x] = glm::lerp(bgBaseColor, baseColor2, val);
+					colors[y * size + x] = glm::lerp(baseColor2, bgBaseColor, val);
 				}
 			}
 
@@ -71,9 +72,10 @@ class TestScene : public Scene
 			{
 				for (size_t y = 0; y < size; ++y)
 				{
+					float skyVal = 0.5f + glm::simplex(glm::vec3(x, y, 0.0) / (float)bgNoiseScale) * 0.25f + 0.25f;
 					float brightness = glm::simplex(glm::vec3(x, y, 0.0) / (float)starsBrightnessNoiseScale) * 0.5f + 0.5f;
 					float val = glm::simplex(glm::vec3(x, y, 0.0) / (float)starsNoiseScale) * 0.5f + 0.5f;
-					val = glm::pow(val * brightness, starsPow);
+					val = glm::pow(val * skyVal * brightness, starsPow);
 					colors[y * size + x] += glm::vec3(val) *starsMultipler;
 				}
 			}
@@ -164,12 +166,12 @@ class TestScene : public Scene
 
 	}
 };
-*/
+
 int main() 
 {
 
-	//auto scene = MakeRef<TestScene>();
-	auto scene = Ref<Scene>(new DisclaimerScene());
+	auto scene = MakeRef<TestScene>();
+	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
 	//auto scene = Ref<Scene>(new SplashScene());
 	//auto scene = Ref<Scene>(new MenuScene());
