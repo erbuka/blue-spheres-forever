@@ -71,6 +71,7 @@ namespace bsf
 		
 		glm::ivec2 GetDirection() const { return m_Direction; }
 		float GetRotationAngle() const { return m_RotationAngle; }
+		glm::vec2 GetViewDirection() const;
 
 		float GetNormalizedVelocity() const;
 		float GetMaxVelocity() const;

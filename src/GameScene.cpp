@@ -155,10 +155,12 @@ namespace bsf
 
 		glm::vec2 pos = m_GameLogic->GetPosition();
 		glm::vec2 deltaPos = m_GameLogic->GetDeltaPosition();
+		glm::vec2 viewDir = m_GameLogic->GetViewDirection();
+		glm::vec2 viewOrigin = -viewDir;
 		int32_t ix = pos.x, iy = pos.y;
 		float fx = pos.x - ix, fy = pos.y - iy;
 
-		auto setupView = [&]() {
+		const auto setupView = [&]() {
 			// Setup the player view
 			m_View.Reset();
 			m_Model.Reset();
@@ -170,6 +172,11 @@ namespace bsf
 			m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle());
 			m_Model.Rotate({ 1.0f, 0.0f, 0.0f }, -glm::pi<float>() / 2.0f);
 		};
+
+		const auto isObjectVisible = [&](const glm::vec2& position) -> bool {
+			return glm::dot(position - viewOrigin, viewDir) >= 0.0f;
+		};
+
 
 
 		m_Projection.Reset();
@@ -280,7 +287,7 @@ namespace bsf
 					{
 						auto value = m_Stage->GetValueAt(x + ix, y + iy);
 
-						if (value == EStageObject::None)
+						if (value == EStageObject::None || !isObjectVisible({ x - fx, y - fy }))
 							continue;
 
 						auto [visible, p, tbn] = Reflect(cameraWorldPosition, { x - fx, y - fy, 0.15f + m_GameOverObjectsHeight }, 0.15f);
@@ -499,7 +506,7 @@ namespace bsf
 						{
 							auto value = m_Stage->GetValueAt(x + ix, y + iy);
 
-							if (value == EStageObject::None)
+							if (value == EStageObject::None || !isObjectVisible({ x - fx, y - fy }))
 								continue;
 
 							auto [p, tbn] = Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight });

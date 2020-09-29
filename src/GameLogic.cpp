@@ -407,6 +407,11 @@ namespace bsf
 		return result;
 	}
 
+	glm::vec2 GameLogic::GetViewDirection() const
+	{
+		return { std::cos(m_RotationAngle), std::sin(m_RotationAngle) };
+	}
+
 	float GameLogic::GetNormalizedVelocity() const { return m_Velocity * m_VelocityScale / s_BaseVelocity; }
 
 	float GameLogic::GetMaxVelocity() const { return s_MaxVelocity; }

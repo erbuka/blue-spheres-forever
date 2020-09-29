@@ -117,8 +117,6 @@ namespace bsf
 				m_pGenBg->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
 				m_pGenBg->UniformMatrix4f("uView", camera.GetViewMatrix());
 				m_pGenBg->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-				//m_pGenBg->Uniform3fv("uColor0", 1, glm::value_ptr(options.BaseColor0));
-				//m_pGenBg->Uniform3fv("uColor1", 1, glm::value_ptr(options.BaseColor1));
 				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern);
 				m_pGenBg->UniformTexture("uGradient", gradient);
 				m_vaCube->DrawArrays(GL_TRIANGLES);
