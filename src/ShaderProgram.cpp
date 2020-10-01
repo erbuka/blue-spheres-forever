@@ -228,7 +228,7 @@ namespace bsf
 			std::string definesStr;
 
 			for (const auto& def : defines)
-				definesStr += Format("#define %s\n", def.data());
+				definesStr += fmt::format("#define {0}\n", def.data());
 
 			auto pos = source.find("#version");
 				

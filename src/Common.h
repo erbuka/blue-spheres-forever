@@ -218,20 +218,9 @@ namespace bsf
 		return  t < length ? from + t * glm::normalize(diff) : target;
 	}
 
-	template<typename ...Args>
-	std::string Format(std::string_view format, Args... args)
-	{
-		static constexpr uint32_t bufSize = 1024;
-		static char buffer[bufSize];
-		std::snprintf(buffer, bufSize, format.data(), args...);
-		return std::string(buffer);
-	}
-
-
 	void Trim(std::string& str);
 
 	uint32_t UniqueId();
-
 
 	template<typename T>
 	struct InterpolatedValue

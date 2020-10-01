@@ -33,3 +33,5 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/matrix_transform_2d.hpp>
 #include <glm/gtx/euler_angles.hpp>
+
+#include <fmt/core.h>

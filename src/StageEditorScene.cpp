@@ -645,9 +645,9 @@ namespace bsf
 		if (Hovered)
 		{
 			const std::array<std::pair<std::string, std::string>, 3> infos = {
-				std::pair<std::string, std::string>{ "Position", Format("%.2f %.2f", Bounds.Left(), Bounds.Bottom()) },
-				std::pair<std::string, std::string>{ "Size", Format("%.2f %.2f", Bounds.Width(), Bounds.Height()) },
-				std::pair<std::string, std::string>{ "Margin", Format("%.2f", Margin) }
+				std::pair<std::string, std::string>{ "Position", fmt::format("{0:.2f} {1:.2f}", Bounds.Left(), Bounds.Bottom()) },
+				std::pair<std::string, std::string>{ "Size", fmt::format("{0:.2f} {1:.2f}", Bounds.Width(), Bounds.Height()) },
+				std::pair<std::string, std::string>{ "Margin", fmt::format("{0:.2f}", Margin) }
 			};
 			std::array<std::string, infos.size()> infoStrings;
 			auto& font = Assets::GetInstance().Get<Font>(AssetName::FontText);
@@ -1906,7 +1906,7 @@ namespace bsf
 				r2.DrawQuad();
 
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
-				r2.DrawStringShadow(font, Format("%d", info.BlueSpheres), { 1.0f + margin, 0.0f });
+				r2.DrawStringShadow(font, std::to_string(info.BlueSpheres), { 1.0f + margin, 0.0f });
 
 				r2.Pop();
 			}
@@ -1926,7 +1926,7 @@ namespace bsf
 				r2.DrawQuad();
 
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
-				r2.DrawStringShadow(font, Format("%d", info.MaxRings), { -1.0f - margin, 0.0f });
+				r2.DrawStringShadow(font, std::to_string(info.MaxRings), { -1.0f - margin, 0.0f });
 
 				r2.Pop();
 			}

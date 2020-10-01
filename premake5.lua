@@ -115,7 +115,11 @@ project "BlueSpheresForever"
         "vendor/stb/include",
         "vendor/bass/include",
         "vendor/json/include",
+        "vendor/fmt/include"
     }
+
+    
+    defines { "SPDLOG_FMT_EXTERNAL", "FMT_HEADER_ONLY" }
 
     pchheader "BsfPch.h"
     pchsource "BsfPch.cpp"
