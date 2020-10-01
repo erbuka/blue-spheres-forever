@@ -193,14 +193,14 @@ namespace bsf
 		m_Id(0)
 	{
 		BSF_GLCALL(glGenTextures(1, &m_Id));
-		BSF_INFO("Create texture id: {0}", m_Id);
+		BSF_DEBUG("Create texture id: {0}", m_Id);
 	}
 
 	Texture::~Texture()
 	{
 		if (m_Id != 0)
 		{
-			BSF_INFO("Delete texture id: {0}", m_Id);
+			BSF_DEBUG("Delete texture id: {0}", m_Id);
 			BSF_GLCALL(glDeleteTextures(1, &m_Id));
 			m_Id = 0;
 		}

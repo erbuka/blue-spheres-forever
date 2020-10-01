@@ -171,7 +171,7 @@ namespace bsf
 		std::sort(infos.begin(), infos.end(), [](const auto& a, const auto& b) -> bool { return a.Location < b.Location; });
 		
 		for (const auto& info : infos)
-			BSF_INFO("\t{1} - {0}, textureUnit: {2}", info.Name, info.Location, info.TextureUnit);
+			BSF_DEBUG("\t{1} - {0}, textureUnit: {2}", info.Name, info.Location, info.TextureUnit);
 
 	}
 

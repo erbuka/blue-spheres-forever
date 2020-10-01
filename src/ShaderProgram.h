@@ -63,7 +63,7 @@ namespace bsf
 			texture->Bind(texUnit);
 		}
 
-		uint32_t GetId() { return m_Id; }
+		uint32_t GetId() const { return m_Id; }
 		
 		UNIFORM1_INL(i, int32_t, 1);
 		UNIFORM_DECL(i, int32_t, 1);

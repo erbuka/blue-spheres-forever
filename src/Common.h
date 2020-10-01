@@ -13,7 +13,6 @@
 #include "Log.h"
 #include "Ref.h"
 
-
 namespace glm
 {
 	using namespace nlohmann;
@@ -84,14 +83,6 @@ namespace bsf
 		glm::vec3 Position;
 		glm::vec3 Normal;
 		glm::vec2 Uv;
-	};
-
-
-	struct MorphVertex3D
-	{
-		glm::vec3 Position0, Position1;
-		glm::vec3 Normal0, Normal1;
-		glm::vec2 Uv0, Uv1;
 	};
 	
 	constexpr float s_GroundRadius = 12.5f;
@@ -198,17 +189,13 @@ namespace bsf
 		return (T(0) < x) - (x < T(0));
 	}
 
-	template<typename Enum>
-	constexpr std::underlying_type_t<Enum> MakeFlags(Enum f)
-	{
-		return static_cast<std::underlying_type_t<Enum>>(f);
-	}
 
 	template<typename Enum, typename... Args>
 	constexpr std::underlying_type_t<Enum> MakeFlags(Enum f, Args... args)
 	{
 		static_assert(std::is_enum_v<Enum> && std::is_integral_v<std::underlying_type_t<Enum>>);
-		return static_cast<std::underlying_type_t<Enum>>(f) | MakeFlags(args...);
+		if constexpr (sizeof...(Args) > 0) return static_cast<std::underlying_type_t<Enum>>(f) | MakeFlags(args...);
+		else return static_cast<std::underlying_type_t<Enum>>(f);
 	}
 
 	

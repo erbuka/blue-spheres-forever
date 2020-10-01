@@ -46,7 +46,10 @@ namespace bsf
 	{
 		assert(duration > 0.0f);
 
-		SetUpdateFunction([this](SceneTask& self, const Time& time) {
+		SetUpdateFunction([&](SceneTask& self, const Time& time) {
+
+			m_Time = std::min(m_Time + time.Delta, m_Duration);
+
 			float delta = m_Time / m_Duration;
 			auto& renderer2d = GetApplication().GetRenderer2D();
 
@@ -56,7 +59,6 @@ namespace bsf
 			renderer2d.DrawQuad({ 0, 0 });
 			renderer2d.End();
 
-			m_Time = std::min(m_Time + time.Delta, m_Duration);
 
 			if (m_Time == m_Duration)
 				SetDone();
