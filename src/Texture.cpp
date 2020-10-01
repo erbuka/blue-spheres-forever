@@ -15,11 +15,11 @@ namespace bsf
 
 	std::tuple<std::vector<std::byte>, uint32_t, uint32_t> ImageLoad(std::string_view fileName, bool flipY)
 	{
-		uint32_t width, height;
-
 		std::ifstream is;
 
 		is.open(fileName, std::ios_base::binary);
+		
+		BSF_INFO("Loading image from file: {0}", fileName.data());
 
 		if (!is.is_open())
 		{
@@ -31,12 +31,11 @@ namespace bsf
 		auto length = is.tellg();
 		is.seekg(0, std::ios_base::beg);
 
-		std::vector<uint8_t> fileData;
+		std::vector<std::byte> fileData;
 		fileData.resize(length);
 
 		is.read((char*)fileData.data(), length);
-
-		BSF_INFO("Loading image from file: {0}", fileName.data());
+		is.close();
 
 		return ImageLoad(fileData.data(), fileData.size(), flipY);
 

@@ -112,7 +112,6 @@ project "BlueSpheresForever"
         "vendor/glad/include",
         "vendor/glfw/include",
         "vendor/spdlog/include",
-        "vendor/lodepng/include",
         "vendor/stb/include",
         "vendor/bass/include",
         "vendor/json/include",
