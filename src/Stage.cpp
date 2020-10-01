@@ -450,9 +450,6 @@ namespace bsf
 
 		result->Rings = result->MaxRings;
 
-
-		result->FloorRenderingMode = EFloorRenderingMode::CheckerBoard;
-		result->BumpMappingEnabled = false;
 		result->PatternColors = {
 			s_CheckerBoardPatterns[((size_t)tl % 16) * 2],
 			s_CheckerBoardPatterns[((size_t)tl % 16) * 2 + 1]

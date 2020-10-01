@@ -10,7 +10,7 @@
 namespace bsf
 {
 
-	static constexpr std::array<const char*, 11> s_DisclaimerText = {
+	static constexpr std::array<std::string_view, 11> s_DisclaimerText = {
 		"All the copyrights and registered  trademarks of \"Sonic The Hedgehog\" and all associated",
 		"characters, art, names, termsand music belong to SEGA.",
 		"",
@@ -97,7 +97,7 @@ namespace bsf
 			renderer.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 			for (const auto& s : s_DisclaimerText)
 			{
-				renderer.DrawString(textFont, s);
+				renderer.DrawString(textFont, s.data());
 				renderer.Translate({ 0.0f, -1.0f });
 			}
 

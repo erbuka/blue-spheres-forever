@@ -9,7 +9,6 @@
 #include "Common.h"
 #include "Font.h";
 #include "WafefrontLoader.h"
-#include "CharacterAnimator.h"
 #include "Audio.h"
 #include "Stage.h"
 #include "SkyGenerator.h"
@@ -109,42 +108,6 @@ namespace bsf
 
 		m_Assets[AssetName::ModChaosEmerald] = 
 			CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
-		/*
-		{ 
-			std::array<std::string, 14> files = {
-				"assets/models/sonic0.obj",
-				"assets/models/sonic1.obj",
-				"assets/models/sonic2.obj",
-				"assets/models/sonic3.obj",
-				"assets/models/sonic4.obj",
-				"assets/models/sonic5.obj",
-				"assets/models/sonic6.obj",
-				"assets/models/sonic7.obj",
-				"assets/models/sonic8.obj",
-				"assets/models/sonic9.obj",
-				"assets/models/sonic10.obj",
-				"assets/models/sonic11.obj",
-				"assets/models/sonicStand.obj",
-				"assets/models/sonicJump.obj",
-			};
-
-			auto sonicAnimator = MakeRef<CharacterAnimator>();
-			std::array<Ref<Model>, files.size()> models;
-
-			for (uint32_t i = 0; i < files.size(); i++) {
-				auto model = CreateModel(WavefrontLoader().Load(files[i]), { 0.05f, 0.05f, 0.05f }, GL_STATIC_DRAW);
-				sonicAnimator->AddFrame(model);
-			}
-
-			sonicAnimator->RegisterAnimation("run", { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0 });
-			sonicAnimator->RegisterAnimation("stand", { 12, 12 });
-			sonicAnimator->RegisterAnimation("jump", { 13, 13 });
-
-			m_Assets[AssetName::ModSonic] = sonicAnimator;
-			
-		}
-		*/
-
 
 		// Sonic character
 		{

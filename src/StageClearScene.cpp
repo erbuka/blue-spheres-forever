@@ -132,8 +132,6 @@ namespace bsf
 
 		auto drawCounter = [&](const std::string& str, uint64_t count) {
 
-			char buffer[32];
-
 			r2.Push();
 
 			r2.Translate({ width / 4.0f, 0.0f });

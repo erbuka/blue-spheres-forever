@@ -6,7 +6,6 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_freetype.h>
-#undef STB_TRUETYPE_IMPLEMENTATION
 
 
 namespace bsf
@@ -14,13 +13,13 @@ namespace bsf
 
 	static constexpr char s_FirstChar = ' ';
 	static constexpr char s_LastChar = 'z';
-	static constexpr uint32_t s_BitmapSize = 1024;
+	static constexpr size_t s_BitmapSize = 1024;
 
 
 	struct Font::Impl
 	{
 
-		static Impl* Pack(std::string_view fileName, float fontSize, uint32_t fromCharacter, uint32_t toCharacter, uint32_t packWidth, uint32_t packHeight)
+		static Impl* Pack(std::string_view fileName, float fontSize, uint32_t fromCharacter, uint32_t toCharacter, size_t packWidth, size_t packHeight)
 		{
 			std::ifstream is;
 
@@ -42,7 +41,7 @@ namespace bsf
 
 			// Init font info
 			stbtt_fontinfo fontInfo;
-			memset(&fontInfo, 0, sizeof(fontInfo));
+			std::memset(&fontInfo, 0, sizeof(fontInfo));
 
 			if (!stbtt_InitFont(&fontInfo, fileData.data(), 0))
 			{
@@ -95,6 +94,7 @@ namespace bsf
 				auto end = beg + packWidth;
 				std::copy(beg, end, invertedPixels.begin() + (row * packWidth));
 			}
+
 
 			// Create rgba packed texture
 			Impl* result = new Impl();

@@ -13,7 +13,6 @@
 #include "Stage.h"
 #include "Font.h"
 #include "Model.h"
-#include "CharacterAnimator.h"
 #include "Audio.h"
 #include "MenuScene.h"
 #include "SkyGenerator.h"

@@ -66,13 +66,10 @@ namespace bsf
 		uint32_t MaxRings = 0;
 		uint32_t Rings = 0;
 
-		std::string Texture, NormalMap;
-
-		EFloorRenderingMode FloorRenderingMode;
-		bool BumpMappingEnabled;
 		glm::vec3 EmeraldColor = Colors::Green;
 		std::array<glm::vec3, 2> PatternColors = { Colors::Red, Colors::White }, 
-			SkyColors = { Colors::Blue, Colors::Blue }, StarColors;
+			SkyColors = { Colors::Blue, Colors::Blue }, 
+			StarColors = { Colors::White, Colors::Yellow };
 
 		static void SaveStageFiles(const std::vector<std::string>& files);
 		static std::vector<std::string> GetStageFiles();

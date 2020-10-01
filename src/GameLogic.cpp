@@ -19,7 +19,6 @@ namespace bsf
 	static constexpr float s_MaxVelocity = s_BaseVelocity + s_MaxPace * s_VelocityIncrease;
 	static constexpr float s_BaseAngularVelocity = glm::pi<float>() * 2.0f;
 	static constexpr float s_AngularVelocityIncrease = glm::pi<float>() * 2.0f / 8.0f;
-	static constexpr float s_EmeraldVelocityScale = 0.5f;
 
 	// Jump
 	static constexpr float s_JumpDistance = 2.0f;
@@ -337,9 +336,7 @@ namespace bsf
 				convertedBlueSpheres += 1;
 
 				for (const auto& dir : s_AllDirections)
-				{
 					convertedBlueSpheres += FloodFillRings(pos + dir);
-				}
 			}
 
 			return convertedBlueSpheres;
@@ -436,17 +433,13 @@ namespace bsf
 	void GameLogic::Jump()
 	{
 		if (!m_IsJumping)
-		{
 			m_JumpCommand = true;
-		}
 	}
 
 	void GameLogic::RunForward()
 	{
 		if (m_IsGoingBackward && !m_IsJumping)
-		{
 			m_RunForwardCommand = true;
-		}
 	}
 
 	void GameLogic::ChangeGameState(EGameState newState)

@@ -101,9 +101,7 @@ namespace bsf
 
 	private:
 
-		using StateFn = std::function<void(const Time&)>;
 		using StateFnPtr = void(GameLogic::*)(const Time&);
-
 
 		Time m_SpeedUpTimer;
 

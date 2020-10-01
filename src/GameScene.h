@@ -11,16 +11,12 @@ namespace bsf
 	
 	class BlurFilter;
 	class ShaderProgram;
-	class VertexArray;
 	class Stage;
 	class GameLogic;
 	class Texture2D;
 	class TextureCube;
 	class Framebuffer;
-	class Renderer2D;
-	class CubeCamera;
 	class Sky;
-	class GLTF;
 
 	struct GameStateChangedEvent;
 	struct GameActionEvent;
