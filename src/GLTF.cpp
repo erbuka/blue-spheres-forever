@@ -374,7 +374,7 @@ namespace bsf
 			std::vector<GLTFBuffer> buffers;
 			std::vector<GLTFBufferView> bufferViews;
 			std::vector<GLTFAccessor> accessors;
-			std::vector<std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>> images;
+			std::vector<std::tuple<std::vector<std::byte>, uint32_t, uint32_t>> images;
 
 			m_Textures.clear();
 			m_Meshes.clear();
@@ -447,7 +447,7 @@ namespace bsf
 
 			loopIfExists("images", [&](const json& imgSpec) {
 				const auto& bufferView = bufferViews[imgSpec["bufferView"].get<size_t>()];
-				images.push_back(LoadPng(bufferView.Data(), bufferView.ByteLength, false));
+				images.push_back(ImageLoad(bufferView.Data(), bufferView.ByteLength, false));
 			});
 
 			loopIfExists("textures", [&](const json& texSpec) {

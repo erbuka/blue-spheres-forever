@@ -52,12 +52,12 @@ namespace bsf
 	{
 		CubeImage result;
 
-		result[TextureCubeFace::Front] = std::move(std::get<0>(LoadPng(front, false)));
-		result[TextureCubeFace::Back] = std::move(std::get<0>(LoadPng(back, false)));
-		result[TextureCubeFace::Left] = std::move(std::get<0>(LoadPng(left, false)));
-		result[TextureCubeFace::Right] = std::move(std::get<0>(LoadPng(right, false)));
-		result[TextureCubeFace::Bottom] = std::move(std::get<0>(LoadPng(bottom, false)));
-		result[TextureCubeFace::Top] = std::move(std::get<0>(LoadPng(top, false)));
+		result[TextureCubeFace::Front] = std::move(std::get<0>(ImageLoad(front, false)));
+		result[TextureCubeFace::Back] = std::move(std::get<0>(ImageLoad(back, false)));
+		result[TextureCubeFace::Left] = std::move(std::get<0>(ImageLoad(left, false)));
+		result[TextureCubeFace::Right] = std::move(std::get<0>(ImageLoad(right, false)));
+		result[TextureCubeFace::Bottom] = std::move(std::get<0>(ImageLoad(bottom, false)));
+		result[TextureCubeFace::Top] = std::move(std::get<0>(ImageLoad(top, false)));
 
 		return result;
 	}

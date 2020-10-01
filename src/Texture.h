@@ -36,8 +36,8 @@ namespace bsf
 		TextureCubeFace::Back
 	};
 
-	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(const void* ptr, size_t length, bool flipY);
-	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(std::string_view fileName, bool flipY);
+	std::tuple<std::vector<std::byte>, uint32_t, uint32_t> ImageLoad(const void* ptr, size_t length, bool flipY);
+	std::tuple<std::vector<std::byte>, uint32_t, uint32_t> ImageLoad(std::string_view fileName, bool flipY);
 
 	class Texture : public Asset
 	{

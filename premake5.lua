@@ -5,9 +5,9 @@ workspace "BlueSpheresForever"
     location(_ACTION)
 
     filter "configurations:Debug"
+        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC" }
         symbols "On"
         optimize "Off"
-        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC" }
 
     filter "configurations:Release"
         defines { "BSF_ENABLE_DIAGNOSTIC" }
@@ -97,19 +97,6 @@ project "ImGui"
         "vendor/imgui/examples/imgui_impl_opengl3.cpp",
      }
 
-project "LodePng"
-    location(_ACTION)
-    kind "StaticLib"
-    language "C++"
-    
-    objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
-    targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
-    debugdir "bin/%{cfg.buildcfg}/%{prj.name}"
-
-    includedirs {"vendor/lodepng/include" }
-
-    files { "vendor/lodepng/src/**.cpp" }
-
 project "BlueSpheresForever"
     location(_ACTION)
     kind "ConsoleApp"
@@ -136,7 +123,7 @@ project "BlueSpheresForever"
 
     files { "src/**.cpp", "src/**.h"  }
 
-    links { "opengl32", "Glad", "GLFW", "LodePng", "bass" }
+    links { "opengl32", "Glad", "GLFW", "bass" }
 
 
     postbuildcommands {

@@ -53,7 +53,7 @@ namespace bsf
 
 	private:
 
-		using CubeImage = std::unordered_map<TextureCubeFace, std::vector<unsigned char>>;
+		using CubeImage = std::unordered_map<TextureCubeFace, std::vector<std::byte>>;
 
 		CubeImage m_imNoise, m_imStars;
 

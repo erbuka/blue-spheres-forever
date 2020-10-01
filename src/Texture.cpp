@@ -4,13 +4,16 @@
 #include "Log.h"
 #include "Table.h"
 
-#include <lodepng.h>
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+#include <stb_image.h>
 
 
 namespace bsf
 {
 
-	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(std::string_view fileName, bool flipY)
+	std::tuple<std::vector<std::byte>, uint32_t, uint32_t> ImageLoad(std::string_view fileName, bool flipY)
 	{
 		uint32_t width, height;
 
@@ -33,43 +36,33 @@ namespace bsf
 
 		is.read((char*)fileData.data(), length);
 
-		return LoadPng(fileData.data(), fileData.size(), flipY);
+		BSF_INFO("Loading image from file: {0}", fileName.data());
+
+		return ImageLoad(fileData.data(), fileData.size(), flipY);
 
 	}
 
-	std::tuple<std::vector<unsigned char>, uint32_t, uint32_t> LoadPng(const void* ptr, size_t length, bool flipY)
+	std::tuple<std::vector<std::byte>, uint32_t, uint32_t> ImageLoad(const void* ptr, size_t length, bool flipY)
 	{
-		uint32_t width, height;
+		constexpr size_t channels = 4;
+		int32_t width, height;
+		stbi_set_flip_vertically_on_load(flipY);
+			
+		std::byte* imageData = (std::byte*)stbi_load_from_memory((const uint8_t*)ptr, length, &width, &height, nullptr, channels);
 
-		std::vector<unsigned char> data, flippedData;
-		unsigned error = lodepng::decode(data, width, height, (const unsigned char*)ptr, length);
+		if (imageData == nullptr)
+			BSF_ERROR("Cannot load the given image");
 
-		// If there's an error, display it.
-		if (error != 0) {
-			BSF_ERROR("There was en error while loading png");
-			return { };
-		}
+		BSF_DEBUG("Loading image ({0} x {1}, {2} channels)", width, height, channels);
 
-		// Flip y pixels
-		if (flipY)
-		{
-			flippedData.resize(data.size());
+		size_t size = channels * width * height;
+		std::vector<std::byte> pixels(size);
+		std::memcpy(pixels.data(), imageData, size);
 
-			for (uint32_t y = 0; y < height; y++)
-			{
-				std::memcpy(
-					flippedData.data() + y * width * sizeof(uint32_t),
-					data.data() + (height - y - 1) * width * sizeof(uint32_t),
-					width * sizeof(uint32_t));
-			}
+		stbi_image_free(imageData);
 
-			return { std::move(flippedData), width, height };
-		}
-		else
-		{
-			return { std::move(data), width, height };
+		return { std::move(pixels), width, height };
 
-		}
 	}
 
 	static constexpr Table<3, TextureFilter, GLenum> s_glTextureFilter = {
@@ -177,7 +170,7 @@ namespace bsf
 
 	bool Texture2D::Load(std::string_view fileName)
 	{
-		auto [pixels, width, height] = std::move(LoadPng(fileName, true));
+		auto [pixels, width, height] = std::move(ImageLoad(fileName, true));
 
 		//BSF_GLCALL(glGenTextures(1, &m_Id));
 		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
@@ -210,7 +203,7 @@ namespace bsf
 	TextureCube::TextureCube(uint32_t size, std::string_view crossImage) :
 		TextureCube(size, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
-		auto image = LoadPng(crossImage, false);
+		auto image = ImageLoad(crossImage, false);
 
 		const auto& pixels = std::get<0>(image);
 		auto width = std::get<1>(image);
@@ -259,7 +252,7 @@ namespace bsf
 		
 		for (uint32_t i = 0; i < files.size(); i++)
 		{
-			auto [pixels, width, height] = std::move(LoadPng(files[i], false));
+			auto [pixels, width, height] = std::move(ImageLoad(files[i], false));
 
 			if (width != m_Size || height != m_Size)
 			{
