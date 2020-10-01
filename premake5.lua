@@ -5,17 +5,17 @@ workspace "BlueSpheresForever"
     location(_ACTION)
 
     filter "configurations:Debug"
-        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC" }
+        defines { "DEBUG", "BSF_ENABLE_DIAGNOSTIC", "BSF_SAFE_GLCALL" }
         symbols "On"
         optimize "Off"
 
     filter "configurations:Release"
-        defines { "BSF_ENABLE_DIAGNOSTIC" }
+        defines { "BSF_ENABLE_DIAGNOSTIC", "BSF_SAFE_GLCALL" }
         symbols "Off"
         optimize "On"
     
     filter "configurations:Distribution"
-        defines { "NDEBUG", "BSF_ENABLE_FILE_LOG" }
+        defines { "NDEBUG" }
         symbols "Off"
         optimize "On"
         

@@ -112,9 +112,6 @@ namespace bsf
 
     void Application::Start()
     {
-        // Init Log
-        BSF_INIT_LOG();
-
         if (!glfwInit()) {
             BSF_ERROR("Can't initialize GLFW");
             return;
