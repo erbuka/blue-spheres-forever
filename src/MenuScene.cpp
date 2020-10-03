@@ -560,11 +560,11 @@ namespace bsf
 
 			if (i > 0 && i % 4 == 0)
 			{
-				codeString.SetColor(color);
+				codeString.Color(color);
 				codeString += "-";
 			}
 
-			codeString.SetColor(m_Input && m_CursorPos == i ? glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } : color);
+			codeString.Color(m_Input && m_CursorPos == i ? glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } : color);
 			codeString += std::to_string(code[i]);
 
 		}

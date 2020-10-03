@@ -13,11 +13,8 @@
 #include "Ref.h"
 #include "EventEmitter.h"
 #include "Common.h"
+#include "Renderer2D.h"
 
-/*
-TODO:
-- Add some sort of notification/messages for when the user saves, or maybe for errors
-*/
 
 namespace bsf
 {
@@ -47,8 +44,6 @@ namespace bsf
 		Horizontal, Vertical, Fill, Free
 	};
 
-
-
 	struct UIPalette
 	{
 		glm::vec4 Foreground = Colors::White;
@@ -62,6 +57,12 @@ namespace bsf
 		glm::vec4 Secondary = Colors::Yellow;
 		glm::vec4 SecondaryContrast = Colors::Black;
 
+	};
+
+	struct UIToast
+	{
+		FormattedString Message;
+		float Duration = 2.5f;
 	};
 
 	template<typename T>
@@ -98,9 +99,11 @@ namespace bsf
 		float StageAreaAvoidSearchThickness = 0.3f;
 
 		float TextShadowOffset = 0.025f;
-		float LabelFontScale = 0.5f;
+		float LabelFontScale = 0.75f;
 
 		float SliderTrackThickness = -1.0f;
+
+		float ToastWidth = -1.0f;
 
 		// Colors
 		glm::vec4 ShadowColor = { 0.0f, 0.0f, 0.0f, 0.5f };
@@ -108,8 +111,7 @@ namespace bsf
 
 		UIPalette Palette;
 
-		const glm::vec4& DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const;
-
+		const glm::vec4 DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const;
 		const glm::vec4 GetBackgroundColor(const UIElement& element, const glm::vec4& default) const;
 		const glm::vec4 GetForegroundColor(const UIElement& element, const glm::vec4& default) const;
 
@@ -192,6 +194,8 @@ namespace bsf
 		void PushLayer(const Ref<UILayer>& layer) { m_LayersToPush.push_back(layer); }
 		void PopLayer() { m_LayersToPop++; }
 
+		void ShowToast(UIToast&& toast) { m_Toasts.push_front(std::move(toast)); }
+		void ShowToast(const UIToast& toast) { m_Toasts.push_front(toast); }
 
 		glm::vec2 GetMousePosition() const { return m_MouseState.Position; }
 
@@ -204,6 +208,7 @@ namespace bsf
 		glm::vec2 m_Viewport, m_WindowSize;
 		glm::mat4 m_Projection, m_InverseProjection;
 		std::vector<Ref<UILayer>> m_Layers, m_LayersToPush;
+		std::list<UIToast> m_Toasts;
 		uint32_t m_LayersToPop = 0;
 
 		struct MouseButtonState
@@ -345,7 +350,6 @@ namespace bsf
 	};
 
 
-	// TODO Fix zoom relative to center or mouse position
 	class UIStageEditorArea : public UIElement
 	{
 	public:

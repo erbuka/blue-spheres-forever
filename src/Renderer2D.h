@@ -60,18 +60,19 @@ namespace bsf
 		FormattedString() = default;
 		FormattedString(const char* ch);
 		FormattedString(const std::string& str);
-		void SetColor(const glm::vec4& color);
-		void ResetColor();
 
-		void Add(const std::string& str);
+		FormattedString& Color(const glm::vec4& color);
+		FormattedString& ResetColor();
+
+		FormattedString& Add(const std::string& str);
 
 		size_t Size() const { return m_Characters.size(); }
 
 		const std::string& GetPlainText() const { return m_PlainText; }
 
 		const Character& operator[](size_t i) const { return m_Characters[i]; }
-		FormattedString& operator+=(const std::string& str) { Add(str); return *this; }
-		FormattedString& operator+=(char c) { Add(std::string(1, c)); return *this; }
+		FormattedString& operator+=(const std::string& str) { return Add(str); }
+		FormattedString& operator+=(char c) { return Add(std::string(1, c)); }
 
 	private:
 		std::string m_PlainText;
@@ -137,9 +138,6 @@ namespace bsf
 
 		void DrawTriangleInternal(const std::array<glm::vec2, 3>& positions, const std::array<glm::vec2, 3>& uvs);
 
-		std::pair<float, float> IntersectLines(const std::array<glm::vec2, 2>& l0, const std::array<glm::vec2, 2>& l1);
-
-		std::vector<Triangle2D> ClipTriangle(const Triangle2D& input);
 
 		std::vector<uint32_t> m_Textures;
 		std::vector<int32_t> m_TextureUnits;
@@ -149,7 +147,7 @@ namespace bsf
 		size_t m_CurVertexIndex;
 		Ref<VertexArray> m_Triangles;
 
-		Ref<ShaderProgram> m_pTriangleProgram, m_pLineProgram;
+		Ref<ShaderProgram> m_pTriangleProgram;
 
 	};
 

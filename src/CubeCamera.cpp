@@ -7,6 +7,7 @@
 
 namespace bsf 
 {
+
 	CubeCamera::CubeCamera(uint32_t size, GLenum internalFormat, GLenum format, GLenum type) : m_Size(size)
 	{
 		m_Fb = MakeRef<Framebuffer>(size, size, true);

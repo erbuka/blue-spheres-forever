@@ -142,8 +142,8 @@ namespace bsf
 
 		if (!m_Paused)
 		{
-			const int steps = 5;
-			for (int i = 0; i < steps; i++)
+			constexpr size_t steps = 5;
+			for (size_t i = 0; i < steps; i++)
 				m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
 
 			character->Model.SetAnimationGlobalTimeWarp(m_GameLogic->GetNormalizedVelocity() * (m_GameLogic->IsGoindBackward() ? -1.0f : 1.0f));

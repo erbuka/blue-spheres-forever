@@ -113,6 +113,7 @@ namespace bsf
 
 	Ref<ShaderProgram> ShaderProgram::FromFile(std::string_view vertex, std::string_view fragment, const std::initializer_list<std::string_view>& defines)
 	{
+		BSF_INFO("Loading shader from file ({0}, {1})", vertex, fragment);
 
 		auto vsSource = ReadTextFile(vertex);
 		auto fsSource = ReadTextFile(fragment);
@@ -134,8 +135,6 @@ namespace bsf
 			GL_SAMPLER_2D,
 			GL_SAMPLER_CUBE
 		};
-
-		BSF_INFO("Loading shader program");
 
 		m_Id = LoadProgram(sources);
 

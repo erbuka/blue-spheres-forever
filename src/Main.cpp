@@ -170,6 +170,7 @@ class TestScene : public Scene
 
 int main() 
 {
+
 	//auto scene = MakeRef<TestScene>();
 	auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());

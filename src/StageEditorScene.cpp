@@ -17,8 +17,8 @@ namespace bsf
 	static constexpr float s_uiPropertiesWidth = s_uiScale / 2.0f;
 	static constexpr float s_uiToolbarMargin = s_uiScale / 100.0f;
 	static constexpr float s_uiToolbarButtonSize = s_uiTopBarHeight - 2 * s_uiToolbarMargin;
-	static constexpr float s_uiStageListItemWidth = s_uiScale / 4.0f;
-	static constexpr float s_uiStageListItemHeight = s_uiScale / 6.0f;
+	static constexpr float s_uiStageListItemWidth = s_uiScale / 3.0f;
+	static constexpr float s_uiStageListItemHeight = s_uiScale / 5.0f;
 	static constexpr float s_uiConfirmDialogBtnSize = s_uiScale / 6.0f;
 
 	static constexpr uint32_t s_MinStageSize = 32;
@@ -86,6 +86,8 @@ namespace bsf
 			m_CurrentStageFile = fileName.str();
 			m_CurrentStage->Save(m_CurrentStageFile.value());
 		}
+
+		m_uiRoot->ShowToast({ FormattedString("Stage Saved: ").Color(Colors::Yellow).Add(m_CurrentStage->Name) });
 	}
 
 	void StageEditorScene::OnStageListButtonClick(const MouseEvent& evt)
@@ -103,9 +105,8 @@ namespace bsf
 
 	void StageEditorScene::LoadStage(std::string_view fileName)
 	{
-		// TODO Add error checking maybe
-		m_CurrentStage->Load(fileName);
-		m_CurrentStageFile = (std::string)fileName;
+		if(m_CurrentStage->Load(fileName))
+			m_CurrentStageFile = std::string(fileName.data());
 	}
 
 	void StageEditorScene::InitializeUI()
@@ -278,7 +279,7 @@ namespace bsf
 
 					auto stageSizeLabel = MakeRef<UIText>();
 					stageSizeLabel->Text = "Size";
-					stageSizeLabel->Scale = 0.5f;
+					stageSizeLabel->Scale = style.LabelFontScale;
 					stageSizePanel->AddChild(stageSizeLabel);
 
 					UIBoundValue<float> sizeValue(0.0f);
@@ -846,6 +847,8 @@ namespace bsf
 
 	void UIRoot::Render(const glm::vec2& windowSize, const glm::vec2& viewport, Renderer2D& r2, const Time& time)
 	{
+		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
+
 		m_WindowSize = windowSize;
 		m_Viewport = viewport;
 		m_Projection = glm::ortho(0.0f, viewport.x, 0.0f, viewport.y, -1.0f, 1.0f);
@@ -875,6 +878,36 @@ namespace bsf
 			//layer->Traverse([&](UIElement& el) { el.RenderDebugInfo(*this, r2, time); });
 #endif
 		}
+
+		r2.Push();
+		r2.Pivot(EPivot::Left);
+		r2.Translate({ (viewport.x - m_Style.ToastWidth) / 2.0f, m_Style.GetMargin(2.0f) + 0.5f });
+
+		for (auto& toast : m_Toasts)
+		{
+			r2.Color(m_Style.ShadowColor);
+			r2.DrawQuad({ m_Style.ShadowOffset, -m_Style.ShadowOffset }, { m_Style.ToastWidth, 1.0f });
+
+			r2.Color(m_Style.Palette.BackgroundVariant);
+			r2.DrawQuad({ 0.0f, 0.0f }, { m_Style.ToastWidth, 1.0f });
+
+			r2.Push();
+			r2.Scale(0.5f);
+			r2.Color(m_Style.Palette.Foreground);
+			r2.DrawStringShadow(font, toast.Message, { m_Style.GetMargin(1.0f), 0.0f });
+			r2.Pop();
+
+			r2.Translate({ 0.0f, 1.0f + m_Style.GetMargin(2.0f) });
+
+
+			toast.Duration = std::max(0.0f, toast.Duration - time.Delta);
+
+		}
+
+		m_Toasts.remove_if([](const auto& toast) -> bool { return toast.Duration == 0.0f; });
+
+		r2.Pop();
+
 		r2.End();
 	}
 
@@ -1225,7 +1258,7 @@ namespace bsf
 		const float margin = GetStyle().GetMargin(Margin);
 
 		// Update the current value
-		MinSize.y = MaxSize.y = PreferredSize.y = 1.5f + 2.0f * margin;
+		MinSize.y = MaxSize.y = PreferredSize.y = 1.0f + GetStyle().LabelFontScale + 2.0f * margin;
 	}
 
 	void UITextInput::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
@@ -1279,19 +1312,16 @@ namespace bsf
 		r2.Pop();
 	}
 
-
-
-	inline const glm::vec4& UIStyle::DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const { return colorOpt.has_value() ? colorOpt.value() : default; }
-
-	inline const glm::vec4 UIStyle::GetBackgroundColor(const UIElement& element, const glm::vec4& default) const { return DefaultColor(element.BackgroundColor, default); }
-
-	inline const glm::vec4 UIStyle::GetForegroundColor(const UIElement & element, const glm::vec4 & default) const { return DefaultColor(element.ForegroundColor, default); }
+	const glm::vec4 UIStyle::DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const { return colorOpt.has_value() ? colorOpt.value() : default; }
+	const glm::vec4 UIStyle::GetBackgroundColor(const UIElement& element, const glm::vec4& default) const { return DefaultColor(element.BackgroundColor, default); }
+	const glm::vec4 UIStyle::GetForegroundColor(const UIElement& element, const glm::vec4& default) const { return DefaultColor(element.ForegroundColor, default); }
 
 	void UIStyle::Recompute()
 	{
 		MarginUnit = GlobalScale / 100.0f;
 		ShadowOffset = GlobalScale / 200.0f;
 		SliderTrackThickness = GlobalScale / 300.0f;
+		ToastWidth = GlobalScale / 3.0f;
 	}
 
 	void UIText::Update(const UIRoot& root, const Time& time)
@@ -1631,10 +1661,8 @@ namespace bsf
 
 				auto draggedIt = std::find(m_StagesInfo.begin(), m_StagesInfo.end(), draggedItem);
 
-
 				for (auto it = m_StagesInfo.begin(); it != m_StagesInfo.end(); ++it)
 				{
-					// TODO Maybe there's a better way to implement this. Not sure thoughh
 					if (it->TargetBounds.Contains({ evt.X, evt.Y }) && *it != *draggedIt)
 					{
 						
@@ -1664,9 +1692,10 @@ namespace bsf
 						}
 						
 						m_StagesInfo = std::move(newStageInfo);
+
+						// Must break here because we could potentially go over multiple boxes
 						break;
 
-						//std::swap(*it, *draggedIt);
 
 					}
 				}
@@ -1885,7 +1914,7 @@ namespace bsf
 			{ // Stage Name
 				r2.Push();
 				r2.Translate({ innerBounds.Left(), innerBounds.Bottom() });
-				r2.Scale(0.75f);
+				r2.Scale(style.LabelFontScale);
 				r2.Color(style.GetForegroundColor(*this, style.Palette.Foreground));
 				r2.DrawStringShadow(font, info.Name);
 				r2.Pop();
@@ -1895,7 +1924,7 @@ namespace bsf
 				r2.Push();
 				r2.Pivot(EPivot::TopLeft);
 				r2.Translate({ innerBounds.Left(), innerBounds.Top() });
-				r2.Scale(0.5f);
+				r2.Scale(style.LabelFontScale);
 
 				r2.Texture(sphereUi);
 
@@ -1915,7 +1944,7 @@ namespace bsf
 				r2.Push();
 				r2.Pivot(EPivot::TopRight);
 				r2.Translate({ innerBounds.Right(), innerBounds.Top() });
-				r2.Scale(0.5f);
+				r2.Scale(style.LabelFontScale);
 
 				r2.Texture(ringUi);
 

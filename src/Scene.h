@@ -29,8 +29,11 @@ namespace bsf
 			m_IsDone(false), m_IsStarted(false)  {}
 		virtual ~SceneTask() {}
 
-		void SetUpdateFunction(UpdateFn fn) { m_UpdateFn = fn; }
-		void SetDoneFunction(DoneFn fn) { m_DoneFn = fn; }
+		void SetUpdateFunction(const UpdateFn& fn) { m_UpdateFn = fn; }
+		void SetUpdateFunction(UpdateFn&& fn) { m_UpdateFn = std::move(fn); }
+
+		void SetDoneFunction(const DoneFn& fn) { m_DoneFn = fn; }
+		void SetDoneFunction(DoneFn&& fn) { m_DoneFn = std::move(fn); }
 
 		const Time& GetStartTime() const { return m_StartTime; }
 

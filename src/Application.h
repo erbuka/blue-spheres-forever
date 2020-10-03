@@ -38,6 +38,8 @@ namespace bsf {
 		Application(Application&&) = delete;
 
 		glm::vec2 GetWindowSize() const;
+		glm::vec2 GetMousePosition() const;
+		bool GetKeyPressed(int32_t key) const;
 
 		Renderer2D& GetRenderer2D();
 

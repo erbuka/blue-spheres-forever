@@ -97,27 +97,11 @@ namespace bsf
 	}
 
 
-	/*
-		TODO Review this. It sucks it's so ugly, but I don't like the version
-		with find_first_of etc. That doesn't seem very safe.
-		Have to reverse 2 times because I can't erase with reverse iterators
-	*/
+	static std::regex s_Space("(^\\s+)|(\\s+$)");
+
 	void Trim(std::string& str)
 	{
-		static auto trimImpl = [](std::string& str) {
-			for (auto it = str.begin(); it != str.end();)
-			{
-				if (*it == ' ')
-					it = str.erase(it);
-				else
-					break;
-			}
-		};
-		trimImpl(str);
-		std::reverse(str.begin(), str.end());
-		trimImpl(str);
-		std::reverse(str.begin(), str.end());
-
+		str = std::regex_replace(str, s_Space, "");
 	}
 
 	uint32_t UniqueId()

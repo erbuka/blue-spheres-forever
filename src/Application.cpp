@@ -110,14 +110,27 @@ namespace bsf
         return { w, h };
     }
 
+    glm::vec2 bsf::Application::GetMousePosition() const
+    {
+        double x, y;
+        glfwGetCursorPos(m_Window, &x, &y);
+        return { x, y };
+    }
+
+    bool bsf::Application::GetKeyPressed(int32_t key) const
+    {
+        return glfwGetKey(m_Window, key) == GLFW_PRESS;
+    }
+
     void Application::Start()
     {
-        if (!glfwInit()) {
+        if (!glfwInit()) 
+        {
             BSF_ERROR("Can't initialize GLFW");
             return;
         }
 
-        m_Window = glfwCreateWindow(1280, 780, "Hello World", NULL, NULL);
+        m_Window = glfwCreateWindow(1280, 780, "Blue Spheres Forever", NULL, NULL);
         if (!m_Window)
         {
             BSF_ERROR("Can't create the window");
@@ -143,6 +156,7 @@ namespace bsf
         // Init diagnostic
         BSF_DIAGNOSTIC_INIT(this, m_Window);
 
+        // Start with a default scene
         m_CurrentScene = std::make_shared<Scene>();
         m_CurrentScene->m_App = this;
 

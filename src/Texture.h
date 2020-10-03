@@ -43,7 +43,7 @@ namespace bsf
 	{
 	public:
 		Texture();
-		Texture(Texture&) = delete;
+		Texture(const Texture&) = delete;
 
 		virtual ~Texture();
 
@@ -93,7 +93,7 @@ namespace bsf
 		Texture2D(uint32_t color);
 		Texture2D(std::string_view fileName);
 
-		Texture2D(Texture2D&) = delete;
+		Texture2D(const Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
 
 		void SetPixels(const void * pixels, uint32_t width, uint32_t height);

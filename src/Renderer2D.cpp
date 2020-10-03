@@ -99,8 +99,6 @@ namespace bsf
 		// Init Vertex Arrays
 		m_TriangleVertices = new Vertex2D[s_MaxTriangleVertices];
 
-	
-
 		auto trianglesVb = Ref<VertexBuffer>(new VertexBuffer({
 			{ "aPosition", AttributeType::Float2  },
 			{ "aUv", AttributeType::Float2  },
@@ -115,7 +113,6 @@ namespace bsf
 		// Init Shaders
 
 		m_pTriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
-		//m_pLineProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource, { "DEBUG" });
 
 		m_Textures.resize(s_MaxTextureUnits);
 
@@ -131,7 +128,7 @@ namespace bsf
 
 		// Reset state stack
 		m_State = std::stack<Renderer2DState>();
-		m_State.push({});
+		m_State.emplace();
 
 		// Projection matrix
 		m_Projection = projection;
@@ -142,7 +139,6 @@ namespace bsf
 		BSF_DIAGNOSTIC_FUNC();
 
 		const auto& state = m_State.top();
-
 
 		uint32_t textureIndex = 0;
 
@@ -201,116 +197,6 @@ namespace bsf
 
 		if (m_CurVertexIndex == s_MaxTriangleVertices)
 			End();
-
-	}
-
-	std::pair<float, float> Renderer2D::IntersectLines(const std::array<glm::vec2, 2>& l0, const std::array<glm::vec2, 2>& l1)
-	{
-		const auto& a = l0[0];
-		const auto& b = l0[1];
-		const auto& c = l1[0];
-		const auto& d = l1[1];
-
-		glm::mat2 A = {
-			b.x - a.x, b.y - a.y,
-			c.x - d.x, c.y - d.y
-		};
-
-		glm::vec2 B = { c.x - a.x, c.y - a.y };
-
-		auto st = glm::inverse(A) * B;
-
-		return { st.x, st.y };
-
-	}
-
-	std::vector<Renderer2D::Triangle2D> Renderer2D::ClipTriangle(const Triangle2D& input)
-	{
-		const auto& clipRect = m_State.top().Clip.value();
-
-		// Create the points that defines the clipping planes (ccw order)
-		const std::array<glm::vec2, 4> points = {
-			glm::vec2(clipRect.Left(), clipRect.Bottom()),
-			glm::vec2(clipRect.Right(), clipRect.Bottom()),
-			glm::vec2(clipRect.Right(), clipRect.Top()),
-			glm::vec2(clipRect.Left(), clipRect.Top()),
-		};
-
-		std::vector<Triangle2D> triangles; // final result
-		std::vector<Triangle2D> newTriangles; // assembled triangles
-
-		// Start with the initial triangle
-		triangles.push_back(input);
-
-		std::array<std::pair<float, float>, 3> intersections;
-
-		std::array<Vertex2D, 4> assembleList;
-
-		// We consider one plane at time
-		for (size_t i = 0; i < points.size(); i++)
-		{
-
-			// Define the 2 point that give us the clipping plane
-			const std::array<glm::vec2, 2> plane = { points[i], points[(i + 1) % points.size()] };
-			glm::vec2 dir = glm::normalize(plane[1] - plane[0]);
-			// Get the normal direction (that's why the ccw ordering is important)
-			glm::vec2 norm = { -dir.y, dir.x };
-
-			// We clip each triangle in the current list and generate new triangles is necessary
-			for (auto& triangle : triangles)
-			{
-				// For each edge, find the intersections with the current clipping plane
-				intersections[0] = IntersectLines({ triangle[0].Postion, triangle[1].Postion }, plane);
-				intersections[1] = IntersectLines({ triangle[1].Postion, triangle[2].Postion }, plane);
-				intersections[2] = IntersectLines({ triangle[2].Postion, triangle[0].Postion }, plane);
-
-				size_t count = 0;
-
-				// Based on the intersections and on the original points we create a list of new points
-				// that are used to assemble new triangles. Note that the number of new points can be
-				// eighter 0, 3 or 4
-				for (size_t j = 0; j < intersections.size(); ++j)
-				{
-
-					const auto& t = intersections[j].first;
-
-					// If the starting point of the edge is "inside" the plane, add it to the list
-					if (glm::dot(triangle[j].Postion - plane[0], norm) >= 0.0f)
-						assembleList[count++] = triangle[j];
-					
-					
-					if (!std::isnan(t) && t > 0.0f && t < 1.0f)
-					{ // If there's an intersection, add the new intersetion point to the list						
-						assembleList[count] = triangle[j];
-						assembleList[count].Postion = glm::lerp(triangle[j].Postion, triangle[(j + 1) % triangle.size()].Postion, t);
-						assembleList[count].UV = glm::lerp(triangle[j].UV, triangle[(j + 1) % triangle.size()].UV, t);
-						count++;
-					}
-
-				}
-
-				// With the assemble list we generate a triangle fan (can be eighter 0,1 or 2 triangles
-				// depending on the number of points)
-				if (count >= 3)
-				{
-					for (size_t i = 1; i < count - 1; i++)
-						newTriangles.push_back({ assembleList[0], assembleList[i], assembleList[i + 1] });
-				}
-
-			}
-
-			// We put the new triangles (newTriangles) in our final list (triangles). At the next cycle the triangles
-			// are going to be tested against another clipping plane. At the end this list is going
-			// to contain triangles that are inside all the clipping planes
-
-			triangles = std::move(newTriangles); // std::move guarantees that the moved container is empty after the operation
-
-
-		}
-
-
-
-		return triangles;
 
 	}
 
@@ -515,7 +401,6 @@ namespace bsf
 			glDisable(GL_CULL_FACE);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
 			m_pTriangleProgram->Use();
@@ -536,7 +421,6 @@ namespace bsf
 
 			m_CurVertexIndex = 0;
 
-			//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		}
 
@@ -552,19 +436,22 @@ namespace bsf
 	{
 		Add(str);
 	}
-	void FormattedString::SetColor(const glm::vec4& color)
+	FormattedString& FormattedString::Color(const glm::vec4& color)
 	{
 		m_CurrentColor = color;
+		return *this;
 	}
-	void FormattedString::ResetColor()
+	FormattedString& FormattedString::ResetColor()
 	{
 		m_CurrentColor.reset();
+		return *this;
 	}
 
-	void FormattedString::Add(const std::string& str)
+	FormattedString& FormattedString::Add(const std::string& str)
 	{
 		m_PlainText += str;
 		for (auto c : str)
 			m_Characters.push_back({ c, m_CurrentColor });
+		return *this;
 	}
 }
