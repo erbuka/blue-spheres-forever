@@ -6,13 +6,55 @@
 #include "Stage.h"
 #include "Log.h";
 #include "Common.h"
+#include "Table.h"
 
 
 
 namespace bsf
 {
-
+	static constexpr uint32_t s_CurrentVersion = 201;
 	static constexpr char* s_SortedStagesFile = "assets/data/stages.json";
+
+#pragma region Loaders
+	
+	using LoaderFn = void(*)(Stage&, const nlohmann::json& json);
+
+	static void Loader200(Stage& stage, const nlohmann::json& json)
+	{
+		stage.Name = json.at("name").get<std::string>();
+		stage.Resize(json.at("size").get<int32_t>());
+		stage.StartPoint = json.at("startPoint").get<glm::vec2>();
+		stage.StartDirection = json.at("startDirection").get<glm::vec2>();
+		stage.Rings = stage.MaxRings = json.at("maxRings").get<uint32_t>();
+		stage.EmeraldColor = json.at("emeraldColor").get<glm::vec3>();
+		stage.PatternColors = json.at("patternColors").get<std::array<glm::vec3, 2>>();
+		stage.SkyColor = (json.at("skyColors").get<std::array<glm::vec3, 2>>())[0];
+		stage.StarsColor = Colors::White;
+		stage.SetData(json.at("data").get<std::vector<EStageObject>>());
+		stage.SetAvoidSearch(json.at("avoidSearch").get<std::vector<EAvoidSearch>>());
+	}
+
+	static void Loader201(Stage& stage, const nlohmann::json& json)
+	{
+		stage.Name = json.at("name").get<std::string>();
+		stage.Resize(json.at("size").get<int32_t>());
+		stage.StartPoint = json.at("startPoint").get<glm::vec2>();
+		stage.StartDirection = json.at("startDirection").get<glm::vec2>();
+		stage.Rings = stage.MaxRings = json.at("maxRings").get<uint32_t>();
+		stage.EmeraldColor = json.at("emeraldColor").get<glm::vec3>();
+		stage.PatternColors = json.at("patternColors").get<std::array<glm::vec3, 2>>();
+		stage.SkyColor = json.at("skyColor").get<glm::vec3>();
+		stage.StarsColor = json.at("starsColor").get<glm::vec3>();
+		stage.SetData(json.at("data").get<std::vector<EStageObject>>());
+		stage.SetAvoidSearch(json.at("avoidSearch").get<std::vector<EAvoidSearch>>());
+	}
+
+	static constexpr Table<2, uint32_t, LoaderFn> s_Loaders = {
+		std::make_tuple(200, &Loader200),
+		std::make_tuple(201, &Loader201)
+	};
+
+#pragma endregion
 
 
 	void Stage::SaveStageFiles(const std::vector<std::string>& files)
@@ -74,21 +116,14 @@ namespace bsf
 	{
 		using namespace nlohmann;
 
+
 		try
 		{
 			auto root = json::parse(ReadTextFile(fileName));
 
 			Version = root.at("version").get<uint32_t>();
-			Name = root.at("name").get<std::string>();
-			m_Size = root.at("size").get<int32_t>();
-			StartPoint = root.at("startPoint").get<glm::vec2>();
-			StartDirection = root.at("startDirection").get<glm::vec2>();
-			Rings = MaxRings = root.at("maxRings").get<uint32_t>();
-			EmeraldColor = root.at("emeraldColor").get<glm::vec3>();
-			PatternColors = root.at("patternColors").get<std::array<glm::vec3, 2>>();
-			SkyColors = root.at("skyColors").get<std::array<glm::vec3, 2>>();
-			m_Data = root.at("data").get<std::vector<EStageObject>>();
-			m_AvoidSearch = root.at("avoidSearch").get<std::vector<EAvoidSearch>>();
+			BSF_INFO("Loading stage: {0}, version {1}", fileName.data(), Version);
+			s_Loaders.Get<0, 1>(Version)(*this, root);
 		}
 		catch (std::exception& err)
 		{
@@ -104,7 +139,7 @@ namespace bsf
 		auto root = nlohmann::json::object();
 
 		root = {
-			{ "version", Version },
+			{ "version", s_CurrentVersion },
 			{ "name", Name },
 			{ "size", m_Size },
 			{ "startPoint", StartPoint },
@@ -112,13 +147,15 @@ namespace bsf
 			{ "maxRings" , MaxRings },
 			{ "emeraldColor", EmeraldColor },
 			{ "patternColors", PatternColors },
-			{ "skyColors", SkyColors },
+			{ "skyColor", SkyColor },
+			{ "starsColor", StarsColor },
 			{ "data", m_Data },
 			{ "avoidSearch", m_AvoidSearch }
 		};
 
 		std::ofstream os;
 		os.open(fileName.data());
+
 
 		if (!os.is_open())
 		{
@@ -187,6 +224,18 @@ namespace bsf
 		return std::count(std::execution::par_unseq, m_Data.begin(), m_Data.end(), object);
 	}
 
+	void Stage::SetData(std::vector<EStageObject>&& data)
+	{
+		assert(data.size() == m_Size * m_Size);
+		m_Data = std::move(data);
+	}
+
+	void Stage::SetAvoidSearch(std::vector<EAvoidSearch>&& as)
+	{
+		assert(as.size() == m_Size * m_Size);
+		m_AvoidSearch = std::move(as);
+	}
+
 
 	bool Stage::Resize(int32_t size)
 	{
@@ -224,7 +273,8 @@ namespace bsf
 			StartDirection == other.StartDirection &&
 			MaxRings == other.MaxRings &&
 			EmeraldColor == other.EmeraldColor &&
-			SkyColors == other.SkyColors &&
+			SkyColor == other.SkyColor &&
+			StarsColor == other.StarsColor &&
 			PatternColors == other.PatternColors;
 
 	}
@@ -455,15 +505,9 @@ namespace bsf
 			s_CheckerBoardPatterns[((size_t)tl % 16) * 2 + 1]
 		};
 		
-		result->SkyColors = {
-			s_SkyColor[tl % 16],
-			(glm::vec3)Lighten(glm::vec4(s_SkyColor[tl % 16], 1.0f), 0.2f)
-		};
+		result->SkyColor = s_SkyColor[tl % 16];
 
-		result->StarColors = {
-			glm::vec3(255, 255, 255) / 255.0f,
-			glm::vec3(255, 255, 128) / 255.0f
-		};
+		result->StarsColor = Colors::White;
 
 		result->EmeraldColor = s_EmeraldColors[tr % s_EmeraldColors.size()];
 

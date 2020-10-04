@@ -19,7 +19,7 @@ namespace bsf
 		return ToHexColor({ rgb, 1.0f });
 	}
 
-	constexpr glm::vec4 Lighten(const glm::vec4 color, float factor)
+	constexpr glm::vec4 Lighten(const glm::vec4& color, float factor)
 	{
 		return {
 			color.r + (1.0f - color.r) * factor,
@@ -29,8 +29,13 @@ namespace bsf
 		};
 	}
 
+	constexpr glm::vec3 Lighten(const glm::vec3& color, float factor)
+	{
+		return static_cast<glm::vec3>(Lighten(glm::vec4(color, 1.0f), 1.0f));
+	}
 
-	constexpr glm::vec4 Darken(const glm::vec4 color, float factor)
+
+	constexpr glm::vec4 Darken(const glm::vec4& color, float factor)
 	{
 		return {
 			color.r * factor,
@@ -38,6 +43,11 @@ namespace bsf
 			color.b * factor,
 			color.a
 		};
+	}
+
+	constexpr glm::vec3 Darken(const glm::vec3& color, float factor)
+	{
+		return static_cast<glm::vec3>(Darken(glm::vec4(color, 1.0), factor));
 	}
 
 	constexpr glm::vec4 ToColor(uint32_t rgba)

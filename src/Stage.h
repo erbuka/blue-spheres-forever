@@ -67,14 +67,13 @@ namespace bsf
 		uint32_t Rings = 0;
 
 		glm::vec3 EmeraldColor = Colors::Green;
-		std::array<glm::vec3, 2> PatternColors = { Colors::Red, Colors::White }, 
-			SkyColors = { Colors::Blue, Colors::Blue }, 
-			StarColors = { Colors::White, Colors::Yellow };
+		std::array<glm::vec3, 2> PatternColors = { Colors::Red, Colors::White };
+		glm::vec3 SkyColor, StarsColor;
 
 		static void SaveStageFiles(const std::vector<std::string>& files);
 		static std::vector<std::string> GetStageFiles();
 
-		[[nodiscard]] bool Load(std::string_view fileName);
+		bool Load(std::string_view fileName);
 		void Save(std::string_view fileName);
 		void Initialize(int32_t size);
 
@@ -100,9 +99,12 @@ namespace bsf
 
 		bool IsPerfect() const { return Rings == 0; }
 
-		std::vector<EStageObject>& GetData() { return m_Data; }
-		std::vector<EAvoidSearch>& GetAvoidSearch() { return m_AvoidSearch; }
+		const std::vector<EStageObject>& GetData() const { return m_Data; }
+		const std::vector<EAvoidSearch>& GetAvoidSearch() const { return m_AvoidSearch; }
 		
+		void SetData(std::vector<EStageObject>&& data);
+		void SetAvoidSearch(std::vector<EAvoidSearch>&& as);
+
 		glm::ivec2 WrapCoordinates(glm::ivec2 pos) { Wrap(pos.x); Wrap(pos.y); return pos; }
 
 		int32_t GetSize() const { return m_Size; }

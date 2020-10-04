@@ -70,10 +70,10 @@ namespace bsf
 		// Textures
 		m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
 		m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
-
+		
 		// Skybox
 		auto& skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);
-		m_Sky = skyGenerator->Generate({ 1024, m_Stage->SkyColors[0], m_Stage->SkyColors[1] });
+		m_Sky = skyGenerator->Generate({ 1024, m_Stage->SkyColor, m_Stage->StarsColor });
 
 		// Event hanlders
 		AddSubscription(app.WindowResized, this, &GameScene::OnResize);
@@ -444,7 +444,7 @@ namespace bsf
 					m_pSkeletalPBR->Uniform1f("uEmission", { 0.0f });
 
 					m_pSkeletalPBR->UniformTexture("uMetallic", texBlack);
-					m_pSkeletalPBR->UniformTexture("uRoughness", texBlack);
+					m_pSkeletalPBR->UniformTexture("uRoughness", texWhite);
 					m_pSkeletalPBR->UniformTexture("uAo", texWhite);
 
 					m_pSkeletalPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));

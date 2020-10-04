@@ -18,26 +18,8 @@ namespace bsf
 		m_vaCube = CreateCube();
 
 		// Shaders
-		m_pGenBg = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen_bg.frag");
-		m_pGenStars = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_stars.vert", "assets/shaders/sky_generator/sky_gen_stars.frag");
+		m_pGenEnv = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen.frag");
 		m_pGenIrradiance = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_irradiance.vert", "assets/shaders/sky_generator/sky_gen_irradiance.frag");
-		
-		// Images
-		m_imNoise = LoadCubeImage(
-			"assets/textures/noise_front5.png",
-			"assets/textures/noise_back6.png",
-			"assets/textures/noise_left2.png",
-			"assets/textures/noise_right1.png",
-			"assets/textures/noise_bottom4.png",
-			"assets/textures/noise_top3.png");
-
-		m_imStars = LoadCubeImage(
-			"assets/textures/stars_front5.png",
-			"assets/textures/stars_back6.png",
-			"assets/textures/stars_left2.png",
-			"assets/textures/stars_right1.png",
-			"assets/textures/stars_bottom4.png",
-			"assets/textures/stars_top3.png");
 	}
 
 	Ref<Sky> SkyGenerator::Generate(const Options& options)
@@ -48,20 +30,7 @@ namespace bsf
 	}
 
 
-	SkyGenerator::CubeImage SkyGenerator::LoadCubeImage(std::string_view front, std::string_view back, std::string_view left, std::string_view right, std::string_view bottom, std::string_view top)
-	{
-		CubeImage result;
-
-		result[TextureCubeFace::Front] = std::move(std::get<0>(ImageLoad(front, false)));
-		result[TextureCubeFace::Back] = std::move(std::get<0>(ImageLoad(back, false)));
-		result[TextureCubeFace::Left] = std::move(std::get<0>(ImageLoad(left, false)));
-		result[TextureCubeFace::Right] = std::move(std::get<0>(ImageLoad(right, false)));
-		result[TextureCubeFace::Bottom] = std::move(std::get<0>(ImageLoad(bottom, false)));
-		result[TextureCubeFace::Top] = std::move(std::get<0>(ImageLoad(top, false)));
-
-		return result;
-	}
-
+	
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
 
@@ -69,34 +38,7 @@ namespace bsf
 		auto& assets = Assets::GetInstance();
 		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
 
-		auto bgPattern = Ref<TextureCube>(new TextureCube(1024, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE));
-		auto starsPattern = Ref<TextureCube>(new TextureCube(1024, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE));
-
-		for (auto face : TextureCubeFaces)
-		{
-			bgPattern->SetPixels(face, m_imNoise[face].data());
-			starsPattern->SetPixels(face, m_imStars[face].data());
-		}
-
 		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		
-		/*
-		auto gradient = CreateGradient(16, {
-			{ 0.0f, options.BaseColor0 },
-			{ 0.3f, options.BaseColor0 },
-			{ 0.45f, glm::mix(options.BaseColor0, glm::vec3(1.0f, 1.0f, 0.0f), 0.5f) },
-			{ 0.6f, glm::mix(options.BaseColor1, glm::vec3(1.0f, 0.0f, 1.0f), 0.5f) },
-			{ 0.75f, options.BaseColor1 },
-			{ 1.0f, options.BaseColor1 }
-		});
-		*/
-
-		auto gradient = CreateGradient(128, {
-			{ 0.0f, options.BaseColor0 },
-			{ 0.3f, glm::mix(options.BaseColor0, glm::vec3(1.0f, 1.0f, 0.0f), 0.1f) },
-			{ 0.6f, glm::mix(options.BaseColor1, glm::vec3(1.0f, 0.0f, 1.0f), 0.1f) },
-			{ 1.0f, options.BaseColor1 }
-		});
 
 		// Generate stars
 		for (auto face : TextureCubeFaces)
@@ -109,29 +51,24 @@ namespace bsf
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+			m_pGenEnv->Use();
+			m_pGenEnv->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
+			m_pGenEnv->UniformMatrix4f("uView", camera.GetViewMatrix());
+			m_pGenEnv->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
 
+			m_pGenEnv->Uniform3fv("uBackColor", 1, glm::value_ptr(options.BaseColor));
 
-			// Draw background
-			{
-				m_pGenBg->Use();
-				m_pGenBg->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
-				m_pGenBg->UniformMatrix4f("uView", camera.GetViewMatrix());
-				m_pGenBg->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-				m_pGenBg->UniformTexture("uBackgroundPattern", bgPattern);
-				m_pGenBg->UniformTexture("uGradient", gradient);
-				m_vaCube->DrawArrays(GL_TRIANGLES);
-			}
+			m_pGenEnv->Uniform3fv("uStarColor", 1, glm::value_ptr(options.StarsColor));
 
+			m_pGenEnv->Uniform1f("uBackgroundScale", { 1.0f });
+			m_pGenEnv->Uniform1f("uStarScale", { 180.0f });
+			m_pGenEnv->Uniform1f("uStarBrightnessScale", { 200.0f });
+			m_pGenEnv->Uniform1f("uStarPower", { 12.0f });
+			m_pGenEnv->Uniform1f("uStarMultipler", { 24.0f });
 
-			// Draw stars
-			{
-				m_pGenStars->Use();
-				m_pGenStars->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
-				m_pGenStars->UniformMatrix4f("uView", camera.GetViewMatrix());
-				m_pGenStars->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-				m_pGenStars->UniformTexture("uStarsPattern", starsPattern);
-				m_vaCube->DrawArrays(GL_TRIANGLES);
-			}
+			m_pGenEnv->Uniform1f("uCloudScale", { 0.75f });
+
+			m_vaCube->DrawArrays(GL_TRIANGLES);
 		}
 
 		return camera.GetTexture();
@@ -234,7 +171,7 @@ namespace bsf
 		return Assets::GetInstance().Get<SkyGenerator>(AssetName::SkyGenerator)->Generate({
 			1024,
 			Colors::Blue,
-			Darken(Colors::Blue, 0.5f)
+			Colors::White
 		});
 	}
 

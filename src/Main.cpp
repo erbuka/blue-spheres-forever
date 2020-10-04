@@ -35,131 +35,94 @@ using namespace glm;
 
 class TestScene : public Scene
 {
-	static constexpr size_t size = 512;
-
-	float zoom = 1.0f;
-	
-	float starsPow = 8.0f;
-	float starsMultipler = 1.0f;
-	float starsBrightnessNoiseScale = 1.0f;
-	float starsNoiseScale = 2.0f;
-
-	float bgNoiseScale = 100.0f;
-	float bgDarkenFactor = 0.75f;
 	glm::vec3 bgBaseColor = Colors::Blue;
 
-	Ref<Texture2D> noiseTex;
-	std::vector<uint32_t> pixels;
-	std::vector<glm::vec3> colors;
+	float bgNoiseScale = 4.0f;
+	float bgDarkenFactor = 0.9f;
 
-	void UpdateNoise()
-	{
-		constexpr size_t numThreads = 4;
-		constexpr size_t sliceSize = size / numThreads;
-		std::array<std::thread, numThreads> threads;
-		auto baseColor2 = (glm::vec3)Darken(glm::vec4(bgBaseColor, 1.0f), bgDarkenFactor);
+	float starPow = 8.0f;
+	float starMultipler = 24.0f;
+	float starBrightnessScale = 200.0f;
+	float starScale = 180.0f;
 
-		auto updateSlice = [&](size_t xMin, size_t xMax) {
-			for (size_t x = xMin; x < xMax; ++x)
-			{
-				for (size_t y = 0; y < size; ++y)
-				{
-					float val = glm::simplex(glm::vec3(x, y, 0.0) / (float)bgNoiseScale) * 0.5f + 0.5f;
-					colors[y * size + x] = glm::lerp(baseColor2, bgBaseColor, val);
-				}
-			}
+	float cloudScale = 4.0f;
 
-			for (size_t x = xMin; x < xMax; ++x)
-			{
-				for (size_t y = 0; y < size; ++y)
-				{
-					float skyVal = 0.5f + glm::simplex(glm::vec3(x, y, 0.0) / (float)bgNoiseScale) * 0.25f + 0.25f;
-					float brightness = glm::simplex(glm::vec3(x, y, 0.0) / (float)starsBrightnessNoiseScale) * 0.5f + 0.5f;
-					float val = glm::simplex(glm::vec3(x, y, 0.0) / (float)starsNoiseScale) * 0.5f + 0.5f;
-					val = glm::pow(val * skyVal * brightness, starsPow);
-					colors[y * size + x] += glm::vec3(val) *starsMultipler;
-				}
-			}
-
-
-			// Normalize + transfer
-			for (size_t x = xMin; x < xMax; ++x)
-			{
-				for (size_t y = 0; y < size; ++y)
-				{
-					colors[y * size + x] /= (colors[y * size + x] + 1.0f);
-					pixels[y * size + x] = ToHexColor(colors[y * size + x]);
-				}
-			}
-		};
-
-		for (size_t i = 0; i < numThreads; ++i)
-			threads[i] = std::thread(updateSlice, i * sliceSize, (i + 1) * sliceSize);
-		
-		for (size_t i = 0; i < numThreads; ++i)
-			threads[i].join();
-
-
-		noiseTex->SetPixels(pixels.data(), size, size);
-
-	}
+	Ref<VertexArray> quad;
+	Ref<ShaderProgram> shader;
 
 	void OnAttach() override 
 	{
-		pixels.reserve(size * size);
-		colors.reserve(size * size);
+		shader = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen.frag");
 
-		noiseTex = MakeRef<Texture2D>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		std::array<glm::vec3, 12> vertexData = {
+			glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f),
+			glm::vec3(+1.0f, -1.0f, -1.0f), glm::vec3(0.0f),
+			glm::vec3(+1.0f, +1.0f, -1.0f), glm::vec3(0.0f),
 
-		UpdateNoise();
+			glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f),
+			glm::vec3(+1.0f, +1.0f, -1.0f), glm::vec3(0.0f),
+			glm::vec3(-1.0f, +1.0f, -1.0f), glm::vec3(0.0f),
+		};
+
+		auto vb = Ref<VertexBuffer>(new VertexBuffer({
+			{ "aPosition", AttributeType::Float3 },
+			{ "aUv", AttributeType::Float3 }
+		}, (void*)vertexData.data(), 6));
+	
+		quad = Ref<VertexArray>(new VertexArray(vb->GetVertexCount(), { vb }));
 
 	}
 
 	void OnRender(const Time& time) override
 	{
 		auto size = GetApplication().GetWindowSize();
-		auto& r2 = GetApplication().GetRenderer2D();
-
+		
+		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, size.x, size.y);
 
 		float aspect = size.x / size.y;
 
-		r2.Begin(glm::ortho(-1.0f * aspect, 1.0f * aspect, -1.0f, 1.0f, -1.0f, 1.0f));
+		glm::mat4 proj = glm::ortho(-1.0f * aspect, 1.0f * aspect, -1.0f, 1.0f);
 
-		r2.Pivot(EPivot::Center);
+		shader->Use();
+		shader->UniformMatrix4f("uProjection", proj);
+		shader->UniformMatrix4f("uView", glm::identity<glm::mat4>());
+		shader->UniformMatrix4f("uModel", glm::identity < glm::mat4>());
 
-		r2.Color(Colors::White);
-		r2.Texture(noiseTex);
-		r2.DrawQuad({}, { zoom,zoom });
+		shader->Uniform3fv("uBackColor", 1, glm::value_ptr(bgBaseColor));
 
-		r2.End();
+		shader->Uniform3fv("uStarColor", 1, glm::value_ptr(Colors::White));
+		
+		shader->Uniform1fv("uBackgroundScale", 1, &bgNoiseScale);
+		shader->Uniform1fv("uStarBrightnessScale", 1, &starBrightnessScale);
+		shader->Uniform1fv("uStarScale", 1, &starScale);
+		shader->Uniform1fv("uStarPower", 1, &starPow);
+		shader->Uniform1fv("uStarMultipler",1, &starMultipler);
+
+		shader->Uniform1fv("uCloudScale", 1, &cloudScale);
+
+
+		quad->Draw(GL_TRIANGLES);
 
 		ImGui::Begin("Test");
 		
-		if (ImGui::DragFloat("Zoom", &zoom, 0.01f, 1.0f, 10.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Bg Darken Factor", &bgDarkenFactor, 0.01f, 0.0f, 1.0f);
+		
+		ImGui::ColorEdit3("Base Color", glm::value_ptr(bgBaseColor));
 
-		if (ImGui::DragFloat("Bg Darken Factor", &bgDarkenFactor, 0.01f, 0.0f, 1.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Bg Noise Scale", &bgNoiseScale, 1.0f, 1.0f, 500.0f);
 
-		if (ImGui::DragFloat("Bg Noise Scale", &bgNoiseScale, 1.0f, 1.0f, 500.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Stars Noise Scale", &starScale, 0.1f, 1.0f, 500.0f);
 
-		if (ImGui::DragFloat("Stars Noise Scale", &starsNoiseScale, 0.1f, 1.0f, 10.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Stars Brighness Noise Scale", &starBrightnessScale, 0.1f, 1.0f, 500.0f);
 
-		if (ImGui::DragFloat("Stars Brighness Noise Scale", &starsBrightnessNoiseScale, 0.1f, 1.0f, 10.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Stars Multipler", &starMultipler, 0.1f, 1.0f, 100.0f);
 
-		if (ImGui::DragFloat("Stars Multipler", &starsMultipler, 0.1f, 1.0f, 100.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Stars Power", &starPow, 0.1f, 1.0f, 100.0f);
 
-		if (ImGui::DragFloat("Stars Power", &starsPow, 0.1f, 1.0f, 1.0f))
-			UpdateNoise();
+		ImGui::DragFloat("Clouds Scale", &cloudScale, 0.1f, 1.0f, 500.0f);
 
-		if (ImGui::ColorEdit3("Base Color", glm::value_ptr(bgBaseColor)))
-			UpdateNoise();
 		
 		ImGui::End();
 
@@ -170,14 +133,15 @@ class TestScene : public Scene
 
 int main() 
 {
-
+	
 	//auto scene = MakeRef<TestScene>();
-	auto scene = Ref<Scene>(new DisclaimerScene());
+	//auto scene = Ref<Scene>(new DisclaimerScene());
 	//auto scene = Ref<Scene>(new StageEditorScene());
-	//auto scene = Ref<Scene>(new SplashScene());
+	auto scene = Ref<Scene>(new SplashScene());
 	//auto scene = Ref<Scene>(new MenuScene());
 	//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
 	
+
 	Application app;
 	app.GotoScene(std::move(scene));
 	app.Start();

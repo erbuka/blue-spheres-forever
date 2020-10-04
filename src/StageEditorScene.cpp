@@ -329,7 +329,7 @@ namespace bsf
 
 			}
 
-			// Sky Colors
+			// Sky and stars
 			{
 
 				auto panel = MakeRef<UIPanel>();
@@ -337,14 +337,14 @@ namespace bsf
 
 				auto cp1 = MakeRef<UIColorPicker>();
 				cp1->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
-				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->SkyColors[0]; });
-				cp1->Label = "Sky Primary";
+				cp1->Bind([&]() -> glm::vec3& { return m_CurrentStage->SkyColor; });
+				cp1->Label = "Sky";
 				panel->AddChild(cp1);
 
 				auto cp2 = MakeRef<UIColorPicker>();
 				cp2->PreferredSize.x = s_uiPropertiesWidth / 2.0f;
-				cp2->Bind([&]() -> glm::vec3& { return m_CurrentStage->SkyColors[1]; });
-				cp2->Label = "Sky Secondary";
+				cp2->Bind([&]() -> glm::vec3& { return m_CurrentStage->StarsColor; });
+				cp2->Label = "Stars";
 
 				panel->AddChild(cp2);
 

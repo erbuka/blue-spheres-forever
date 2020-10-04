@@ -78,7 +78,6 @@ namespace bsf
 		m_Assets[AssetName::TexUISave] = loadTex2D("assets/textures/save_ui.png");
 		m_Assets[AssetName::TexUIBack] = loadTex2D("assets/textures/back_ui.png");
 
-
 		// Sound
 		m_Assets[AssetName::SfxBlueSphere] = MakeRef<Audio>("assets/sound/bluesphere.wav");
 		m_Assets[AssetName::SfxGameOver] = MakeRef<Audio>("assets/sound/redsphere.wav");

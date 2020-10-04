@@ -72,7 +72,7 @@ namespace bsf
 			ImGui::Begin("Diagnostic Tool");
 
 
-			if (ImGui::BeginTabBar("Tags"))
+			if (ImGui::BeginTabBar("Tabs"))
 			{
 				if (ImGui::BeginTabItem("Info"))
 				{
@@ -122,7 +122,7 @@ namespace bsf
 
 				}
 
-				if (ImGui::BeginTabItem("Play stage"))
+				if (ImGui::BeginTabItem("Utility"))
 				{
 					ImGui::InputText("Stage number", m_StageNumber, sizeof(m_StageNumber));
 					ImGui::SameLine();
@@ -135,6 +135,17 @@ namespace bsf
 						m_App->GotoScene(scene);
 
 					}
+					
+					if (ImGui::Button("Save Stages"))
+					{
+						for (auto file : Stage::GetStageFiles())
+						{
+							Stage s;
+							s.Load(file);
+							s.Save(file);
+						}
+					}
+					
 					ImGui::EndTabItem();
 				}
 
