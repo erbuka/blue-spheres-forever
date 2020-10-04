@@ -2,7 +2,6 @@
 
 #include "Log.h"
 #include "Ref.h"
-#include "Profiler.h"
 #include <unordered_map>
 
 namespace bsf

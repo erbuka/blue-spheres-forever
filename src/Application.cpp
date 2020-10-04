@@ -5,7 +5,7 @@
 #include "Assets.h"
 #include "Renderer2D.h"
 #include "Audio.h"
-#include "Profiler.h"
+#include "Diagnostic.h"
 
 
 namespace bsf

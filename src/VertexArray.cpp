@@ -3,6 +3,7 @@
 #include "VertexArray.h"
 #include "Log.h"
 #include "Table.h"
+#include "Diagnostic.h"
 
 namespace bsf
 {
@@ -107,12 +108,14 @@ namespace bsf
 
 	void VertexArray::DrawArrays(GLenum mode, uint32_t count)
 	{
+		BSF_DIAGNOSTIC_FUNC();
 		Bind();
 		glDrawArrays(mode, 0, count);
 	}
 
 	void VertexArray::DrawIndexed(GLenum mode)
 	{
+		BSF_DIAGNOSTIC_FUNC();
 		assert(m_IndexBuffer != nullptr);
 		Bind();
 		m_IndexBuffer->Bind();

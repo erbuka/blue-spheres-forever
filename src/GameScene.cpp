@@ -19,7 +19,7 @@
 #include "SplashScene.h"
 #include "BlurFilter.h"
 #include "StageClearScene.h"
-#include "Profiler.h"
+#include "Diagnostic.h"
 #include "GLTF.h"
 #include "Character.h"
 

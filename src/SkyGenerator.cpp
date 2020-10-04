@@ -8,6 +8,7 @@
 #include "VertexArray.h"
 #include "Assets.h"
 #include "Color.h"
+#include "Diagnostic.h"
 
 namespace bsf
 {
@@ -19,7 +20,7 @@ namespace bsf
 
 		// Shaders
 		m_pGenEnv = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen.frag");
-		m_pGenIrradiance = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_irradiance.vert", "assets/shaders/sky_generator/sky_gen_irradiance.frag");
+		m_pGenIrr = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_irradiance.vert", "assets/shaders/sky_generator/sky_gen_irradiance.frag");
 	}
 
 	Ref<Sky> SkyGenerator::Generate(const Options& options)
@@ -99,11 +100,11 @@ namespace bsf
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			m_pGenIrradiance->Use();
-			m_pGenIrradiance->UniformTexture("uEnvironment", sky);
-			m_pGenIrradiance->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
-			m_pGenIrradiance->UniformMatrix4f("uView", camera->GetViewMatrix());
-			m_pGenIrradiance->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+			m_pGenIrr->Use();
+			m_pGenIrr->UniformTexture("uEnvironment", sky);
+			m_pGenIrr->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
+			m_pGenIrr->UniformMatrix4f("uView", camera->GetViewMatrix());
+			m_pGenIrr->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
 			modSkyBox->DrawArrays(GL_TRIANGLES);
 
 		}
@@ -128,6 +129,7 @@ namespace bsf
 
 	void Sky::ApplyMatrix(const glm::mat4& matrix)
 	{
+		BSF_DIAGNOSTIC_FUNC();
 		for (auto& v : m_Vertices)
 			v[0] = matrix * glm::vec4(v[0], 1.0);
 

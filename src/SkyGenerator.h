@@ -6,6 +6,7 @@
 #include "Asset.h"
 #include "Texture.h"
 
+// TODO Rename shaders and delete obsolete ones
 namespace bsf
 {
 	class TextureCube;
@@ -58,7 +59,7 @@ namespace bsf
 		Ref<TextureCube> GenerateIrradiance(const Ref<TextureCube>& sky, uint32_t size);
 
 		Ref<VertexArray> m_vaCube;
-		Ref<ShaderProgram> m_pGenEnv, m_pGenIrradiance;
+		Ref<ShaderProgram> m_pGenEnv, m_pGenIrr;
 	};
 
 	Ref<Sky> GenerateDefaultSky();

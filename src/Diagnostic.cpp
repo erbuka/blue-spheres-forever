@@ -6,7 +6,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "Profiler.h"
+#include "Diagnostic.h"
 #include "Log.h"
 #include "GameScene.h"
 #include "Application.h"

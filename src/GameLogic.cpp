@@ -3,7 +3,7 @@
 #include "GameLogic.h"
 #include "Stage.h"
 #include "Log.h"
-#include "Profiler.h"
+#include "Diagnostic.h"
 
 namespace bsf
 {
