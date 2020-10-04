@@ -6,7 +6,6 @@
 #include "Asset.h"
 #include "Texture.h"
 
-// TODO Rename shaders and delete obsolete ones
 namespace bsf
 {
 	class TextureCube;

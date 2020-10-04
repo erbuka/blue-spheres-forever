@@ -52,7 +52,7 @@ class TestScene : public Scene
 
 	void OnAttach() override 
 	{
-		shader = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen.frag");
+		shader = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen.vert", "assets/shaders/sky_generator/sky_gen.frag");
 
 		std::array<glm::vec3, 12> vertexData = {
 			glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f),

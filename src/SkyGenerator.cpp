@@ -19,7 +19,7 @@ namespace bsf
 		m_vaCube = CreateCube();
 
 		// Shaders
-		m_pGenEnv = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_bg.vert", "assets/shaders/sky_generator/sky_gen.frag");
+		m_pGenEnv = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen.vert", "assets/shaders/sky_generator/sky_gen.frag");
 		m_pGenIrr = ShaderProgram::FromFile("assets/shaders/sky_generator/sky_gen_irradiance.vert", "assets/shaders/sky_generator/sky_gen_irradiance.frag");
 	}
 
