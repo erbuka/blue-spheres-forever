@@ -78,6 +78,9 @@ namespace bsf
 	class VertexArray : public Asset
 	{
 	public:
+
+		bool LayoutNeedsUpdate = false;
+
 		VertexArray(uint32_t vertexCount, const std::initializer_list<Ref<VertexBuffer>>& buffers = {});
 		VertexArray(uint32_t vertexCount, uint32_t vbsCount);
 		~VertexArray();
@@ -102,7 +105,7 @@ namespace bsf
 		uint32_t GetVertexCount() const { return m_VertexCount; }
 
 	private:
-		
+
 		uint32_t m_Id;
 		uint32_t m_VertexCount;
 		std::vector<Ref<VertexBuffer>> m_Vbs;

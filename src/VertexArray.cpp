@@ -69,36 +69,42 @@ namespace bsf
 	{
 		BSF_GLCALL(glBindVertexArray(m_Id));
 
-		uint32_t index = 0;
-
-		for (auto& vb : m_Vbs)
+		if (LayoutNeedsUpdate)
 		{
 
-			assert(vb != nullptr);
+			uint32_t index = 0;
 
-			vb->Bind();
-
-			for (auto& attrib : vb->GetLayout())
+			for (auto& vb : m_Vbs)
 			{
 
-				uint32_t vertexSize = vb->GetVertexSize();
+				assert(vb != nullptr);
 
-				glEnableVertexAttribArray(index);
+				vb->Bind();
 
-				if (attrib.Type == GL_INT || attrib.Type == GL_UNSIGNED_INT || attrib.Type == GL_UNSIGNED_SHORT)
+				for (auto& attrib : vb->GetLayout())
 				{
-					BSF_GLCALL(glVertexAttribIPointer(index, attrib.Count, attrib.Type, vertexSize, (const void*)attrib.Pointer));
-				}
-				else
-				{
-					BSF_GLCALL(glVertexAttribPointer(index, attrib.Count, attrib.Type, GL_FALSE, vertexSize, (const void*)attrib.Pointer));
+
+					uint32_t vertexSize = vb->GetVertexSize();
+
+					glEnableVertexAttribArray(index);
+
+					if (attrib.Type == GL_INT || attrib.Type == GL_UNSIGNED_INT || attrib.Type == GL_UNSIGNED_SHORT)
+					{
+						BSF_GLCALL(glVertexAttribIPointer(index, attrib.Count, attrib.Type, vertexSize, (const void*)attrib.Pointer));
+					}
+					else
+					{
+						BSF_GLCALL(glVertexAttribPointer(index, attrib.Count, attrib.Type, GL_FALSE, vertexSize, (const void*)attrib.Pointer));
+					}
+
+					index++;
 				}
 
-				index++;
 			}
 
-		}
 
+			LayoutNeedsUpdate = false;
+		}
 	}
 
 	void VertexArray::DrawArrays(GLenum mode)
@@ -108,14 +114,12 @@ namespace bsf
 
 	void VertexArray::DrawArrays(GLenum mode, uint32_t count)
 	{
-		BSF_DIAGNOSTIC_FUNC();
 		Bind();
 		glDrawArrays(mode, 0, count);
 	}
 
 	void VertexArray::DrawIndexed(GLenum mode)
 	{
-		BSF_DIAGNOSTIC_FUNC();
 		assert(m_IndexBuffer != nullptr);
 		Bind();
 		m_IndexBuffer->Bind();
@@ -130,8 +134,11 @@ namespace bsf
 	void VertexArray::SetVertexBuffer(uint32_t index, const Ref<VertexBuffer>& buffer)
 	{
 		assert(buffer != nullptr && buffer->GetVertexCount() == m_VertexCount && index < m_Vbs.size());
+		LayoutNeedsUpdate = true;
 		m_Vbs[index] = buffer;
 	}
+
+	
 	
 	VertexBuffer::VertexBuffer(const std::initializer_list<VertexAttribute>& layout, const void* data, uint32_t count, GLenum usage) : 
 		m_Id(0),
