@@ -110,8 +110,6 @@ namespace bsf
 
 		m_Triangles = Ref<VertexArray>(new VertexArray(s_MaxTriangleVertices, { trianglesVb }));
 
-		// Init Shaders
-
 		m_pTriangleProgram = MakeRef<ShaderProgram>(s_VertexSource, s_FragmentSource);
 
 		m_Textures.resize(s_MaxTextureUnits);
@@ -359,10 +357,9 @@ namespace bsf
 
 	void Renderer2D::Clip(const Rect& clip)
 	{
+
 		if (m_State.top().Clip.has_value())
-		{
 			m_State.top().Clip = m_State.top().Clip.value().Intersect(clip);
-		}
 		else
 			m_State.top().Clip = clip;
 

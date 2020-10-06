@@ -2,6 +2,7 @@
 
 #include "Log.h"
 #include "Ref.h"
+#include "Diagnostic.h"
 #include <unordered_map>
 
 namespace bsf
@@ -91,6 +92,7 @@ namespace bsf
 		template<typename T>
 		Ref<typename std::enable_if_t<std::is_base_of_v<Asset, T>, T>> Get(AssetName name)
 		{
+			BSF_DIAGNOSTIC_FUNC();
 			return std::dynamic_pointer_cast<T>(m_Assets[name]);
 		}
 

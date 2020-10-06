@@ -68,7 +68,7 @@ namespace bsf
 
 		glm::vec3 EmeraldColor = Colors::Green;
 		std::array<glm::vec3, 2> PatternColors = { Colors::Red, Colors::White };
-		glm::vec3 SkyColor, StarsColor;
+		glm::vec3 SkyColor = Colors::Blue, StarsColor = Colors::White;
 
 		static void SaveStageFiles(const std::vector<std::string>& files);
 		static std::vector<std::string> GetStageFiles();
