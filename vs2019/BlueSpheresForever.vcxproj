@@ -166,6 +166,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\Color.h" />
     <ClInclude Include="..\src\Common.h" />
     <ClInclude Include="..\src\CubeCamera.h" />
+    <ClInclude Include="..\src\Diagnostic.h" />
     <ClInclude Include="..\src\DisclaimerScene.h" />
     <ClInclude Include="..\src\EventEmitter.h" />
     <ClInclude Include="..\src\Font.h" />
@@ -177,7 +178,6 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\MatrixStack.h" />
     <ClInclude Include="..\src\MenuScene.h" />
     <ClInclude Include="..\src\Model.h" />
-    <ClInclude Include="..\src\Diagnostic.h" />
     <ClInclude Include="..\src\Ref.h" />
     <ClInclude Include="..\src\Renderer2D.h" />
     <ClInclude Include="..\src\Scene.h" />
@@ -200,10 +200,13 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\Audio.cpp" />
     <ClCompile Include="..\src\BlurFilter.cpp" />
     <ClCompile Include="..\src\BsfPch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\Common.cpp" />
     <ClCompile Include="..\src\CubeCamera.cpp" />
+    <ClCompile Include="..\src\Diagnostic.cpp" />
     <ClCompile Include="..\src\DisclaimerScene.cpp" />
     <ClCompile Include="..\src\Font.cpp" />
     <ClCompile Include="..\src\Framebuffer.cpp" />
@@ -214,7 +217,6 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\MatrixStack.cpp" />
     <ClCompile Include="..\src\MenuScene.cpp" />
     <ClCompile Include="..\src\Model.cpp" />
-    <ClCompile Include="..\src\Diagnostic.cpp" />
     <ClCompile Include="..\src\Renderer2D.cpp" />
     <ClCompile Include="..\src\Scene.cpp" />
     <ClCompile Include="..\src\ShaderProgram.cpp" />
