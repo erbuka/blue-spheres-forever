@@ -35,6 +35,7 @@ namespace bsf
             BD_APP(window)->KeyReleased.Emit({ key });
         }
     }
+
     static void GLFW_CursorPos(GLFWwindow* window, double x, double y)
     {
         BD_APP(window)->MouseMoved.Emit({ float(x), float(y), 0, 0, MouseButton::None });
@@ -131,6 +132,7 @@ namespace bsf
         }
 
         m_Window = glfwCreateWindow(1280, 780, "Blue Spheres Forever", NULL, NULL);
+        
         if (!m_Window)
         {
             BSF_ERROR("Can't create the window");
@@ -259,6 +261,8 @@ namespace bsf
         {
             auto& task = (*taskIt);
             task->m_Application = this;
+            task->m_Scene = scene.get();
+            task->m_Event = evt;
             task->CallUpdateFn(time);
             if (task->IsDone()) 
             {

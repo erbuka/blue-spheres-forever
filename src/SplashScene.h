@@ -14,6 +14,7 @@ namespace bsf
 	class ShaderProgram;
 	class Sky;
 	class BlurFilter;
+	class Renderer2D;
 
 	class SplashScene : public Scene
 	{
@@ -25,6 +26,12 @@ namespace bsf
 		void OnResize(const WindowResizedEvent& evt);
 
 	private:
+			
+		void DrawEmeralds(const Time& time);
+		void DrawTitle(Renderer2D& r2, const Time& time);
+
+		bool m_DisplayTitle = false;
+
 		Ref<BlurFilter> m_fBlur;
 		Ref<Framebuffer> m_fbPBR;
 		Ref<ShaderProgram> m_pPBR, m_pDeferred, m_pSky;

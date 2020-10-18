@@ -71,6 +71,7 @@ namespace bsf
 		SfxTally,
 		SfxStageClear,
 		SfxMusic,
+		SfxMenu,
 
 		StageGenerator,
 		SkyGenerator

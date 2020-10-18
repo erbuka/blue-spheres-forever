@@ -94,6 +94,7 @@ namespace bsf
 		m_Assets[AssetName::SfxTally] = MakeRef<Audio>("assets/sound/tally.mp3");
 		m_Assets[AssetName::SfxStageClear] = MakeRef<Audio>("assets/sound/stage_clear.mp3");
 		m_Assets[AssetName::SfxMusic] = MakeRef<Audio>("assets/sound/music_techno.mp3");
+		m_Assets[AssetName::SfxMenu] = MakeRef<Audio>("assets/sound/menu.wav");
 
 		// Models
 		

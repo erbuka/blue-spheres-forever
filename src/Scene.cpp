@@ -83,6 +83,12 @@ namespace bsf
 			m_DoneFn(*this);
 	}
 
+	Ref<SceneTask> SceneTask::Chain(Ref<SceneTask> next)
+	{
+		SetDoneFunction([&, next](SceneTask& self) { GetScene().ScheduleTask(GetEvent(), next); });
+		return next;
+	}
+
 	Application& SceneTask::GetApplication()
 	{
 		if (m_Application == nullptr)
@@ -90,6 +96,11 @@ namespace bsf
 			BSF_ERROR("Application is null");
 		}
 		return *m_Application;
+	}
+
+	Scene& SceneTask::GetScene()
+	{
+		return *m_Scene;
 	}
 
 	WaitForTask::WaitForTask(float seconds) :
@@ -103,5 +114,6 @@ namespace bsf
 			m_Time += time.Delta;
 		});
 	}
+
 
 }

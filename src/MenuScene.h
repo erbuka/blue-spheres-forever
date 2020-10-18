@@ -11,6 +11,11 @@
 #include "StageCodeHelper.h"
 #include "MatrixStack.h"
 
+/*
+	TODO Probaly I should implement mouse input here. It's going to be a bit tricky because I didn't
+	think I was going to do this, but it would be weird to have mouse input in the stage editor and not
+	have it in the main menus. 
+*/
 namespace bsf
 {
 
@@ -131,6 +136,7 @@ namespace bsf
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
 		bool OnKeyTyped(MenuRoot& root, int32_t keyCode) override;
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
+		float GetUIHeight() const override;
 
 	private:
 		Ref<MenuItem> m_SelectedItem = nullptr;
@@ -161,26 +167,19 @@ namespace bsf
 	{
 	public:
 
-		MenuScene(const Ref<Sky>& sky = nullptr) : m_Sky(sky) {}
-
 		void OnAttach() override;
 		void OnRender(const Time& time) override;
 		void OnDetach() override;
 
-		void OnResize(const WindowResizedEvent& evt);
 
 	private:
 		void BuildMenus();
-		void DrawTitle(Renderer2D& r2);
 		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 
 		MenuRoot m_MenuRoot;
 		Ref<SelectMenuItem<std::string>> m_SelectStageMenuItem;
 		Ref<StageCodeMenuItem> m_StageCodeMenuItem;
-		Ref<Sky> m_Sky;
-		Ref<Framebuffer> m_fbSky;
-		Ref<ShaderProgram> m_pDeferred, m_pSky;
-		MatrixStack m_Projection, m_View, m_Model;
+		Ref<Texture2D> m_txBackground;
 	};
 
 

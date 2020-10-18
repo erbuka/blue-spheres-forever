@@ -4,6 +4,11 @@
 #include <list>
 #include "Log.h"
 
+
+// TODO When an event triggers a scene change, there should be a way to not trigger
+// other scene changes. Could be done at application level, but it's not right. Some
+// scene change operation are deffered with fading. So the best solution would be to
+// clear the subscriptions when a scene change starts
 namespace bsf
 {
 	using Unsubscribe = std::function<void()>;
@@ -103,19 +108,22 @@ namespace bsf
 	class EventReceiver
 	{
 	public:
-		virtual ~EventReceiver() { 
+		virtual ~EventReceiver() 
+		{ 
 			if (!m_Subscriptions.empty())
 				BSF_ERROR("Subscriber has been destroyed but still has {0} subscriptions", m_Subscriptions.size());
 		}
 
-		void ClearSubscriptions() {
+		void ClearSubscriptions() 
+		{
 			for (auto& unsub : m_Subscriptions)
 				unsub();
 			m_Subscriptions.clear();
 		}
 
 		template<typename Event>
-		void AddSubscription(EventEmitter<Event>& evt, typename EventEmitter<Event>::HandlerFn&& handler) { 
+		void AddSubscription(EventEmitter<Event>& evt, typename EventEmitter<Event>::HandlerFn&& handler) 
+		{ 
 			m_Subscriptions.push_back(evt.Subscribe(std::forward<EventEmitter<Event>::HandlerFn>(handler)));
 		}
 		

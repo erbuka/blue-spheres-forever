@@ -19,6 +19,7 @@ namespace bsf
 {
 
 	static constexpr float s_VirtualHeight = 10;
+	static constexpr float s_SidePanelWidth = s_VirtualHeight / 2.0f;
 
 	static constexpr glm::vec4 s_SelectedMenuColor = Colors::Yellow;
 	static constexpr glm::vec4 s_MenuColor = Colors::White;
@@ -83,26 +84,14 @@ namespace bsf
 
 	void MenuScene::OnAttach()
 	{
-		auto windowSize = GetApplication().GetWindowSize();
-
-		// Sky
-		if (m_Sky == nullptr)
-			m_Sky = GenerateDefaultSky();
-
-		// Framebuffers
-		m_fbSky = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbSky->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-
-		// Shaders
-		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
-		m_pSky = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+		// Textures
+		m_txBackground = CreateCheckerBoard({ ToHexColor(Colors::DarkGray), ToHexColor(Colors::LightGray) });
 
 		// Menus
 		BuildMenus();
 		
 		// Fade In
-		ScheduleTask(ESceneTaskEvent::PostRender, 
-			MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f));
+		ScheduleTask(ESceneTaskEvent::PostRender, MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f));
 
 	}
 
@@ -115,79 +104,43 @@ namespace bsf
 
 		float height = s_VirtualHeight;
 		float width = windowSize.x / windowSize.y * s_VirtualHeight;
+		float offset = glm::fract(time.Elapsed / 2.0f);
+		
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Update sky
-		m_Sky->ApplyMatrix(glm::rotate(time.Delta, glm::vec3{ 0.0f, 1.0f, 0.0f }));
+		r2.Begin(glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f));
+		r2.TextShadowColor({ 0.0f, 0.0f, 0.0f, 0.5f });
+		r2.TextShadowOffset({ 0.025f, -0.025f });
 
-		// Draw to framebuffer
-		m_fbSky->Bind();
+		// Draw backgrund
+		r2.Push();
+		r2.Pivot(EPivot::BottomLeft);
+		r2.Texture(m_txBackground);
+		r2.DrawQuad({ 0.0f, 0.0f }, { width, height }, { width, height }, { offset, offset });
+		r2.Pop();
+
+		// Draw side panel
+		r2.Push();
+		r2.Pivot(EPivot::BottomLeft);
+		r2.Color(Colors::Blue);
+		r2.DrawQuad({ 0.0f, 0.0f }, { s_SidePanelWidth, height });
+		r2.Pivot(EPivot::Center);
+		for (size_t i = 0; i <= height + 1.0f; ++i)
 		{
-			GLEnableScope scope({ GL_DEPTH_TEST, GL_BLEND });
-			glEnable(GL_DEPTH_TEST);
-			glDisable(GL_BLEND);
-
-			glViewport(0, 0, windowSize.x, windowSize.y);
-
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			m_Projection.LoadIdentity();
-			m_Projection.Perspective(glm::pi<float>() / 4.0f, windowSize.x / windowSize.y, 0.1f, 10.0f);
-			// Sky
-
-			m_View.LoadIdentity();
-			m_Model.LoadIdentity();
-
-			glDepthMask(GL_FALSE);
-			m_pSky->Use();
-			m_pSky->UniformMatrix4f("uProjection", m_Projection);
-			m_pSky->UniformMatrix4f("uView", m_View);
-			m_pSky->UniformMatrix4f("uModel", m_Model);
-			m_pSky->UniformTexture("uSkyBox", m_Sky->GetEnvironment());
-			assets.Get<VertexArray>(AssetName::ModSkyBox)->DrawArrays(GL_TRIANGLES);
-			glDepthMask(GL_TRUE);
-		}
-		m_fbSky->Unbind();
-
-		// Draw to screen
-		{
-			GLEnableScope scope({ GL_DEPTH_TEST });
-
-			glViewport(0, 0, windowSize.x, windowSize.y);
-
-			glDisable(GL_DEPTH_TEST);
-
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			m_pDeferred->Use();
-			m_pDeferred->UniformTexture("uColor", m_fbSky->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", assets.Get<Texture2D>(AssetName::TexBlack));
-			m_pDeferred->Uniform1f("uExposure", { 1.0f });
-			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
-
-		}
-
-		// Draw title and menus
-		{
-
-			r2.Begin(glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f));
-
-			r2.TextShadowColor({ 0.0f, 0.0f, 0.0f, 0.5f });
-			r2.TextShadowOffset({ 0.025f, -0.025f });
-
-			// Title
 			r2.Push();
-			r2.Translate({ width / 2.0f, height - 2.5f });
-			DrawTitle(r2);
+			r2.Translate({ s_SidePanelWidth, i - offset });
+			r2.Rotate(glm::radians(45.0f));
+			r2.DrawQuad();
 			r2.Pop();
-
-			// Menu
-			r2.Translate({ width / 2.0f, height / 2.5f });
-			m_MenuRoot.ViewportSize = { width, height };
-			m_MenuRoot.Render(r2);
-			r2.End();
 		}
+		r2.Pop();
+
+
+		// Draw Menus
+		m_MenuRoot.ViewportSize = { width, height };
+		m_MenuRoot.Render(r2);
+		r2.End();
 	}
 
 	void MenuScene::OnDetach()
@@ -195,10 +148,6 @@ namespace bsf
 		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->FadeOut(0.5f);
 	}
 
-	void MenuScene::OnResize(const WindowResizedEvent& evt)
-	{
-		m_fbSky->Resize(evt.Width, evt.Height);
-	}
 
 	
 	void MenuScene::BuildMenus()
@@ -279,41 +228,6 @@ namespace bsf
 
 	}
 
-	void MenuScene::DrawTitle(Renderer2D& r2)
-	{
-		auto& assets = Assets::GetInstance();
-		auto& font = assets.Get<Font>(AssetName::FontMain);
-
-		r2.Push();
-		{
-			r2.Pivot(EPivot::Center);
-			r2.Scale(1.5f);
-
-			r2.Push();
-			{
-				r2.Scale(3.0f);
-
-				r2.Texture(assets.Get<Texture2D>(AssetName::TexUISphere));
-				
-				r2.Color({ 0.0f, 0.0f, 0.0f, 0.5f });
-				r2.DrawQuad({ 0.025f, -0.025f });
-
-				r2.Color(Colors::Blue);
-				r2.DrawQuad();
-			}
-			r2.Pop();
-
-			r2.Color(Colors::White);
-			r2.Pivot(EPivot::Bottom);
-			r2.DrawStringShadow(font, "Blue Spheres");
-			
-			r2.Pivot(EPivot::Top);
-			r2.DrawStringShadow(font, "Forever");
-
-		}
-		r2.Pop();
-	}
-
 	void MenuScene::PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo)
 	{
 		auto fadeTask = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
@@ -329,19 +243,30 @@ namespace bsf
 	void MenuRoot::OnConfirm()
 	{
 		assert(m_MenuStack.size() > 0);
-		m_MenuStack.top()->OnConfirm(*this);
+		if (m_MenuStack.top()->OnConfirm(*this))
+		{
+			Assets::GetInstance().Get<Audio>(AssetName::SfxMenu)->Play();
+		}
 	}
 
 	void MenuRoot::OnDirectionInput(Direction direction)
 	{
 		assert(m_MenuStack.size() > 0);
-		m_MenuStack.top()->OnDirectionInput(*this, direction);
+		if (m_MenuStack.top()->OnDirectionInput(*this, direction))
+		{
+			Assets::GetInstance().Get<Audio>(AssetName::SfxMenu)->Play();
+		}
 	}
+
 
 	void MenuRoot::OnKeyTyped(int32_t keyCode)
 	{
 		assert(m_MenuStack.size() > 0);
-		m_MenuStack.top()->OnKeyTyped(*this, keyCode);
+
+		if (m_MenuStack.top()->OnKeyTyped(*this, keyCode))
+		{
+			Assets::GetInstance().Get<Audio>(AssetName::SfxMenu)->Play();
+		}
 	}
 
 	void MenuRoot::PushMenu(const Ref<Menu>& menu)
@@ -358,9 +283,11 @@ namespace bsf
 	void MenuRoot::Render(Renderer2D& renderer)
 	{
 		assert(m_MenuStack.size() > 0);
+		auto& currentMenu = m_MenuStack.top();
 		renderer.Push();
+		renderer.Translate({ s_SidePanelWidth + 1.5f, ViewportSize.y - 1.5f });
 		renderer.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-		renderer.Pivot(EPivot::Center);
+		renderer.Pivot(EPivot::Left);
 		m_MenuStack.top()->Render(*this, renderer);
 		renderer.Pop();
 	}
@@ -430,6 +357,14 @@ namespace bsf
 			renderer.Translate({ 0.0f, -child->GetUIHeight() });
 		}
 		renderer.Pop();
+	}
+
+	float Menu::GetUIHeight() const
+	{
+		float result = 0.0f;
+		for (const auto& c : m_Children)
+			result += c->GetUIHeight();
+		return result;
 	}
 
 	LinkMenuItem::LinkMenuItem(const std::string& caption, const Ref<Menu>& linkedMenu) :

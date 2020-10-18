@@ -7,11 +7,12 @@
 #include <list>
 #include <unordered_map>
 #include <functional>
+#include <vector>
 
 namespace bsf
 {
 	class Application;
-
+	class Scene;
 
 	enum class ESceneTaskEvent
 	{
@@ -22,34 +23,50 @@ namespace bsf
 	class SceneTask
 	{
 	public:
-		using DoneFn = std::function<void(SceneTask&)>;
-		using UpdateFn = std::function<void(SceneTask&, const Time&)>;
+		using DoneFn = std::function<void(SceneTask &)>;
+		using UpdateFn = std::function<void(SceneTask &, const Time &)>;
 
-		SceneTask() : m_DoneFn(nullptr), m_UpdateFn(nullptr), m_Application(nullptr), 
-			m_IsDone(false), m_IsStarted(false)  {}
+		SceneTask() : m_DoneFn(nullptr), m_UpdateFn(nullptr), m_Application(nullptr),
+					  m_IsDone(false), m_IsStarted(false) {}
+
+		SceneTask(const UpdateFn &update) : SceneTask()
+		{
+			m_UpdateFn = update;
+		}
+
+		SceneTask(UpdateFn&& update) : SceneTask()
+		{
+			m_UpdateFn = std::move(update);
+		}
+
 		virtual ~SceneTask() {}
 
-		void SetUpdateFunction(const UpdateFn& fn) { m_UpdateFn = fn; }
-		void SetUpdateFunction(UpdateFn&& fn) { m_UpdateFn = std::move(fn); }
+		void SetUpdateFunction(const UpdateFn &fn) { m_UpdateFn = fn; }
+		void SetUpdateFunction(UpdateFn &&fn) { m_UpdateFn = std::move(fn); }
 
-		void SetDoneFunction(const DoneFn& fn) { m_DoneFn = fn; }
-		void SetDoneFunction(DoneFn&& fn) { m_DoneFn = std::move(fn); }
+		void SetDoneFunction(const DoneFn &fn) { m_DoneFn = fn; }
+		void SetDoneFunction(DoneFn &&fn) { m_DoneFn = std::move(fn); }
 
-		const Time& GetStartTime() const { return m_StartTime; }
+		Ref<SceneTask> Chain(Ref<SceneTask> next);
+
+		const Time &GetStartTime() const { return m_StartTime; }
 
 		void SetDone() { m_IsDone = true; }
 		bool IsStarted() const { return m_IsStarted; }
 		bool IsDone() const { return m_IsDone; }
-		
-		Application& GetApplication();
+
+		Application &GetApplication();
+		Scene &GetScene();
+		ESceneTaskEvent GetEvent() const { return m_Event; }
 
 	private:
-
-		void CallUpdateFn(const Time& time);
+		void CallUpdateFn(const Time &time);
 		void CallDoneFn();
 
 		friend class Application;
-		Application* m_Application = nullptr;
+		Application *m_Application = nullptr;
+		Scene *m_Scene = nullptr;
+		ESceneTaskEvent m_Event = ESceneTaskEvent::PreRender;
 		DoneFn m_DoneFn;
 		UpdateFn m_UpdateFn;
 		Time m_StartTime;
@@ -61,6 +78,7 @@ namespace bsf
 	{
 	public:
 		FadeTask(glm::vec4 fromColor, glm::vec4 toColor, float duration);
+
 	private:
 		float m_Time, m_Duration;
 		glm::vec4 m_FromColor, m_ToColor;
@@ -70,6 +88,7 @@ namespace bsf
 	{
 	public:
 		WaitForTask(float seconds);
+
 	private:
 		float m_Duration, m_Time;
 	};
@@ -78,19 +97,19 @@ namespace bsf
 	{
 	public:
 		Scene() = default;
-		Scene(Scene&&) = delete;
+		Scene(Scene &&) = delete;
 
 		virtual ~Scene();
 		virtual void OnAttach();
-		virtual void OnRender(const Time& time);
+		virtual void OnRender(const Time &time);
 		virtual void OnDetach();
 
-		Application& GetApplication();
+		Application &GetApplication();
 
-		void ScheduleTask(ESceneTaskEvent evt, const Ref<SceneTask>& task);
+		void ScheduleTask(ESceneTaskEvent evt, const Ref<SceneTask> &task);
 
-		template<typename T, typename ... Args>
-		Ref<std::enable_if_t<std::is_base_of_v<SceneTask, T>, T>> ScheduleTask(ESceneTaskEvent evt, Args&&... args)
+		template <typename T, typename... Args>
+		Ref<std::enable_if_t<std::is_base_of_v<SceneTask, T>, T>> ScheduleTask(ESceneTaskEvent evt, Args &&... args)
 		{
 			auto task = MakeRef<T>(std::forward<Args>(args)...);
 			ScheduleTask(evt, task);
@@ -100,7 +119,7 @@ namespace bsf
 	private:
 		friend class Application;
 		std::unordered_map<ESceneTaskEvent, std::list<Ref<SceneTask>>> m_ScheduledTasks;
-		Application* m_App = nullptr;
+		Application *m_App = nullptr;
 	};
 
-}
+} // namespace bsf

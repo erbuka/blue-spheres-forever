@@ -74,5 +74,8 @@ namespace bsf
 		constexpr glm::vec4 RedSphere = Red;
 		constexpr glm::vec4 YellowSphere = Yellow;
 		constexpr glm::vec4 Ring = { glm::vec3(0.83f, 0.69f, 0.22f), 1.0f };
+
+		constexpr glm::vec4 DarkGray = ToColor(0xff121212);
+		constexpr glm::vec4 LightGray = ToColor(0xff333333);
 	}
 }
