@@ -588,6 +588,11 @@ namespace bsf
 					if (m_Stage.IsPerfect())
 						GameAction.Emit({ EGameAction::Perfect });
 				}
+				else if (object == EStageObject::GreenSphere)
+				{
+					GameAction.Emit({ EGameAction::GreenSphereCollected });
+					m_Stage.SetValueAt(roundedPosition, EStageObject::BlueSphere);
+				}
 
 			}
 

@@ -198,6 +198,7 @@ namespace bsf
 				std::make_tuple(StageEditorTool::BlueSphere,	AssetName::TexUISphere,			Colors::BlueSphere),
 				std::make_tuple(StageEditorTool::RedSphere,		AssetName::TexUISphere,			Colors::RedSphere),
 				std::make_tuple(StageEditorTool::YellowSphere,	AssetName::TexUISphere,			Colors::YellowSphere),
+				std::make_tuple(StageEditorTool::GreenSphere,	AssetName::TexUISphere,			Colors::GreenSphere),
 				std::make_tuple(StageEditorTool::Bumper,		AssetName::TexUISphere,			Colors::White),
 				std::make_tuple(StageEditorTool::Ring,			AssetName::TexUIRing,			Colors::Ring),
 				std::make_tuple(StageEditorTool::AvoidSearch,	AssetName::TexUIAvoidSearch,	Colors::White),
@@ -968,12 +969,14 @@ namespace bsf
 			{ StageEditorTool::RedSphere,		EStageObject::RedSphere },
 			{ StageEditorTool::YellowSphere,	EStageObject::YellowSphere },
 			{ StageEditorTool::Bumper,			EStageObject::Bumper },
-			{ StageEditorTool::Ring,			EStageObject::Ring }
+			{ StageEditorTool::Ring,			EStageObject::Ring },
+			{ StageEditorTool::GreenSphere,		EStageObject::GreenSphere}
 		};
 
 		m_StageObjRendering = {
 			{ EStageObject::BlueSphere,		{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::BlueSphere }},
 			{ EStageObject::RedSphere,		{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::RedSphere }},
+			{ EStageObject::GreenSphere,	{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::GreenSphere }},
 			{ EStageObject::YellowSphere,	{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::YellowSphere }},
 			{ EStageObject::Bumper,			{ assets.Get<Texture2D>(AssetName::TexUISphere),	Colors::White }},
 			{ EStageObject::Ring,			{ assets.Get<Texture2D>(AssetName::TexUIRing),		Colors::Ring }}

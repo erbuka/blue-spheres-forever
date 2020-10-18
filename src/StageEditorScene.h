@@ -33,6 +33,7 @@ namespace bsf
 		BlueSphere,
 		RedSphere,
 		YellowSphere,
+		GreenSphere,
 		Bumper,
 		Ring,
 		AvoidSearch,

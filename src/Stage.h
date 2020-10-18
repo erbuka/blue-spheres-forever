@@ -28,7 +28,8 @@ namespace bsf
 		BlueSphere = 2,
 		Bumper = 3,
 		Ring = 4,
-		YellowSphere = 5
+		YellowSphere = 5,
+		GreenSphere = 6
 	};
 
 	enum class EFloorRenderingMode : uint8_t

@@ -335,6 +335,13 @@ namespace bsf
 							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::YellowSphere));
 							modSphere->DrawArrays(GL_TRIANGLES);
 							break;
+						case EStageObject::GreenSphere:
+							m_pPBR->UniformTexture("uMap", texWhite);
+							m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
+							m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
+							m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::GreenSphere));
+							modSphere->DrawArrays(GL_TRIANGLES);
+							break;
 						case EStageObject::Bumper:
 							m_pPBR->UniformTexture("uMap", texBumper);
 							m_pPBR->UniformTexture("uMetallic", texBumperMetallic);
@@ -550,6 +557,13 @@ namespace bsf
 								m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
 								m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
 								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::YellowSphere));
+								modSphere->DrawArrays(GL_TRIANGLES);
+								break;
+							case EStageObject::GreenSphere:
+								m_pPBR->UniformTexture("uMap", texWhite);
+								m_pPBR->UniformTexture("uMetallic", texSphereMetallic);
+								m_pPBR->UniformTexture("uRoughness", texSphereRoughness);
+								m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(Colors::GreenSphere));
 								modSphere->DrawArrays(GL_TRIANGLES);
 								break;
 							case EStageObject::Bumper:
@@ -857,6 +871,7 @@ namespace bsf
 			assets.Get<Audio>(AssetName::SfxPerfect)->Play();
 			m_GameMessages.emplace_back("Perfect");
 			break;
+		case EGameAction::GreenSphereCollected:
 		case EGameAction::BlueSphereCollected:
 			assets.Get<Audio>(AssetName::SfxBlueSphere)->Play();
 			break;

@@ -30,6 +30,7 @@ namespace bsf
 		GoForward,
 		RingCollected,
 		BlueSphereCollected,
+		GreenSphereCollected,
 		HitBumper,
 		Perfect,
 		GameSpeedUp
