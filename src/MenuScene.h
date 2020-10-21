@@ -11,11 +11,6 @@
 #include "StageCodeHelper.h"
 #include "MatrixStack.h"
 
-/*
-	TODO Probaly I should implement mouse input here. It's going to be a bit tricky because I didn't
-	think I was going to do this, but it would be weird to have mouse input in the stage editor and not
-	have it in the main menus. 
-*/
 namespace bsf
 {
 
@@ -122,7 +117,7 @@ namespace bsf
 	{
 	public:
 		template<typename T, typename ...Args>
-		Ref<std::enable_if_t<std::is_base_of_v<MenuItem, T>, T>> AddItem(Args... args)
+		Ref<std::enable_if_t<std::is_base_of_v<MenuItem, T>, T>> AddItem(Args&&... args)
 		{
 			auto item = MakeRef<T>(std::forward<Args>(args)...);
 			m_Children.push_back(item);

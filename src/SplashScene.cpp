@@ -239,6 +239,31 @@ namespace bsf
 
 	void SplashScene::DrawTitle(Renderer2D &r2, const Time &time)
 	{
+		auto& assets = Assets::GetInstance();
+		auto font = assets.Get<Font>(AssetName::FontMain);
+		auto texLogo = assets.Get<Texture2D>(AssetName::TexLogo);
+
+		constexpr glm::vec4 s_ShadowColor = { 0.0f, 0.0f, 0.0f, 0.5f };
+
+		const float aspect = (float)texLogo->GetWidth() / texLogo->GetHeight();
+		const float alpha = std::abs(std::sin(time.Elapsed * 5.0f));
+		
+		r2.Pivot(EPivot::Center);
+
+		r2.Push();
+		r2.Texture(texLogo);
+		r2.Scale(5.0f);
+		r2.DrawQuad({ 0.0f, 0.0f }, { aspect, 1.0f });
+		r2.Pop();
+
+		r2.Push();
+		r2.Translate({ 0.0f, -2.5f });
+		r2.Color(glm::vec4(1.0f, 1.0f, 1.0f, alpha));
+		r2.TextShadowColor(s_ShadowColor * alpha);
+		r2.DrawStringShadow(font, "Press Start");
+		r2.Pop();
+
+		/*
 		auto &assets = Assets::GetInstance();
 		auto &font = assets.Get<Font>(AssetName::FontMain);
 
@@ -274,6 +299,7 @@ namespace bsf
 		r2.Color(glm::vec4(1.0f, 1.0f, 1.0f, alpha));
 		r2.TextShadowColor(s_ShadowColor * alpha);
 		r2.DrawStringShadow(font, "Press Start");
+		*/
 	}
 
 } // namespace bsf

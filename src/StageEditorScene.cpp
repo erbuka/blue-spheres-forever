@@ -484,10 +484,7 @@ namespace bsf
 		m_Children.push_back(child);
 	}
 
-	void UIPanel::RemoveChild(const Ref<UIElement>& child)
-	{
 
-	}
 
 
 	void UIPanel::Update(const UIRoot& root, const Time& time)
@@ -707,6 +704,8 @@ namespace bsf
 
 	void UIRoot::Attach(Application& app)
 	{
+		m_App = &app;
+
 		AddSubscription(app.CharacterTyped, [&](const CharacterTypedEvent& evt) {
 			if (m_FocusedControl)
 				m_FocusedControl->CharacterTyped.Emit(evt);
@@ -871,7 +870,10 @@ namespace bsf
 		
 		for (auto& layer : m_Layers)
 		{
-			layer->Traverse([&](UIElement& el) { el.m_Style = &m_Style; });
+			layer->Traverse([&](UIElement& el) { 
+				el.m_Style = &m_Style;
+				el.m_App = m_App;
+			});
 			layer->Update(*this, time);
 			layer->UpdateBounds(*this, { 0.0f, 0.0f }, viewport);
 			layer->Render(*this, r2, time);
@@ -994,7 +996,7 @@ namespace bsf
 			{
 				const auto& stageCoords = stageCoordsOpt.value();
 
-				if (evt.Button == MouseButton::Left)
+				if (evt.Button == MouseButton::Left && !GetApplication().GetKeyPressed(GLFW_KEY_SPACE))
 				{
 					if (auto obj = s_toolMap.find(ActiveTool); obj != s_toolMap.end())
 					{
@@ -1028,7 +1030,7 @@ namespace bsf
 		AddSubscription(MouseClicked, editCallback);
 		AddSubscription(MouseDragged, editCallback);
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
-			if (evt.Button == MouseButton::Middle)
+			if (evt.Button == MouseButton::Middle || (evt.Button == MouseButton::Left && GetApplication().GetKeyPressed(GLFW_KEY_SPACE)))
 				m_ViewOrigin -= glm::vec2(evt.DeltaX, evt.DeltaY) / m_Zoom;
 		});
 

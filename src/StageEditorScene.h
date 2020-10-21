@@ -170,6 +170,7 @@ namespace bsf
 		void Traverse(const std::function<void(UIElement&)>& action);
 
 		const UIStyle& GetStyle() const { return *m_Style; }
+		const Application& GetApplication() const { return *m_App; }
 
 	private:
 		friend class UIRoot;
@@ -177,6 +178,7 @@ namespace bsf
 		
 		std::underlying_type_t<UIElementFlags> m_Flags;
 		UIStyle* m_Style = nullptr;
+		Application* m_App = nullptr;
 		uint32_t m_Id;
 	};
 
@@ -203,6 +205,8 @@ namespace bsf
 	private:
 
 		static constexpr auto s_ClickDelay = std::chrono::milliseconds(250);
+
+		Application* m_App = nullptr;
 
 		UIStyle m_Style;
 
@@ -261,7 +265,6 @@ namespace bsf
 		bool HasShadow = false;
 
 		void AddChild(const Ref<UIElement>& child);
-		void RemoveChild(const Ref<UIElement>& child);
 
 		void Update(const UIRoot& root, const Time& time) override;
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;

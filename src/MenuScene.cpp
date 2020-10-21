@@ -99,7 +99,7 @@ namespace bsf
 	{
 		auto& assets = Assets::GetInstance();
 		auto& r2 = GetApplication().GetRenderer2D();
-		auto& font = assets.Get<Font>(AssetName::FontMain);
+		auto font = assets.Get<Font>(AssetName::FontMain);
 		auto windowSize = GetApplication().GetWindowSize();
 
 		float height = s_VirtualHeight;
@@ -219,11 +219,11 @@ namespace bsf
 			case GLFW_KEY_UP: m_MenuRoot.OnDirectionInput(Direction::Up); break;
 			case GLFW_KEY_DOWN: m_MenuRoot.OnDirectionInput(Direction::Down); break;
 			case GLFW_KEY_ENTER: m_MenuRoot.OnConfirm(); break;
-			default:
-				if (!evt.Repeat)
-					m_MenuRoot.OnKeyTyped(evt.KeyCode);
-				break;
 			}
+		});
+
+		AddSubscription(app.CharacterTyped, [&](const CharacterTypedEvent& evt) {
+			m_MenuRoot.OnKeyTyped(evt.Character);
 		});
 
 	}

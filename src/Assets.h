@@ -16,6 +16,8 @@ namespace bsf
 		TexBlack,
 		TexTransparent,
 
+		TexLogo,
+
 		TexBumper,
 		TexBumperMetallic,
 		TexBumperRoughness,

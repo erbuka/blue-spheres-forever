@@ -29,8 +29,6 @@ namespace bsf
 		auto irr = GenerateIrradiance(env, 32);
 		return Ref<Sky>(new Sky(env, irr));
 	}
-
-
 	
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	

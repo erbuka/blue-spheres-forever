@@ -46,6 +46,9 @@ namespace bsf
 
 
 		// Textures
+
+		m_Assets[AssetName::TexLogo] = loadTex2D("assets/textures/bs.png");
+
 		m_Assets[AssetName::TexWhite] = MakeRef<Texture2D>(0xffffffff);
 		m_Assets[AssetName::TexBlack] = MakeRef<Texture2D>(0xff000000);
 		m_Assets[AssetName::TexTransparent] = MakeRef<Texture2D>(0);
