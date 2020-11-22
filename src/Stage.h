@@ -38,9 +38,6 @@ namespace bsf
 		Texture = 1
 	};
 
-
-
-
 	class StageGenerator : public Asset
 	{
 	public:

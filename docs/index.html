@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/styles.css">
+    <title>Blue Spheres Forever</title>
+</head>
+
+<body>
+    <div class="bsf-menu">
+        <a href="#home">Home</a>
+        <a href="#downloads">Downloads</a>
+        <a href="#how-to-play">How to play</a>
+    </div>
+    <div class="bsf-splash">
+        <h1 class="bsf-title"> Blue Spheres Forever</h1>
+        <h2 class="bsf-subtitle">A fan remake of Sonic 3's Special stage</h2>
+    </div>
+    <main class="container">
+        <div id="home"></div>
+        <section>
+            <h2 class="text-center">Home</h2>
+            <p>
+                Hi everybody! So, if you got here, you probably know what this site is about. Yes, this is a little
+                project
+                that tries to recreate the very popular special stages of Sonic 3 and Sonic&Knuckles. The main goal is
+                to
+                maintain the old but great gameplay, and give the game a new look and feel.
+            </p>
+            <p>
+                This was the original project... Then I accidentally discovered that secret "Blue Spheres" minigame, and
+                decided to put all toghether. And so, here we are.
+            </p>
+        </section>
+
+        <div id="downloads"></div>
+        <section class="bsf-downloads">
+            <h2 class="text-center">Downloads</h2>
+            <div class="bsf-download">
+                <div class="bsf-download-links">
+                    <a href="#">Windows</a>
+                </div>
+                <div>Version 2.0.0 Alpha</div>
+            </div>
+            <div class="bsf-download">
+                <div class="bsf-download-links">
+                    <a href="#">Windows</a>
+                </div>
+                <div>Version 1.0.3</div>
+            </div>
+            <div class="bsf-download">
+                <div class="bsf-download-links">
+                    <a href="#">Windows</a>
+                </div>
+                <div>Version 1.0.2</div>
+            </div>
+        </section>
+
+        <div id="how-to-play"></div>
+        <section class="bsf-how-to-play">
+            <h2 class="text-center">How to play</h2>
+            <p>In every level you will find the following objects:</p>
+            <ul class="bsf-stage-objects">
+                <li>
+                    <div class="bsf-stage-item" style="background-image: url(images/blue-sphere.png);"></div> Collect
+                    all the blue spheres to complete the level. Each time you hit one of these, it becomes red. You can
+                    turn blue spheres into rings by surrounding them.
+                </li>
+                <li>
+                    <div class="bsf-stage-item" style="background-image: url(images/red-sphere.png);"></div>
+                    Avoid red spheres! If you hit one, the game is over.
+                </li>
+                <li>
+                    <div class="bsf-stage-item" style="background-image: url(images/bumper.png);"></div>
+                    Bumpers will make you run backward (or forward if you were already running backward).
+                </li>
+                <li>
+                    <div class="bsf-stage-item" style="background-image: url(images/ring.png);"></div>
+                    Collect all the rings in a level to get the "Perfect" bonus.
+                </li>
+                <li>
+                    <div class="bsf-stage-item" style="background-image: url(images/yellow-sphere.png);"></div>
+                    Yellow spheres will make you jump 6 tiles forward.
+                </li>
+                <li>
+                    <div class="bsf-stage-item" style="background-image: url(images/green-sphere.png);"></div>
+                    (Custom mode only) Green spheres will turn into blue spheres when hit.
+                </li>
+            </ul>
+            <p>There are two game modes available:</p>
+            <ul>
+                <li>Classic mode - This is the classic Blue Spheres play. You will start from level 1, and each time you
+                    complete a stage, you will advance to the next.
+                    If you get the "Perfect" bonus, you will advance by 10 levels.</li>
+                <li>Custom mode - In this mode you'll be able to play your
+                    own stages that you can build with the included level editor. When you first install the game, the
+                    custom levels are the 16 original special stages from Sonic 3 and Sonic&Knuckles.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <script lanugage="javascript" src="js/jquery.min.js"></script>
+    <script lanugage="javascript" src="js/main.js"></script>
+    <script language="javascript">bsf.setupMenu();</script>
+</body>
+
+</html>

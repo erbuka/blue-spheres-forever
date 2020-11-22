@@ -1,0 +1,1 @@
+window.bsf={setupMenu:function(){const s=$(".bsf-menu"),n=function(){window.scrollY<50&&!s.hasClass("bsf-transparent")?s.addClass("bsf-transparent"):window.scrollY>=50&&s.hasClass("bsf-transparent")&&s.removeClass("bsf-transparent")};n(),window.addEventListener("scroll",n)}};

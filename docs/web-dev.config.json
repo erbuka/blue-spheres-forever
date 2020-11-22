@@ -1,0 +1,19 @@
+{
+    "tasks": [
+        {
+            "type" : "scss",
+            "src": "./_develop/scss",
+            "dst": "./css"
+        },
+        {
+            "type" : "js",
+            "src": "./_develop/js",
+            "dst": "./js"
+        },
+        {
+            "type" : "ncp",
+            "src" : "./node_modules/jquery/dist/jquery.min.js",
+            "dst" : "./js/jquery.min.js"
+        }
+    ]
+}
