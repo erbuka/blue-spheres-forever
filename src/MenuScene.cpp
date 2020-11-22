@@ -80,12 +80,29 @@ namespace bsf
 		return m_Options[m_SelectedOption].second;
 	}
 
+	template<typename T>
+	void SelectMenuItem<T>::SetSelectedOption(const T& val)
+	{
+		for (size_t i = 0; i < m_Options.size(); ++i)
+		{
+			if (m_Options[i].second == val)
+			{
+				m_SelectedOption = i;
+				return;
+			}
+		}
 
+		BSF_ERROR("Menu option not found");
+
+	}
 
 	void MenuScene::OnAttach()
 	{
 		// Textures
 		m_txBackground = CreateCheckerBoard({ ToHexColor(Colors::DarkGray), ToHexColor(Colors::LightGray) });
+
+		// Config
+		m_Config = Config::Load();
 
 		// Menus
 		BuildMenus();
@@ -147,8 +164,6 @@ namespace bsf
 	{
 		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->FadeOut(0.5f);
 	}
-
-
 	
 	void MenuScene::BuildMenus()
 	{
@@ -156,6 +171,7 @@ namespace bsf
 		auto mainMenu = MakeRef<Menu>();
 		auto playMenu = MakeRef<Menu>();
 		auto customStagesMenu = MakeRef<Menu>();
+		auto optionsMenu = MakeRef<Menu>();
 
 		auto backFn = [&](MenuRoot& root) { root.PopMenu(); return true; };
 
@@ -198,9 +214,31 @@ namespace bsf
 
 		customStagesMenu->AddItem<ButtonMenuItem>("Back")->SetConfirmFunction(backFn);
 
+		m_DisplayModeMenuItem = optionsMenu->AddItem<SelectMenuItem<DisplayModeDescriptor>>("Display Mode");
+		m_FullscreenMenuItem = optionsMenu->AddItem<SelectMenuItem<bool>>("Fullscreen");
+		optionsMenu->AddItem<ButtonMenuItem>("Back")->SetConfirmFunction([&](MenuRoot& root) {
+			m_Config.DisplayMode = m_DisplayModeMenuItem->GetSelectedOption();
+			m_Config.Fullscreen = m_FullscreenMenuItem->GetSelectedOption();
+			m_Config.Save();
+			GetApplication().LoadConfig();
+			root.PopMenu();
+			return true;
+		});
 
+		m_FullscreenMenuItem->AddOption("Yes", true);
+		m_FullscreenMenuItem->AddOption("No", false);
+
+		m_FullscreenMenuItem->SetSelectedOption(m_Config.Fullscreen);
+
+		for (auto& mode : GetDisplayModes())
+			m_DisplayModeMenuItem->AddOption(mode.ToString(), mode);
+
+		m_DisplayModeMenuItem->SetSelectedOption(m_Config.DisplayMode);
+		
+			
 		mainMenu->AddItem<LinkMenuItem>("Classic Mode", playMenu);
 		mainMenu->AddItem<LinkMenuItem>("Custom Stages", customStagesMenu);
+		mainMenu->AddItem<LinkMenuItem>("Options", optionsMenu);
 
 		mainMenu->AddItem<ButtonMenuItem>("Exit")->SetConfirmFunction([&](MenuRoot&) {
 			GetApplication().Exit();
@@ -439,6 +477,7 @@ namespace bsf
 			}
 
 		}
+
 		return true;
 	}
 

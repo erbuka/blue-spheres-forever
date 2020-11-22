@@ -1,0 +1,5 @@
+- [X] ~~*Configuration file*~~ [2020-11-22]
+- [X] ~~*options*~~ [2020-11-22]
+  - [X] ~~*Display mode*~~ [2020-11-22]
+  - [X] ~~*Fullscreen*~~ [2020-11-22]
+- [ ] Distribution mode no console + log on file

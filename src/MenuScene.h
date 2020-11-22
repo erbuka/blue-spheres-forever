@@ -10,6 +10,7 @@
 #include "EventEmitter.h"
 #include "StageCodeHelper.h"
 #include "MatrixStack.h"
+#include "Config.h"
 
 namespace bsf
 {
@@ -88,6 +89,7 @@ namespace bsf
 
 		void AddOption(const std::string& caption, const T& value);
 		const T& GetSelectedOption();
+		void SetSelectedOption(const T& val);
 
 	private:
 		uint32_t m_SelectedOption;
@@ -171,10 +173,14 @@ namespace bsf
 		void BuildMenus();
 		void PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo);
 
+		Config m_Config;
 		MenuRoot m_MenuRoot;
 		Ref<SelectMenuItem<std::string>> m_SelectStageMenuItem;
+		Ref<SelectMenuItem<DisplayModeDescriptor>> m_DisplayModeMenuItem;
+		Ref<SelectMenuItem<bool>> m_FullscreenMenuItem;
 		Ref<StageCodeMenuItem> m_StageCodeMenuItem;
 		Ref<Texture2D> m_txBackground;
+
 	};
 
 

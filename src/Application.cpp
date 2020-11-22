@@ -6,7 +6,7 @@
 #include "Renderer2D.h"
 #include "Audio.h"
 #include "Diagnostic.h"
-
+#include "Config.h"
 
 namespace bsf
 {
@@ -131,7 +131,7 @@ namespace bsf
             return;
         }
 
-        m_Window = glfwCreateWindow(1280, 780, "Blue Spheres Forever", NULL, NULL);
+        m_Window = glfwCreateWindow(640, 480, "Blue Spheres Forever", NULL, NULL);
         
         if (!m_Window)
         {
@@ -139,10 +139,12 @@ namespace bsf
             glfwTerminate();
         }
 
+
         glfwMakeContextCurrent(m_Window);
 
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+        LoadConfig();
         // Setup GLFW callbacks
         glfwSetWindowUserPointer(m_Window, this);
 
@@ -250,6 +252,21 @@ namespace bsf
     AudioDevice& bsf::Application::GetAudioDevice()
     {
         return *(m_AudioDevice.get());
+    }
+
+    void bsf::Application::LoadConfig()
+    {
+        auto config = Config::Load();
+
+        if (config.Fullscreen)
+        {
+            glfwSetWindowMonitor(m_Window, glfwGetPrimaryMonitor(), 100, 100, config.DisplayMode.Width, config.DisplayMode.Height, GLFW_DONT_CARE);
+        }
+        else
+        {
+            glfwSetWindowMonitor(m_Window, NULL, 100, 100, config.DisplayMode.Width, config.DisplayMode.Height, GLFW_DONT_CARE);
+        }
+
     }
 
 
