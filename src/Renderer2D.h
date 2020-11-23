@@ -77,7 +77,7 @@ namespace bsf
 	private:
 		std::string m_PlainText;
 		std::vector<Character> m_Characters;
-		std::optional<glm::vec4> m_CurrentColor;
+		std::optional<glm::vec4> m_CurrentColor = std::nullopt;
 	};
 
 	class Renderer2D

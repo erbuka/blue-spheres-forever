@@ -125,17 +125,6 @@ namespace bsf
 		}
 	}
 
-	
-	void Texture2D::SetAnisotropy(float value)
-	{
-		float max = 0.0f;
-		BSF_GLCALL(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max));
-		
-		BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Id));
-		BSF_GLCALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(max, value)));
-
-
-	}
 
 	void Texture2D::Bind(uint32_t textureUnit) const
 	{

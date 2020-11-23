@@ -2,4 +2,8 @@
 - [X] ~~*options*~~ [2020-11-22]
   - [X] ~~*Display mode*~~ [2020-11-22]
   - [X] ~~*Fullscreen*~~ [2020-11-22]
-- [ ] Distribution mode no console + log on file
+- [X] ~~*Distribution mode no console + log on file*~~ [2020-11-23]
+- Video recording
+  - Generic gameplay
+  - Green spheres
+  - New level editor + big levels

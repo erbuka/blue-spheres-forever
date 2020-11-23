@@ -75,6 +75,12 @@ namespace bsf
 	{
 		Trim(m_CurrentStage->Name);
 
+		if (m_CurrentStage->Name.empty())
+		{
+			m_uiRoot->ShowToast({ FormattedString().Add("Error: ").Add("Stage doesn't have a name") });
+			return;
+		}
+
 		if (m_CurrentStageFile.has_value())
 		{
 			m_CurrentStage->Save(m_CurrentStageFile.value());

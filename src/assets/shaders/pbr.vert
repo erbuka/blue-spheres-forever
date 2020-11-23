@@ -1,4 +1,4 @@
-#version 330 core
+#version 330
 
 uniform mat4 uProjection;
 uniform mat4 uView;

@@ -100,7 +100,6 @@ namespace bsf
 
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
 
-		void SetAnisotropy(float value);
 		void Bind(uint32_t textureUnit) const override;
 
 		void GenerateMipmaps();

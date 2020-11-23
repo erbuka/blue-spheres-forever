@@ -129,7 +129,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;BSF_DISTRIBUTION;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -215,6 +215,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\GLTF.cpp" />
     <ClCompile Include="..\src\GameLogic.cpp" />
     <ClCompile Include="..\src\GameScene.cpp" />
+    <ClCompile Include="..\src\Log.cpp" />
     <ClCompile Include="..\src\Main.cpp" />
     <ClCompile Include="..\src\MatrixStack.cpp" />
     <ClCompile Include="..\src\MenuScene.cpp" />

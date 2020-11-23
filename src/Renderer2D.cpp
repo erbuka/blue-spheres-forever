@@ -16,7 +16,7 @@ static constexpr uint32_t s_MaxTextureUnits = 32;
 
 static const std::string s_VertexSource = R"VERTEX(
 
-	#version 330 core
+	#version 330
 
 	uniform mat4 uProjection;
 
@@ -48,7 +48,7 @@ static const std::string s_VertexSource = R"VERTEX(
 
 static const std::string s_FragmentSource = R"FRAGMENT(
 	
-	#version 330 core
+	#version 330
 
 	uniform sampler2D uTextures[32];
 

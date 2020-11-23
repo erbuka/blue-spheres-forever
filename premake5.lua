@@ -15,7 +15,7 @@ workspace "BlueSpheresForever"
         optimize "On"
     
     filter "configurations:Distribution"
-        defines { "NDEBUG" }
+        defines { "NDEBUG", "BSF_DISTRIBUTION" }
         symbols "Off"
         optimize "On"
         

@@ -296,7 +296,6 @@ namespace bsf
 		}
 	}
 
-
 	void MenuRoot::OnKeyTyped(int32_t keyCode)
 	{
 		assert(m_MenuStack.size() > 0);
