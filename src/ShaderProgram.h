@@ -58,9 +58,19 @@ namespace bsf
 		void UniformTexture(const std::string name, const Ref<T>& texture)
 		{
 			static_assert(std::is_base_of_v<Texture, T>);
-			uint32_t texUnit = m_UniformInfo.at(name).TextureUnit;
-			Uniform1i(name, { (int32_t)texUnit });
-			texture->Bind(texUnit);
+			
+			auto info = m_UniformInfo.find(name);
+
+			if (info != m_UniformInfo.end())
+			{
+				uint32_t texUnit = info->second.TextureUnit;
+				Uniform1i(name, { (int32_t)texUnit });
+				texture->Bind(texUnit);
+				return;
+			}
+			
+			BSF_ERROR("Couldn't find uniform texture: {0}", name);
+
 		}
 
 		uint32_t GetId() const { return m_Id; }
