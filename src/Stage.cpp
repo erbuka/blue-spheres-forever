@@ -609,7 +609,10 @@ namespace bsf
 		/* If the stage is <= 0, we add the max_stage (cyclic stages) */
 		stage %= s_MaxStage;
 
-		/* Checking that the given code is fully correct. If not, return -1 (invalid code) */
+		/*
+			Extra safety check
+			Checking that the given code is fully correct. If not, return -1 (invalid code) 
+		*/
 		if (GetCodeFromStage(stage) != code) {
 			BSF_ERROR("Invalid stage code: {0}", code);
 			return std::nullopt;

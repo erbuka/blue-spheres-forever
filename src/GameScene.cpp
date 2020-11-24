@@ -272,7 +272,6 @@ namespace bsf
 				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
 				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
 				m_pPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance());
-				//m_pPBR->UniformTexture("uShadowMap", m_fbShadow->GetColorAttachment("depth"));
 				m_pPBR->UniformTexture("uReflections", texBlack);
 				m_pPBR->UniformTexture("uReflectionsEmission", texBlack);
 
@@ -879,7 +878,6 @@ namespace bsf
 			assets.Get<Audio>(AssetName::SfxBumper)->Play();
 			break;
 		case EGameAction::GameSpeedUp:
-			std::cout << m_GameLogic->GetVelocity() << std::endl;
 			break;
 		default:
 			break;
