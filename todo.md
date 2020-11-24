@@ -3,6 +3,7 @@
   - [X] ~~*Display mode*~~ [2020-11-22]
   - [X] ~~*Fullscreen*~~ [2020-11-22]
 - [X] ~~*Distribution mode no console + log on file*~~ [2020-11-23]
+- [X] ~~*Mouse support for main menu*~~ [2020-11-24]
 - Video recording
   - Generic gameplay
   - Green spheres
