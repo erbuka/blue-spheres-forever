@@ -29,14 +29,20 @@ namespace bsf
 		virtual bool OnConfirm(MenuRoot& root) = 0;
 		virtual bool OnDirectionInput(MenuRoot& root, Direction direction) = 0;
 		virtual bool OnKeyTyped(MenuRoot& root, int32_t keyCode) { return false; }
+		virtual bool OnMouseMoved(MenuRoot& root, const glm::vec2& pos) { return false; }
+		virtual bool OnMouseClicked(MenuRoot& root, const glm::vec2& pos) { return false; }
 		virtual void Render(MenuRoot& root, Renderer2D& renderer) = 0;
-		virtual float GetUIHeight() const { return 1.0f; }
 	};
 
 	class MenuItem : public MenuNode
 	{
 	public:
 		bool Selected = false;
+		Rect Bounds;
+
+		virtual float GetHeight() const = 0;
+		virtual std::string GetCaption() const = 0;
+
 	};
 
 
@@ -52,6 +58,10 @@ namespace bsf
 		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override { return false; }
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
+
+		virtual std::string GetCaption() const override { return Caption; }
+		virtual float GetHeight() const override { return 1.0f; };
+
 	};
 
 
@@ -69,6 +79,10 @@ namespace bsf
 		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override { return false; }
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
+
+		virtual std::string GetCaption() const override { return Caption; }
+		virtual float GetHeight() const override { return 1.0f; };
+
 	private:
 		ConfirmFn m_ConfirmFn = nullptr;
 	};
@@ -82,14 +96,18 @@ namespace bsf
 
 		SelectMenuItem(const std::string& caption);
 
-		bool OnConfirm(MenuRoot& root) override { return false; }
+		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
+
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
-		float GetUIHeight() const override { return 1.5f; }
 
 		void AddOption(const std::string& caption, const T& value);
 		const T& GetSelectedOption();
 		void SetSelectedOption(const T& val);
+
+		virtual std::string GetCaption() const override { return m_Options[m_SelectedOption].first; }
+		virtual float GetHeight() const override { return 1.5f; };
+
 
 	private:
 		uint32_t m_SelectedOption;
@@ -105,9 +123,13 @@ namespace bsf
 		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
 		bool OnKeyTyped(MenuRoot& root, int32_t keyCode) override;
+		bool OnMouseMoved(MenuRoot& root, const glm::vec2& pos) override;
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
-		float GetUIHeight() const override { return 1.5f; }
 		uint64_t GetStageCode() const { return m_CurrentCode; }
+
+		virtual std::string GetCaption() const override { return (std::string)m_CurrentCode; }
+		virtual float GetHeight() const override { return 1.5f; };
+
 
 	private:
 		uint32_t m_CursorPos;
@@ -132,8 +154,10 @@ namespace bsf
 		bool OnConfirm(MenuRoot& root) override;
 		bool OnDirectionInput(MenuRoot& root, Direction direction) override;
 		bool OnKeyTyped(MenuRoot& root, int32_t keyCode) override;
+		bool OnMouseMoved(MenuRoot& root, const glm::vec2& pos) override;
+		bool OnMouseClicked(MenuRoot& root, const glm::vec2& pos) override;
 		void Render(MenuRoot& root, Renderer2D& renderer) override;
-		float GetUIHeight() const override;
+		const std::vector<Ref<MenuItem>>& GetChildren() const { return m_Children; }
 
 	private:
 		Ref<MenuItem> m_SelectedItem = nullptr;
@@ -144,10 +168,13 @@ namespace bsf
 	{
 	public:
 		glm::vec2 ViewportSize = { 0.0f, 0.0f };
+		glm::vec2 WindowSize = { 0.0f, 0.0f };
 
-		void OnConfirm();
-		void OnDirectionInput(Direction direction);
-		void OnKeyTyped(int32_t keyCode);
+		void FireOnConfirm();
+		void FireOnDirectionInput(Direction direction);
+		void FireOnKeyTyped(int32_t keyCode);
+		void FireOnMouseMoved(const glm::vec2& pos);
+		void FireOnMouseClicked(const glm::vec2& pos);
 
 		void PushMenu(const Ref<Menu>& menu);
 		void PopMenu();
@@ -157,6 +184,9 @@ namespace bsf
 		Ref<Menu>& GetCurrentMenu();
 
 	private:
+
+		glm::vec2 WindowToViewport(const glm::vec2& pos) const;
+
 		std::stack<Ref<Menu>> m_MenuStack;
 	};
 

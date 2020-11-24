@@ -20,6 +20,7 @@ namespace bsf
 
 	static constexpr float s_VirtualHeight = 10;
 	static constexpr float s_SidePanelWidth = s_VirtualHeight / 2.0f;
+	static constexpr float s_MenuPadding = s_VirtualHeight / 40.0f;
 
 	static constexpr glm::vec4 s_SelectedMenuColor = Colors::Yellow;
 	static constexpr glm::vec4 s_MenuColor = Colors::White;
@@ -29,6 +30,13 @@ namespace bsf
 	SelectMenuItem<T>::SelectMenuItem(const std::string& caption) :
 		Caption(caption), m_SelectedOption(0)
 	{
+	}
+
+	template<typename T>
+	bool SelectMenuItem<T>::OnConfirm(MenuRoot& root)
+	{
+		m_SelectedOption = (m_SelectedOption + 1) % m_Options.size();
+		return true;
 	}
 
 	template<typename T>
@@ -58,14 +66,15 @@ namespace bsf
 		auto color = Selected ? s_SelectedMenuColor : s_MenuColor;
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 
-		renderer.Push();
-		renderer.Scale({ 0.5f, 0.5f });
+
 		renderer.Color(color);
+		renderer.DrawStringShadow(font, m_Options[m_SelectedOption].first, Bounds.Position);
+		renderer.Push();
+		renderer.Translate(Bounds.Position + glm::vec2(0.0f, 1.0f));
+		renderer.Scale({ 0.5f, 0.5f });
 		renderer.DrawStringShadow(font, Caption);
-		renderer.Translate({ 0.0f, -1.0f });
-		renderer.Scale({ 2.0f, 2.0f });
-		renderer.DrawStringShadow(font, m_Options[m_SelectedOption].first);
 		renderer.Pop();
+
 	}
 
 	template<typename T>
@@ -156,6 +165,7 @@ namespace bsf
 
 		// Draw Menus
 		m_MenuRoot.ViewportSize = { width, height };
+		m_MenuRoot.WindowSize = windowSize;
 		m_MenuRoot.Render(r2);
 		r2.End();
 	}
@@ -252,18 +262,26 @@ namespace bsf
 		AddSubscription(app.KeyPressed, [&](const KeyPressedEvent& evt) {
 			switch (evt.KeyCode)
 			{
-			case GLFW_KEY_LEFT: m_MenuRoot.OnDirectionInput(Direction::Left); break;
-			case GLFW_KEY_RIGHT: m_MenuRoot.OnDirectionInput(Direction::Right); break;
-			case GLFW_KEY_UP: m_MenuRoot.OnDirectionInput(Direction::Up); break;
-			case GLFW_KEY_DOWN: m_MenuRoot.OnDirectionInput(Direction::Down); break;
-			case GLFW_KEY_ENTER: m_MenuRoot.OnConfirm(); break;
+			case GLFW_KEY_LEFT: m_MenuRoot.FireOnDirectionInput(Direction::Left); break;
+			case GLFW_KEY_RIGHT: m_MenuRoot.FireOnDirectionInput(Direction::Right); break;
+			case GLFW_KEY_UP: m_MenuRoot.FireOnDirectionInput(Direction::Up); break;
+			case GLFW_KEY_DOWN: m_MenuRoot.FireOnDirectionInput(Direction::Down); break;
+			case GLFW_KEY_ENTER: m_MenuRoot.FireOnConfirm(); break;
 			}
 		});
 
 		AddSubscription(app.CharacterTyped, [&](const CharacterTypedEvent& evt) {
-			m_MenuRoot.OnKeyTyped(evt.Character);
+			m_MenuRoot.FireOnKeyTyped(evt.Character);
 		});
 
+
+		AddSubscription(app.MouseMoved, [&](const MouseEvent& evt) {
+			m_MenuRoot.FireOnMouseMoved({ evt.X, evt.Y });
+		});
+
+		AddSubscription(app.MousePressed, [&](const MouseEvent& evt) {
+			m_MenuRoot.FireOnMouseClicked({ evt.X, evt.Y });
+		});
 	}
 
 	void MenuScene::PlayStage(const Ref<Stage>& stage, const GameInfo& gameInfo)
@@ -278,7 +296,7 @@ namespace bsf
 		ScheduleTask(ESceneTaskEvent::PostRender, fadeTask);
 	}
 
-	void MenuRoot::OnConfirm()
+	void MenuRoot::FireOnConfirm()
 	{
 		assert(m_MenuStack.size() > 0);
 		if (m_MenuStack.top()->OnConfirm(*this))
@@ -287,7 +305,7 @@ namespace bsf
 		}
 	}
 
-	void MenuRoot::OnDirectionInput(Direction direction)
+	void MenuRoot::FireOnDirectionInput(Direction direction)
 	{
 		assert(m_MenuStack.size() > 0);
 		if (m_MenuStack.top()->OnDirectionInput(*this, direction))
@@ -296,7 +314,7 @@ namespace bsf
 		}
 	}
 
-	void MenuRoot::OnKeyTyped(int32_t keyCode)
+	void MenuRoot::FireOnKeyTyped(int32_t keyCode)
 	{
 		assert(m_MenuStack.size() > 0);
 
@@ -304,6 +322,19 @@ namespace bsf
 		{
 			Assets::GetInstance().Get<Audio>(AssetName::SfxMenu)->Play();
 		}
+	}
+
+	void MenuRoot::FireOnMouseMoved(const glm::vec2& pos)
+	{
+		assert(m_MenuStack.size() > 0);
+		m_MenuStack.top()->OnMouseMoved(*this, WindowToViewport(pos));
+	}
+
+	void MenuRoot::FireOnMouseClicked(const glm::vec2& pos)
+	{
+		assert(m_MenuStack.size() > 0);
+		m_MenuStack.top()->OnMouseClicked(*this, WindowToViewport(pos));
+		BSF_INFO("Click");
 	}
 
 	void MenuRoot::PushMenu(const Ref<Menu>& menu)
@@ -317,22 +348,40 @@ namespace bsf
 		m_MenuStack.pop();
 	}
 
+
 	void MenuRoot::Render(Renderer2D& renderer)
 	{
 		assert(m_MenuStack.size() > 0);
 		auto& currentMenu = m_MenuStack.top();
-		renderer.Push();
-		renderer.Translate({ s_SidePanelWidth + 1.5f, ViewportSize.y - 1.5f });
-		renderer.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
-		renderer.Pivot(EPivot::Left);
+		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
+
+		const float x = s_SidePanelWidth + 1.5f;
+		float y = ViewportSize.y - s_MenuPadding;
+
+		for (auto& child : currentMenu->GetChildren())
+		{
+			child->Bounds.Position = { x, y - child->GetHeight() };
+			auto caption = child->GetCaption();
+			child->Bounds.Size = { font->GetStringWidth(child->GetCaption()), child->GetHeight() };
+			y -= child->GetHeight() + s_MenuPadding;
+		}
+
+		renderer.Pivot(EPivot::BottomLeft);
 		m_MenuStack.top()->Render(*this, renderer);
-		renderer.Pop();
 	}
 
 	Ref<Menu>& MenuRoot::GetCurrentMenu()
 	{
 		assert(m_MenuStack.size() > 0);
 		return m_MenuStack.top();
+	}
+
+	glm::vec2 MenuRoot::WindowToViewport(const glm::vec2& pos) const
+	{
+		return {
+			pos.x / WindowSize.x * ViewportSize.x,
+			(1.0f - pos.y / WindowSize.y) * ViewportSize.y
+		};
 	}
 
 
@@ -384,25 +433,51 @@ namespace bsf
 		return m_SelectedItem->OnKeyTyped(root, keyCode);
 	}
 
+	bool Menu::OnMouseMoved(MenuRoot& root, const glm::vec2& pos)
+	{
+		bool handled = m_SelectedItem->OnMouseMoved(root, pos);
+
+		if (!handled)
+		{
+			for (auto& child : m_Children)
+			{
+				if (child->Bounds.Contains(pos))
+				{
+					m_SelectedItem = child;
+					handled = true;
+					break;
+				}
+			}
+		}
+
+		return handled;
+	}
+
+	bool Menu::OnMouseClicked(MenuRoot& root, const glm::vec2& pos)
+	{
+		bool handled = m_SelectedItem->OnMouseClicked(root, pos);
+
+		if (!handled)
+		{
+			if (m_SelectedItem->Bounds.Contains(pos))
+			{
+				m_SelectedItem->OnConfirm(root);
+				handled = true;
+			}
+		}
+
+		return handled;
+	}
+
 	void Menu::Render(MenuRoot& root, Renderer2D& renderer)
 	{
-		renderer.Push();
 		for (auto& child : m_Children)
 		{
 			child->Selected = m_SelectedItem == child;
 			child->Render(root, renderer);
-			renderer.Translate({ 0.0f, -child->GetUIHeight() });
 		}
-		renderer.Pop();
 	}
 
-	float Menu::GetUIHeight() const
-	{
-		float result = 0.0f;
-		for (const auto& c : m_Children)
-			result += c->GetUIHeight();
-		return result;
-	}
 
 	LinkMenuItem::LinkMenuItem(const std::string& caption, const Ref<Menu>& linkedMenu) :
 		Caption(caption), LinkedMenu(linkedMenu)
@@ -421,7 +496,7 @@ namespace bsf
 	{
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		renderer.Color(Selected ? s_SelectedMenuColor : s_MenuColor);
-		renderer.DrawStringShadow(font, Caption);
+		renderer.DrawStringShadow(font, Caption, Bounds.Position);
 	}
 
 	ButtonMenuItem::ButtonMenuItem(const std::string& caption) :
@@ -440,7 +515,7 @@ namespace bsf
 	{
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 		renderer.Color(Selected ? s_SelectedMenuColor : s_MenuColor);
-		renderer.DrawStringShadow(font, Caption);
+		renderer.DrawStringShadow(font, Caption, Bounds.Position);
 	}
 
 
@@ -520,6 +595,11 @@ namespace bsf
 		return false;
 	}
 
+	bool StageCodeMenuItem::OnMouseMoved(MenuRoot& root, const glm::vec2& pos)
+	{
+		return m_Input;
+	}
+
 	void StageCodeMenuItem::Render(MenuRoot& root, Renderer2D& renderer)
 	{
 		auto color = Selected ? s_SelectedMenuColor : s_MenuColor;
@@ -542,16 +622,14 @@ namespace bsf
 
 		}
 
-		
-		renderer.Push();
-		renderer.Scale({ 0.5f, 0.5f });
 		renderer.Color(color);
+		renderer.DrawStringShadow(font, codeString, Bounds.Position);
+		renderer.Push();
+		renderer.Translate(Bounds.Position + glm::vec2(0.0f, 1.0f));
+		renderer.Scale(0.5f);
 		renderer.DrawStringShadow(font, "Stage Code");
-		renderer.Translate({ 0.0f, -1.0f });
-		renderer.Scale({ 2.0f, 2.0f });
-		renderer.DrawStringShadow(font, codeString);
-		renderer.Color({ 1.0f, 0.0f, 0.0f, 1.0f });
 		renderer.Pop();
+
 	}
 
 
