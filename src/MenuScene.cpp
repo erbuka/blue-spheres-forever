@@ -20,7 +20,8 @@ namespace bsf
 
 	static constexpr float s_VirtualHeight = 10;
 	static constexpr float s_SidePanelWidth = s_VirtualHeight / 2.0f;
-	static constexpr float s_MenuPadding = s_VirtualHeight / 40.0f;
+	static constexpr float s_MenuPaddingTop = 0.75f;
+	static constexpr float s_MenuPaddingLeft = 1.5f;
 
 	static constexpr glm::vec4 s_SelectedMenuColor = Colors::Yellow;
 	static constexpr glm::vec4 s_MenuColor = Colors::White;
@@ -70,7 +71,7 @@ namespace bsf
 		renderer.Color(color);
 		renderer.DrawStringShadow(font, m_Options[m_SelectedOption].first, Bounds.Position);
 		renderer.Push();
-		renderer.Translate(Bounds.Position + glm::vec2(0.0f, 1.0f));
+		renderer.Translate(Bounds.Position + glm::vec2(0.0f, 0.75f));
 		renderer.Scale({ 0.5f, 0.5f });
 		renderer.DrawStringShadow(font, Caption);
 		renderer.Pop();
@@ -355,15 +356,15 @@ namespace bsf
 		auto& currentMenu = m_MenuStack.top();
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
 
-		const float x = s_SidePanelWidth + 1.5f;
-		float y = ViewportSize.y - s_MenuPadding;
+		const float x = s_SidePanelWidth + s_MenuPaddingLeft;
+		float y = ViewportSize.y - s_MenuPaddingTop;
 
 		for (auto& child : currentMenu->GetChildren())
 		{
 			child->Bounds.Position = { x, y - child->GetHeight() };
 			auto caption = child->GetCaption();
 			child->Bounds.Size = { font->GetStringWidth(child->GetCaption()), child->GetHeight() };
-			y -= child->GetHeight() + s_MenuPadding;
+			y -= child->GetHeight();
 		}
 
 		renderer.Pivot(EPivot::BottomLeft);
@@ -625,7 +626,7 @@ namespace bsf
 		renderer.Color(color);
 		renderer.DrawStringShadow(font, codeString, Bounds.Position);
 		renderer.Push();
-		renderer.Translate(Bounds.Position + glm::vec2(0.0f, 1.0f));
+		renderer.Translate(Bounds.Position + glm::vec2(0.0f, 0.75f));
 		renderer.Scale(0.5f);
 		renderer.DrawStringShadow(font, "Stage Code");
 		renderer.Pop();
