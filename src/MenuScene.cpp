@@ -335,7 +335,6 @@ namespace bsf
 	{
 		assert(m_MenuStack.size() > 0);
 		m_MenuStack.top()->OnMouseClicked(*this, WindowToViewport(pos));
-		BSF_INFO("Click");
 	}
 
 	void MenuRoot::PushMenu(const Ref<Menu>& menu)

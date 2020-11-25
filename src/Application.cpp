@@ -111,14 +111,14 @@ namespace bsf
         return { w, h };
     }
 
-    glm::vec2 bsf::Application::GetMousePosition() const
+    glm::vec2 Application::GetMousePosition() const
     {
         double x, y;
         glfwGetCursorPos(m_Window, &x, &y);
         return { x, y };
     }
 
-    bool bsf::Application::GetKeyPressed(int32_t key) const
+    bool Application::GetKeyPressed(int32_t key) const
     {
         return glfwGetKey(m_Window, key) == GLFW_PRESS;
     }
@@ -233,7 +233,7 @@ namespace bsf
 
     }
 
-    void bsf::Application::GotoScene(std::shared_ptr<Scene>&& scene)
+    void Application::GotoScene(std::shared_ptr<Scene>&& scene)
     {
         m_NextScene = std::move(scene);
     }
@@ -243,22 +243,22 @@ namespace bsf
         m_NextScene = scene;
     }
 
-    void bsf::Application::Exit()
+    void Application::Exit()
     {
         m_Running = false;
     }
 
-    Renderer2D& bsf::Application::GetRenderer2D()
+    Renderer2D& Application::GetRenderer2D()
     {
         return *(m_Renderer2D.get());
     }
 
-    AudioDevice& bsf::Application::GetAudioDevice()
+    AudioDevice& Application::GetAudioDevice()
     {
         return *(m_AudioDevice.get());
     }
 
-    void bsf::Application::LoadConfig()
+    void Application::LoadConfig()
     {
         auto config = Config::Load();
 
@@ -274,7 +274,7 @@ namespace bsf
     }
 
 
-	void bsf::Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)
+	void Application::RunScheduledTasks(const Time& time, const Ref<Scene>& scene, ESceneTaskEvent evt)
     {
         auto& tasks = scene->m_ScheduledTasks[evt];
 
