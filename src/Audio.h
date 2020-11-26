@@ -28,6 +28,12 @@ namespace bsf
 		void SetVolume(float volume);
 		float GetVolume() const;
 
+		void SetLoop(float loopPoint);
+		void ResetLoop();
+
+		bool IsLooping() const;
+		float GetLoopPoint() const;
+
 		void Play();
 		void Stop();
 		void FadeOut(float time);
@@ -37,6 +43,7 @@ namespace bsf
 		struct Impl;
 		std::unique_ptr<Impl> m_Impl;
 	};
+
 
 }
 

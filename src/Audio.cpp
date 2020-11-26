@@ -10,15 +10,25 @@
 namespace bsf
 {
 
-	static void CALLBACK Sync_SlideAttribute(HSYNC handle, DWORD channel, DWORD data, void* user)
+	
+	static void CALLBACK Sync_End(HSYNC handle, DWORD channel, DWORD data, void* user)
 	{
-		if (data == BASS_ATTRIB_VOL)
-		{
-			Audio* audio = static_cast<Audio*>(user);
-			if (audio->GetVolume() == 0.0f)
-				audio->Stop();
-		}
+		Audio* audio = static_cast<Audio*>(user);
+		QWORD pos = BASS_ChannelSeconds2Bytes(channel, audio->GetLoopPoint());
+		BASS_ChannelSetPosition(channel, pos, BASS_POS_BYTE);
+	}
 
+	static void CALLBACK Sync_Slide(HSYNC handle, DWORD channel, DWORD data, void* user)
+	{
+		Audio* audio = static_cast<Audio*>(user);
+		if (handle == BASS_SYNC_SLIDE)
+		{
+			if (data == BASS_ATTRIB_VOL)
+			{
+				if (audio->GetVolume() == 0.0f)
+					audio->Stop();
+			}
+		}
 	}
 
 	struct AudioDevice::Impl
@@ -31,6 +41,9 @@ namespace bsf
 	struct Audio::Impl
 	{
 		HSTREAM m_Stream = 0;
+		HSYNC m_LoopSync = 0;
+		bool m_Loop = false;
+		float m_LoopPoint = 0.0f;
 	};
 
 	AudioDevice::AudioDevice()
@@ -46,13 +59,14 @@ namespace bsf
 	Audio::Audio(std::string_view fileName)
 	{
 		m_Impl = std::make_unique<Impl>();
-		if ((m_Impl->m_Stream = BASS_StreamCreateFile(FALSE, fileName.data(), 0, 0, 0)) == 0)
+		if ((m_Impl->m_Stream = BASS_StreamCreateFile(FALSE, fileName.data(), 0, 0, BASS_STREAM_PRESCAN)) == 0)
 		{
 			BSF_ERROR("Can't create stream from file: {0}", fileName);
 			return;
 		}
 
-		BASS_ChannelSetSync(m_Impl->m_Stream, BASS_SYNC_MIXTIME, BASS_SYNC_SLIDE, &Sync_SlideAttribute, (void*)this);
+		BASS_ChannelSetSync(m_Impl->m_Stream, BASS_SYNC_MIXTIME | BASS_SYNC_SLIDE, 0, &Sync_Slide, (void*)this);
+		
 	}
 
 	Audio::~Audio()
@@ -74,6 +88,37 @@ namespace bsf
 		return volume;
 	}
 
+	void Audio::SetLoop(float loopPoint)
+	{
+		ResetLoop();
+
+		m_Impl->m_Loop = true;
+		m_Impl->m_LoopPoint = loopPoint;
+		m_Impl->m_LoopSync = BASS_ChannelSetSync(m_Impl->m_Stream, BASS_SYNC_MIXTIME | BASS_SYNC_END, 0, &Sync_End, (void*)this);
+
+	}
+
+	void Audio::ResetLoop()
+	{
+		if (m_Impl->m_LoopSync)
+		{
+			BASS_ChannelRemoveSync(m_Impl->m_Stream, m_Impl->m_LoopSync);
+			m_Impl->m_LoopSync = 0;
+		}
+
+		m_Impl->m_Loop = false;
+	}
+
+	bool Audio::IsLooping() const
+	{
+		return m_Impl->m_Loop;
+	}
+
+	float Audio::GetLoopPoint() const
+	{
+		return m_Impl->m_LoopPoint;
+	}
+
 	void Audio::Play()
 	{
 		SetVolume(1.0f);
@@ -90,7 +135,6 @@ namespace bsf
 		if(BASS_ChannelIsActive(m_Impl->m_Stream))
 			BASS_CHECK(BASS_ChannelSlideAttribute(m_Impl->m_Stream, BASS_ATTRIB_VOL, 0.0f, time * 1000));
 	}
-
 
 }
 
