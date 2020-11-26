@@ -7,7 +7,7 @@ uniform float uBackgroundScale;
 
 uniform float uStarBrightnessScale;
 uniform float uStarScale;
-uniform float uStarPower;
+uniform int uStarPower;
 uniform float uStarMultipler;
 
 uniform float uCloudScale;
@@ -23,6 +23,7 @@ const int Octaves = 5;
 float simplexNoise(vec3 p);
 float clouds(vec3 p);
 float absClouds(vec3 p);
+float stupidPow(float x, int y);
 
 void main() {
     vec3 dir = normalize(fPosition);
@@ -38,7 +39,8 @@ void main() {
     // Stars
     float starBrightness = simplexNoise(dir * uStarBrightnessScale) * 0.5 + 0.5;
     float starVal = simplexNoise(dir * uStarScale) * 0.5 + 0.5;
-    starVal = pow(starVal * starBrightness, uStarPower) * uStarMultipler;
+    //starVal = pow(starVal * starBrightness, uStarPower) * uStarMultipler;
+    starVal = stupidPow(starVal * starBrightness, uStarPower) * uStarMultipler;
     vec3 starColor = uStarColor * starVal;
 
     // Clouds
@@ -52,6 +54,18 @@ void main() {
     vec3 color = background + starColor * (1.0 - cloudStep) + clouds * cloudStep;
 
     oColor = vec4(color, 1.0);
+
+}
+
+float stupidPow(float x, int y)
+{
+    float result = 1.0;
+    while(y > 0)
+    {
+        result *= x;
+        --y;
+    }
+    return result;
 
 }
 

@@ -33,6 +33,7 @@ namespace bsf
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
 
+
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
 		auto& assets = Assets::GetInstance();
 		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
@@ -55,6 +56,7 @@ namespace bsf
 			m_pGenEnv->UniformMatrix4f("uView", camera.GetViewMatrix());
 			m_pGenEnv->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
 
+
 			m_pGenEnv->Uniform3fv("uBackColor", 1, glm::value_ptr(options.BaseColor));
 
 			m_pGenEnv->Uniform3fv("uStarColor", 1, glm::value_ptr(options.StarsColor));
@@ -62,7 +64,7 @@ namespace bsf
 			m_pGenEnv->Uniform1f("uBackgroundScale", { 1.0f });
 			m_pGenEnv->Uniform1f("uStarScale", { 180.0f });
 			m_pGenEnv->Uniform1f("uStarBrightnessScale", { 200.0f });
-			m_pGenEnv->Uniform1f("uStarPower", { 12.0f });
+			m_pGenEnv->Uniform1i("uStarPower", { 12 });
 			m_pGenEnv->Uniform1f("uStarMultipler", { 24.0f });
 
 			m_pGenEnv->Uniform1f("uCloudScale", { 0.75f });
