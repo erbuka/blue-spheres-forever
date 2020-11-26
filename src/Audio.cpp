@@ -33,7 +33,10 @@ namespace bsf
 
 	struct AudioDevice::Impl
 	{
-		Impl() { BASS_CHECK(BASS_Init(1, 44100, BASS_DEVICE_STEREO, 0, nullptr)); }
+		Impl()
+		{ 
+			BASS_CHECK(BASS_Init(-1, 44100, BASS_DEVICE_STEREO, 0, nullptr)); 
+		}
 		~Impl() { BASS_CHECK(BASS_Free()); }
 	};
 
