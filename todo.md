@@ -6,5 +6,7 @@
 - [X] ~~*Mouse support for main menu*~~ [2020-11-24]
 - Video recording
   - Generic gameplay
+  - Emerald ??
   - Green spheres
-  - New level editor + big levels
+  - New level editor
+  - big levels
