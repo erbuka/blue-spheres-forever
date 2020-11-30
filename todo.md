@@ -4,6 +4,8 @@
   - [X] ~~*Fullscreen*~~ [2020-11-22]
 - [X] ~~*Distribution mode no console + log on file*~~ [2020-11-23]
 - [X] ~~*Mouse support for main menu*~~ [2020-11-24]
+- [X] ~~*Adjust velocity by eyeballing original game*~~ [2020-11-30]
+- [X] ~~*Windowed App + WinMain*~~ [2020-11-30]
 - Video recording
   - Generic gameplay
   - Emerald ??

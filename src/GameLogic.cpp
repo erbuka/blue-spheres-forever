@@ -11,11 +11,11 @@ namespace bsf
 	// Game Pace
 	static constexpr int32_t s_MinPace = 0;
 	static constexpr int32_t s_MaxPace = 3;
-	static constexpr float s_SpeedUpPeriod = 5.0f;
+	static constexpr float s_SpeedUpPeriod = 40.0f;
 
 	// Game velocity defaults
-	static constexpr float s_BaseVelocity = 3.5f;
-	static constexpr float s_VelocityIncrease = 0.5f;
+	static constexpr float s_BaseVelocity = 4.0f; // Might be 3.5
+	static constexpr float s_VelocityIncrease = 1.0f;
 	static constexpr float s_MaxVelocity = s_BaseVelocity + s_MaxPace * s_VelocityIncrease;
 	static constexpr float s_BaseAngularVelocity = glm::pi<float>() * 2.0f;
 	static constexpr float s_AngularVelocityIncrease = glm::pi<float>() * 2.0f / 8.0f;

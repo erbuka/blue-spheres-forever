@@ -47,10 +47,18 @@ namespace bsf
 	}
 }
 
-
+#ifdef _WIN32
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	bsf::Run();
+	return 0;
+}
+#else
 int main(int argc, char** argv)
 {
 	bsf::Run();
 	return 0;
 }
+#endif
+
 
