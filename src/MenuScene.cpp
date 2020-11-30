@@ -133,6 +133,7 @@ namespace bsf
 		float width = windowSize.x / windowSize.y * s_VirtualHeight;
 		float offset = glm::fract(time.Elapsed / 2.0f);
 		
+		glViewport(0, 0, windowSize.x, windowSize.y);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -169,6 +170,8 @@ namespace bsf
 		m_MenuRoot.WindowSize = windowSize;
 		m_MenuRoot.Render(r2);
 		r2.End();
+
+
 	}
 
 	void MenuScene::OnDetach()

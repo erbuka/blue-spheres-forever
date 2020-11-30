@@ -1238,7 +1238,7 @@ namespace bsf
 	UITextInput::UITextInput() : UIElement(MakeFlags(UIElementFlags::ReceiveFocus))
 	{
 		static std::string s_TestStr = " ";
-		static std::regex s_AllowedCharacters("^[a-zA-Z0-9_\\s\\-]$");
+		static std::regex s_AllowedCharacters("^[a-zA-Z0-9_\\s\\-&]$");
 
 		Margin = 1.0f;
 		MinSize = { 0.0f, 1.5f };
