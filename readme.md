@@ -18,7 +18,7 @@ Visual Studio 2019 solution is provided under the *vs2019* folder.
 Major features to be added in the next releases:
 
 - [ ] New Mechanic: Portals
-- [ ] Linux version
-- [ ] Apple version
+- [ ] Linux porting
+- [ ] Apple porting
 - [ ] New Character: Tails
 - [ ] New Character: Knuckles
