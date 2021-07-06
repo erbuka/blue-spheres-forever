@@ -14,7 +14,6 @@ uniform float uEmission;
 uniform sampler2D uMap;
 uniform sampler2D uMetallic;
 uniform sampler2D uRoughness;
-uniform sampler2D uAo;
 
 uniform sampler2D uBRDFLut;
 uniform samplerCube uEnvironment;
@@ -43,7 +42,6 @@ void main() {
 
     float metallic = texture(uMetallic, fUv).r;
     float roughness = texture(uRoughness, fUv).r;
-    float ao = texture(uAo, fUv).r;
     
     vec3 normal = normalize((uModel * vec4(fNormal, 0.0)).xyz);
     vec3 worldPos = (uModel * vec4(fPosition, 1.0)).xyz;
@@ -84,18 +82,18 @@ void main() {
     // Irradiance
     #ifndef NO_INDIRECT_LIGHTING
     vec3 irradiance = texture(uIrradiance, N).rgb;
-    fragment += (kD * irradiance * albedo) * ao;
+    fragment += (kD * irradiance * albedo);
 
     // Sky reflections
     ivec2 resolution = textureSize(uReflections, 0);
     vec3 reflections = texture(uReflections, gl_FragCoord.xy / resolution).rgb * F;
     vec3 reflectionsEmission = texture(uReflectionsEmission, gl_FragCoord.xy / resolution).rgb * F;
-    fragment += reflections * ao;
+    fragment += reflections;
 
     if(length(reflections) == 0.0) { 
         vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
         vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
-        fragment += indirectSpecular * ao;
+        fragment += indirectSpecular;
     }
 
     #endif

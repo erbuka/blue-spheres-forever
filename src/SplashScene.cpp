@@ -209,7 +209,6 @@ namespace bsf
 		m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
 		m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 		m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
-		m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite));
 
 		m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
 		m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());

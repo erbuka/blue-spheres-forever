@@ -238,7 +238,6 @@ namespace bsf
 
 				m_pSkeletalPBR->UniformTexture("uMetallic", texBlack);
 				m_pSkeletalPBR->UniformTexture("uRoughness", texWhite);
-				m_pSkeletalPBR->UniformTexture("uAo", texWhite);
 
 				m_pSkeletalPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
 				m_pSkeletalPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
@@ -267,7 +266,6 @@ namespace bsf
 				m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightVector));
 
-				m_pPBR->UniformTexture("uAo", assets.Get<Texture2D>(AssetName::TexWhite));
 
 				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
 				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
@@ -300,7 +298,7 @@ namespace bsf
 						if (value == EStageObject::Ring)
 							m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, glm::pi<float>() * time.Elapsed);
 
-						m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.75f : 0.0f });
+						m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 2.0f : 0.0f });
 
 						m_pPBR->UniformMatrix4f("uModel", m_Model);
 						switch (value)
@@ -451,7 +449,6 @@ namespace bsf
 
 					m_pSkeletalPBR->UniformTexture("uMetallic", texBlack);
 					m_pSkeletalPBR->UniformTexture("uRoughness", texWhite);
-					m_pSkeletalPBR->UniformTexture("uAo", texWhite);
 
 					m_pSkeletalPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
 					m_pSkeletalPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
@@ -485,7 +482,6 @@ namespace bsf
 				m_pPBR->UniformTexture("uMap", m_txGroundMap);
 				m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexGroundMetallic));
 				m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexGroundRoughness));
-				m_pPBR->UniformTexture("uAo", texWhite);
 
 				m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
 				m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
@@ -499,7 +495,6 @@ namespace bsf
 				assets.Get<VertexArray>(AssetName::ModGround)->DrawArrays(GL_TRIANGLES);
 
 				// Draw spheres and rings
-				m_pPBR->UniformTexture("uAo", texWhite);
 				m_pPBR->UniformTexture("uReflections", texBlack);
 				m_pPBR->UniformTexture("uReflectionsEmission", texBlack);
 				m_pPBR->Uniform2f("uUvOffset", { 0.0f, 0.0f });
@@ -525,7 +520,7 @@ namespace bsf
 
 							m_pPBR->UniformMatrix4f("uModel", m_Model);
 
-							m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 0.75f : 0.0f });
+							m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 2.0f : 0.0f });
 
 							switch (value)
 							{
