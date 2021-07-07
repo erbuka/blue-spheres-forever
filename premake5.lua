@@ -11,7 +11,7 @@ workspace "BlueSpheresForever"
 
     filter "configurations:Release"
         defines { "BSF_ENABLE_DIAGNOSTIC", "BSF_SAFE_GLCALL" }
-        symbols "Off"
+        symbols "On"
         optimize "On"
     
     filter "configurations:Distribution"
