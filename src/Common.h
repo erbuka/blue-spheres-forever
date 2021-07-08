@@ -119,6 +119,27 @@ namespace bsf
 	
 	#pragma region Utilities
 
+
+	constexpr uint64_t Hash(std::string_view sv)
+	{
+		// P and M
+		uint32_t p = 31;
+		uint32_t m = 1e9 + 9;
+		uint64_t powerOfP = 1;
+		uint64_t hashVal = 0;
+
+		// Loop to calculate the hash value
+		// by iterating over the elements of string
+		for (int i = 0; i < sv.length(); i++) {
+			hashVal = (hashVal + (sv[i] - 'a' + 1) * powerOfP) % m;
+			powerOfP = (powerOfP * p) % m;
+		}
+		return hashVal;
+	}
+
+	template<auto v>
+	constexpr auto ForceConsteval = v;
+
 	struct GLEnableScope
 	{
 	public:
