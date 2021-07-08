@@ -519,7 +519,6 @@ namespace bsf
 								m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
 
 							m_pPBR->UniformMatrix4f("uModel", m_Model);
-
 							m_pPBR->Uniform1f("uEmission", { value == EStageObject::Ring ? 2.0f : 0.0f });
 
 							switch (value)
@@ -582,7 +581,7 @@ namespace bsf
 					auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
 					auto [pos, tbn] = Project({ emeraldPos.x, emeraldPos.y, 0.8f });
 
-					m_pPBR->Uniform1f("uEmission", { 0.75f });
+					m_pPBR->Uniform1f("uEmission", { 2.0f });
 					m_pPBR->UniformTexture("uMap", texWhite);
 					m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 					m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
@@ -606,7 +605,8 @@ namespace bsf
 
 
 		// Apply post processing
-		m_fBloom->Apply(2);
+		m_fBloom->Apply(3, 2);
+
 		// Draw to default frame buffer
 		{
 			GLEnableScope scope({ GL_FRAMEBUFFER_SRGB });
@@ -619,7 +619,8 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
+			//m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
+			m_pDeferred->UniformTexture("uEmission", m_fBloom->GetResult());
 			m_pDeferred->Uniform1f("uExposure", { 1.0f });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 

@@ -37,7 +37,7 @@ namespace bsf
 		// Framebuffers
 		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT)->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
 
 		// PP
 		m_fBlur = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
@@ -133,7 +133,7 @@ namespace bsf
 		m_fbPBR->Unbind();
 
 		// Post processing
-		m_fBlur->Apply(2);
+		m_fBlur->Apply(3, 2);
 
 		// Draw to screen
 		{
@@ -148,7 +148,7 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
+			m_pDeferred->UniformTexture("uEmission", m_fBlur->GetResult());
 			m_pDeferred->Uniform1f("uExposure", {1.0f});
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 		}
@@ -204,7 +204,7 @@ namespace bsf
 		m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPos));
 		m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightPos));
 
-		m_pPBR->Uniform1f("uEmission", {0.75f});
+		m_pPBR->Uniform1f("uEmission", { 2.0f });
 
 		m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
 		m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
