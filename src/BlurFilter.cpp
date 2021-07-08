@@ -52,10 +52,11 @@ namespace bsf
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_pCopy->Use();
-		m_pCopy->UniformTexture("uSource", m_Source);
+		m_pCopy->UniformTexture(HS("uSource"), m_Source);
 		Assets::GetInstance().Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 		src->Unbind();
+
 
 		for (uint32_t i = 0; i < iterations * 2; i++)
 		{
@@ -68,8 +69,7 @@ namespace bsf
 			Ref<ShaderProgram>& prg = horizonal ? m_pHBlur : m_pVBlur;
 
 			prg->Use();
-			prg->UniformTexture("uSource", src->GetColorAttachment("color"));
-			prg->Uniform1i("uHorizontal", { (int32_t)horizonal });
+			prg->UniformTexture(HS("uSource"), src->GetColorAttachment("color"));
 			Assets::GetInstance().Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 			horizonal = !horizonal;

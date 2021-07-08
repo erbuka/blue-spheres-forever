@@ -12,10 +12,10 @@
 #include <tuple>
 #include <initializer_list>
 
-#define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(const std::string& name, uint32_t count, const varType * ptr)
+#define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(uint64_t hash, uint32_t count, const varType * ptr)
 #define UNIFORM1_INL(type, varType, size) \
-	inline void Uniform ## size ## type(const std::string& name, std::array<varType,size> v) { \
-		Uniform ## size ## type ## v(name, 1, v.data()); \
+	inline void Uniform ## size ## type(uint64_t hash, std::array<varType,size> v) { \
+		Uniform ## size ## type ## v(hash, 1, v.data()); \
 	}
 
 namespace bsf
@@ -47,29 +47,29 @@ namespace bsf
 
 		~ShaderProgram();
 
-		int32_t GetUniformLocation(const std::string& name) const;
+		int32_t GetUniformLocation(uint64_t hash) const;
 
-		void UniformMatrix4f(const std::string& name, const glm::mat4& matrix);
-		void UniformMatrix4fv(const std::string& name, size_t count, const float* ptr);
+		void UniformMatrix4f(uint64_t hash, const glm::mat4& matrix);
+		void UniformMatrix4fv(uint64_t hash, size_t count, const float* ptr);
 
 		void Use();
 
 		template<typename T>
-		void UniformTexture(const std::string name, const Ref<T>& texture)
+		void UniformTexture(uint64_t hash, const Ref<T>& texture)
 		{
 			static_assert(std::is_base_of_v<Texture, T>);
 			
-			auto info = m_UniformInfo.find(name);
+			auto info = m_UniformInfo.find(hash);
 
 			if (info != m_UniformInfo.end())
 			{
 				uint32_t texUnit = info->second.TextureUnit;
-				Uniform1i(name, { (int32_t)texUnit });
+				Uniform1i(hash, { (int32_t)texUnit });
 				texture->Bind(texUnit);
 				return;
 			}
 			
-			BSF_ERROR("Couldn't find uniform texture: {0}", name);
+			BSF_ERROR("Couldn't find uniform texture: {0}", hash);
 
 		}
 
@@ -104,7 +104,7 @@ namespace bsf
 		static void InjectDefines(std::string& source, const std::initializer_list<std::string_view>& defines);
 
 		uint32_t m_Id;
-		std::unordered_map<std::string, UniformInfo> m_UniformInfo;
+		std::unordered_map<uint64_t, UniformInfo> m_UniformInfo;
 	};
 
 }

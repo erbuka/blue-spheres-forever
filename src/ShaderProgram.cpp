@@ -9,8 +9,8 @@
 
 
 #define UNIFORM_IMPL(type, varType, size) \
-	void ShaderProgram::Uniform ## size ## type ## v(const std::string& name, uint32_t count, const varType * ptr) { \
-		BSF_GLCALL(glUniform ## size ## type ## v(GetUniformLocation(name), count, ptr)); \
+	void ShaderProgram::Uniform ## size ## type ## v(uint64_t hash, uint32_t count, const varType * ptr) { \
+		BSF_GLCALL(glUniform ## size ## type ## v(GetUniformLocation(hash), count, ptr)); \
 	}
 
 
@@ -153,13 +153,15 @@ namespace bsf
 			uint32_t location = glGetUniformLocation(m_Id, buffer.data());
 
 
+			const auto hash = Hash(buffer.data());
+
 			if(std::find(samplerTypes.begin(), samplerTypes.end(), type) != samplerTypes.end())
 			{
-				m_UniformInfo[buffer.data()] = { std::string(buffer.data()), location, textureUnit++ };
+				m_UniformInfo[hash] = { std::string(buffer.data()), location, textureUnit++ };
 			}
 			else
 			{
-				m_UniformInfo[buffer.data()] = { std::string(buffer.data()), location, 0 };
+				m_UniformInfo[hash] = { std::string(buffer.data()), location, 0 };
 			}
 
 		}
@@ -179,14 +181,14 @@ namespace bsf
 		BSF_GLCALL(glDeleteProgram(m_Id));
 	}
 
-	int32_t ShaderProgram::GetUniformLocation(const std::string& name) const
+	int32_t ShaderProgram::GetUniformLocation(uint64_t hash) const
 	{
 
-		auto it = m_UniformInfo.find(name);
+		auto it = m_UniformInfo.find(hash);
 
 		if (it == m_UniformInfo.end())
 		{
-			BSF_ERROR("Can't find uniform '{0}'", name);
+			BSF_ERROR("Can't find uniform '{0}'", hash);
 			return -1;
 		}
 
@@ -194,14 +196,14 @@ namespace bsf
 
 	}
 
-	void ShaderProgram::UniformMatrix4f(const std::string& name, const glm::mat4& matrix)
+	void ShaderProgram::UniformMatrix4f(uint64_t hash, const glm::mat4& matrix)
 	{
-		BSF_GLCALL(glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix)));
+		BSF_GLCALL(glUniformMatrix4fv(GetUniformLocation(hash), 1, GL_FALSE, glm::value_ptr(matrix)));
 	}
 
-	void ShaderProgram::UniformMatrix4fv(const std::string& name, size_t count, const float* ptr)
+	void ShaderProgram::UniformMatrix4fv(uint64_t hash, size_t count, const float* ptr)
 	{
-		BSF_GLCALL(glUniformMatrix4fv(GetUniformLocation(name), count, GL_FALSE, ptr));
+		BSF_GLCALL(glUniformMatrix4fv(GetUniformLocation(hash), count, GL_FALSE, ptr));
 	}
 
 	void ShaderProgram::Use()

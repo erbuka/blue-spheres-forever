@@ -33,6 +33,7 @@ namespace bsf
 	void Run()
 	{
 
+
 		//auto scene = MakeRef<TestScene>();
 		//auto scene = Ref<Scene>(new DisclaimerScene());
 		//auto scene = Ref<Scene>(new StageEditorScene());

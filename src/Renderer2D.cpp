@@ -402,7 +402,7 @@ namespace bsf
 
 			m_pTriangleProgram->Use();
 
-			m_pTriangleProgram->UniformMatrix4f("uProjection", m_Projection);
+			m_pTriangleProgram->UniformMatrix4f(HS("uProjection"), m_Projection);
 			
 			for (uint32_t i = 0; i < m_Textures.size(); i++)
 			{
@@ -410,7 +410,7 @@ namespace bsf
 				BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Textures[i]));
 			}
 			
-			m_pTriangleProgram->Uniform1iv("uTextures[0]", (uint32_t)m_Textures.size(), m_TextureUnits.data());
+			m_pTriangleProgram->Uniform1iv(HS("uTextures[0]"), (uint32_t)m_Textures.size(), m_TextureUnits.data());
 			
 			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurVertexIndex);
 

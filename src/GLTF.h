@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "Ref.h"
+#include "Common.h"
 
 namespace bsf
 {
@@ -20,10 +21,10 @@ namespace bsf
 	struct GLTFRenderConfig
 	{
 		Ref<ShaderProgram> Program;
-		std::string ModelMatrixUniform = "uModel";
-		std::string BaseColorTextureUniform = "uMap";
-		std::string BaseColorUniform = "uColor";
-		std::string JointTransformUniform = "uJointTransform[0]";
+		uint64_t ModelMatrixUniform = HS("uModel");
+		uint64_t BaseColorTextureUniform = HS("uMap");
+		uint64_t BaseColorUniform = HS("uColor");
+		uint64_t JointTransformUniform = HS("uJointTransform[0]");
 	};
 
 

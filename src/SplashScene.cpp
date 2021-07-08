@@ -119,10 +119,10 @@ namespace bsf
 
 				glDepthMask(GL_FALSE);
 				m_pSky->Use();
-				m_pSky->UniformMatrix4f("uProjection", m_Projection);
-				m_pSky->UniformMatrix4f("uView", m_View);
-				m_pSky->UniformMatrix4f("uModel", m_Model);
-				m_pSky->UniformTexture("uSkyBox", m_Sky->GetEnvironment());
+				m_pSky->UniformMatrix4f(HS("uProjection"), m_Projection);
+				m_pSky->UniformMatrix4f(HS("uView"), m_View);
+				m_pSky->UniformMatrix4f(HS("uModel"), m_Model);
+				m_pSky->UniformTexture(HS("uSkyBox"), m_Sky->GetEnvironment());
 				assets.Get<VertexArray>(AssetName::ModSkyBox)->DrawArrays(GL_TRIANGLES);
 				glDepthMask(GL_TRUE);
 			}
@@ -147,9 +147,9 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			m_pDeferred->Use();
-			m_pDeferred->UniformTexture("uColor", m_fbPBR->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture("uEmission", m_fBlur->GetResult());
-			m_pDeferred->Uniform1f("uExposure", {1.0f});
+			m_pDeferred->UniformTexture(HS("uColor"), m_fbPBR->GetColorAttachment("color"));
+			m_pDeferred->UniformTexture(HS("uEmission"), m_fBlur->GetResult());
+			m_pDeferred->Uniform1f(HS("uExposure"), {1.0f});
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 		}
 
@@ -198,23 +198,23 @@ namespace bsf
 
 		m_pPBR->Use();
 
-		m_pPBR->UniformMatrix4f("uProjection", m_Projection.GetMatrix());
-		m_pPBR->UniformMatrix4f("uView", m_View.GetMatrix());
+		m_pPBR->UniformMatrix4f(HS("uProjection"), m_Projection.GetMatrix());
+		m_pPBR->UniformMatrix4f(HS("uView"), m_View.GetMatrix());
 
-		m_pPBR->Uniform3fv("uCameraPos", 1, glm::value_ptr(cameraPos));
-		m_pPBR->Uniform3fv("uLightPos", 1, glm::value_ptr(lightPos));
+		m_pPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPos));
+		m_pPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightPos));
 
-		m_pPBR->Uniform1f("uEmission", { 2.0f });
+		m_pPBR->Uniform1f(HS("uEmission"), { 2.0f });
 
-		m_pPBR->UniformTexture("uMap", assets.Get<Texture2D>(AssetName::TexWhite));
-		m_pPBR->UniformTexture("uMetallic", assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
-		m_pPBR->UniformTexture("uRoughness", assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
+		m_pPBR->UniformTexture(HS("uMap"), assets.Get<Texture2D>(AssetName::TexWhite));
+		m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
+		m_pPBR->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
 
-		m_pPBR->UniformTexture("uBRDFLut", assets.Get<Texture2D>(AssetName::TexBRDFLut));
-		m_pPBR->UniformTexture("uEnvironment", m_Sky->GetEnvironment());
-		m_pPBR->UniformTexture("uIrradiance", m_Sky->GetIrradiance());
-		m_pPBR->UniformTexture("uReflections", assets.Get<Texture2D>(AssetName::TexBlack));
-		m_pPBR->UniformTexture("uReflectionsEmission", assets.Get<Texture2D>(AssetName::TexBlack));
+		m_pPBR->UniformTexture(HS("uBRDFLut"), assets.Get<Texture2D>(AssetName::TexBRDFLut));
+		m_pPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
+		m_pPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
+		m_pPBR->UniformTexture(HS("uReflections"), assets.Get<Texture2D>(AssetName::TexBlack));
+		m_pPBR->UniformTexture(HS("uReflectionsEmission"), assets.Get<Texture2D>(AssetName::TexBlack));
 
 		for (uint32_t i = 0; i < 7; i++)
 		{
@@ -227,8 +227,8 @@ namespace bsf
 			m_Model.Rotate({0.0f, 1.0f, 0.0f}, angle + time.Elapsed * s_EmeraldAngularVelocity);
 			m_Model.Rotate({1.0f, 0.0f, 0.0f}, angle + time.Elapsed * s_EmeraldAngularVelocity);
 
-			m_pPBR->UniformMatrix4f("uModel", m_Model.GetMatrix());
-			m_pPBR->Uniform4fv("uColor", 1, glm::value_ptr(colors[i]));
+			m_pPBR->UniformMatrix4f(HS("uModel"), m_Model.GetMatrix());
+			m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(colors[i]));
 
 			emerald->DrawArrays(GL_TRIANGLES);
 
@@ -261,44 +261,6 @@ namespace bsf
 		r2.TextShadowColor(s_ShadowColor * alpha);
 		r2.DrawStringShadow(font, "Press Start");
 		r2.Pop();
-
-		/*
-		auto &assets = Assets::GetInstance();
-		auto &font = assets.Get<Font>(AssetName::FontMain);
-
-		constexpr glm::vec4 s_ShadowColor = {0.0f, 0.0f, 0.0f, 0.5f};
-
-		r2.Pivot(EPivot::Center);
-		r2.Scale(1.5f);
-		r2.TextShadowColor(s_ShadowColor);
-
-		r2.Push();
-		{
-			r2.Scale(3.0f);
-
-			r2.Texture(assets.Get<Texture2D>(AssetName::TexUISphere));
-
-			r2.Color({0.0f, 0.0f, 0.0f, 0.5f});
-			r2.DrawQuad({0.025f, -0.025f});
-
-			r2.Color(Colors::Blue);
-			r2.DrawQuad();
-		}
-		r2.Pop();
-
-		r2.Color(Colors::White);
-		r2.Pivot(EPivot::Bottom);
-		r2.DrawStringShadow(font, "Blue Spheres");
-
-		r2.Pivot(EPivot::Top);
-		r2.DrawStringShadow(font, "Forever");
-
-		const float alpha = std::abs(std::sin(time.Elapsed * 5.0f));
-		r2.Translate({0.0f, -2.0f});
-		r2.Color(glm::vec4(1.0f, 1.0f, 1.0f, alpha));
-		r2.TextShadowColor(s_ShadowColor * alpha);
-		r2.DrawStringShadow(font, "Press Start");
-		*/
 	}
 
 } // namespace bsf

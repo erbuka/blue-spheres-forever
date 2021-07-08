@@ -1,7 +1,6 @@
 #version 330
 
 uniform sampler2D uSource;
-uniform bool uHorizontal;
 
 in vec2 fUv;
 
@@ -18,14 +17,13 @@ void main() {
     int kernelSize = kernel.length();
     float offset = float(kernelSize / 2);
 
-    if(uHorizontal) {
+    #ifndef VERTICAL
         for(int i = 0; i < kernelSize; i++)
             color += texture(uSource, fUv + vec2(texelSize.x, 0.0) * (float(i) - offset)).rgb * kernel[i];
-
-    } else {
+    #else
         for(int i = 0; i < kernelSize; i++)
             color += texture(uSource, fUv + vec2(0.0, texelSize.y) * (float(i) - offset)).rgb * kernel[i];
-    }
+    #endif
 
     oColor = vec4(color, 1.0);
 }

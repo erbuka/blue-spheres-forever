@@ -52,22 +52,22 @@ namespace bsf
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			m_pGenEnv->Use();
-			m_pGenEnv->UniformMatrix4f("uProjection", camera.GetProjectionMatrix());
-			m_pGenEnv->UniformMatrix4f("uView", camera.GetViewMatrix());
-			m_pGenEnv->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+			m_pGenEnv->UniformMatrix4f(HS("uProjection"), camera.GetProjectionMatrix());
+			m_pGenEnv->UniformMatrix4f(HS("uView"), camera.GetViewMatrix());
+			m_pGenEnv->UniformMatrix4f(HS("uModel"), glm::identity<glm::mat4>());
 
 
-			m_pGenEnv->Uniform3fv("uBackColor", 1, glm::value_ptr(options.BaseColor));
+			m_pGenEnv->Uniform3fv(HS("uBackColor"), 1, glm::value_ptr(options.BaseColor));
 
-			m_pGenEnv->Uniform3fv("uStarColor", 1, glm::value_ptr(options.StarsColor));
+			m_pGenEnv->Uniform3fv(HS("uStarColor"), 1, glm::value_ptr(options.StarsColor));
 
-			m_pGenEnv->Uniform1f("uBackgroundScale", { 1.0f });
-			m_pGenEnv->Uniform1f("uStarScale", { 180.0f });
-			m_pGenEnv->Uniform1f("uStarBrightnessScale", { 200.0f });
-			m_pGenEnv->Uniform1i("uStarPower", { 12 });
-			m_pGenEnv->Uniform1f("uStarMultipler", { 24.0f });
+			m_pGenEnv->Uniform1f(HS("uBackgroundScale"), { 1.0f });
+			m_pGenEnv->Uniform1f(HS("uStarScale"), { 180.0f });
+			m_pGenEnv->Uniform1f(HS("uStarBrightnessScale"), { 200.0f });
+			m_pGenEnv->Uniform1i(HS("uStarPower"), { 12 });
+			m_pGenEnv->Uniform1f(HS("uStarMultipler"), { 24.0f });
 
-			m_pGenEnv->Uniform1f("uCloudScale", { 0.75f });
+			m_pGenEnv->Uniform1f(HS("uCloudScale"), { 0.75f });
 
 			m_vaCube->DrawArrays(GL_TRIANGLES);
 		}
@@ -101,10 +101,10 @@ namespace bsf
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			m_pGenIrr->Use();
-			m_pGenIrr->UniformTexture("uEnvironment", sky);
-			m_pGenIrr->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
-			m_pGenIrr->UniformMatrix4f("uView", camera->GetViewMatrix());
-			m_pGenIrr->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
+			m_pGenIrr->UniformTexture(HS("uEnvironment"), sky);
+			m_pGenIrr->UniformMatrix4f(HS("uProjection"), camera->GetProjectionMatrix());
+			m_pGenIrr->UniformMatrix4f(HS("uView"), camera->GetViewMatrix());
+			m_pGenIrr->UniformMatrix4f(HS("uModel"), glm::identity<glm::mat4>());
 			modSkyBox->DrawArrays(GL_TRIANGLES);
 
 		}
@@ -158,10 +158,10 @@ namespace bsf
 			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 			m_pSky->Use();
-			m_pSky->UniformMatrix4f("uProjection", camera->GetProjectionMatrix());
-			m_pSky->UniformMatrix4f("uView", camera->GetViewMatrix());
-			m_pSky->UniformMatrix4f("uModel", glm::identity<glm::mat4>());
-			m_pSky->UniformTexture("uSkyBox", source);
+			m_pSky->UniformMatrix4f(HS("uProjection"), camera->GetProjectionMatrix());
+			m_pSky->UniformMatrix4f(HS("uView"), camera->GetViewMatrix());
+			m_pSky->UniformMatrix4f(HS("uModel"), glm::identity<glm::mat4>());
+			m_pSky->UniformTexture(HS("uSkyBox"), source);
 			m_VertexArray->DrawArrays(GL_TRIANGLES);
 
 		}
