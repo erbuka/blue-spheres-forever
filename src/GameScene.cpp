@@ -234,6 +234,8 @@ namespace bsf
 				m_pSkeletalPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
 				m_pSkeletalPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
 
+				m_pSkeletalPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
+
 				m_pSkeletalPBR->Uniform1f(HS("uEmission"), { 0.0f });
 
 				m_pSkeletalPBR->UniformTexture(HS("uMetallic"), texBlack);
@@ -266,6 +268,7 @@ namespace bsf
 				m_pPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
 
+				m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
 				m_pPBR->UniformTexture(HS("uBRDFLut"), assets.Get<Texture2D>(AssetName::TexBRDFLut));
 				m_pPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
@@ -445,6 +448,8 @@ namespace bsf
 					m_pSkeletalPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
 					m_pSkeletalPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
 
+					m_pSkeletalPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
+
 					m_pSkeletalPBR->Uniform1f(HS("uEmission"), { 0.0f });
 
 					m_pSkeletalPBR->UniformTexture(HS("uMetallic"), texBlack);
@@ -476,6 +481,8 @@ namespace bsf
 
 				m_pPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
 				m_pPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
+
+				m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
 				m_pPBR->Uniform1f(HS("uEmission"), { 0.0f });
 
@@ -619,9 +626,8 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture(HS("uColor"), m_fbPBR->GetColorAttachment("color"));
-			//m_pDeferred->UniformTexture("uEmission", m_fbPBR->GetColorAttachment("emission"));
 			m_pDeferred->UniformTexture(HS("uEmission"), m_fBloom->GetResult());
-			m_pDeferred->Uniform1f(HS("uExposure"), { 1.0f });
+			m_pDeferred->Uniform1f(HS("uExposure"), { GlobalShadingConfig::DeferredExposure });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 		}

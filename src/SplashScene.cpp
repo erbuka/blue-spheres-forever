@@ -149,7 +149,7 @@ namespace bsf
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture(HS("uColor"), m_fbPBR->GetColorAttachment("color"));
 			m_pDeferred->UniformTexture(HS("uEmission"), m_fBlur->GetResult());
-			m_pDeferred->Uniform1f(HS("uExposure"), {1.0f});
+			m_pDeferred->Uniform1f(HS("uExposure"), { GlobalShadingConfig::DeferredExposure });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 		}
 
@@ -204,6 +204,8 @@ namespace bsf
 		m_pPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPos));
 		m_pPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightPos));
 
+		m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
+		
 		m_pPBR->Uniform1f(HS("uEmission"), { 2.0f });
 
 		m_pPBR->UniformTexture(HS("uMap"), assets.Get<Texture2D>(AssetName::TexWhite));

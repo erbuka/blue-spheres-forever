@@ -99,7 +99,7 @@ project "ImGui"
 
 project "BlueSpheresForever"
     location(_ACTION)
-    kind "WindowedApp"
+    kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
 

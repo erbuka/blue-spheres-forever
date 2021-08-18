@@ -12,6 +12,7 @@
 #include "Application.h"
 #include "Assets.h"
 #include "Stage.h"
+#include "Config.h"
 
 namespace bsf
 {
@@ -148,6 +149,13 @@ namespace bsf
 					
 					ImGui::EndTabItem();
 				}
+
+				if (ImGui::BeginTabItem("Shading")) {
+					ImGui::SliderFloat("Sky Exposure", &GlobalShadingConfig::SkyExposure, 1.0f, 100.0f);
+					ImGui::SliderFloat("Light Radiance", &GlobalShadingConfig::LightRadiance, 1.0f, 100.0f);
+					ImGui::SliderFloat("Deferred Exposure", &GlobalShadingConfig::DeferredExposure, 1.0f, 100.0f);
+					ImGui::EndTabItem();
+				};
 
 				ImGui::EndTabBar();
 			}

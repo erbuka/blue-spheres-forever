@@ -156,6 +156,17 @@ namespace bsf
 	bool Base64Decode(std::string_view str, std::vector<std::byte>& result);
 
 
+	template<typename T>
+	class Singleton
+	{
+	public:
+		T& Get()
+		{
+			static T instance;
+			return instance;
+		}
+	};
+
 	struct Rect
 	{
 		glm::vec2 Position = { 0.0f, 0.0f }, Size = { 0.0f, 0.0f };

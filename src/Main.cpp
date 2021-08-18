@@ -48,7 +48,7 @@ namespace bsf
 	}
 }
 
-#ifdef _WIN32
+#if 0
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	bsf::Run();

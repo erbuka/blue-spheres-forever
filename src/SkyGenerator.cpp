@@ -9,6 +9,7 @@
 #include "Assets.h"
 #include "Color.h"
 #include "Diagnostic.h"
+#include "Config.h"
 
 namespace bsf
 {
@@ -32,13 +33,11 @@ namespace bsf
 	
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
 	{	
-
-
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
 		auto& assets = Assets::GetInstance();
 		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
 
-		CubeCamera camera(options.Size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		CubeCamera camera(options.Size, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 
 		// Generate stars
 		for (auto face : TextureCubeFaces)
@@ -56,6 +55,7 @@ namespace bsf
 			m_pGenEnv->UniformMatrix4f(HS("uView"), camera.GetViewMatrix());
 			m_pGenEnv->UniformMatrix4f(HS("uModel"), glm::identity<glm::mat4>());
 
+			m_pGenEnv->Uniform1f(HS("uExposure"), { GlobalShadingConfig::SkyExposure });
 
 			m_pGenEnv->Uniform3fv(HS("uBackColor"), 1, glm::value_ptr(options.BaseColor));
 
@@ -77,7 +77,7 @@ namespace bsf
 
 	Ref<TextureCube> SkyGenerator::GenerateIrradiance(const Ref<TextureCube>& sky, uint32_t size)
 	{
-		auto camera = MakeRef<CubeCamera>(size, GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		auto camera = MakeRef<CubeCamera>(size, GL_RGB8, GL_RGB, GL_UNSIGNED_INT);
 		static std::array<TextureCubeFace, 6> faces = {
 			TextureCubeFace::Right,
 			TextureCubeFace::Left,
@@ -120,8 +120,8 @@ namespace bsf
 		m_VertexArray = CreateCube();
 		
 		m_pSky = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
-		m_Env = Ref<CubeCamera>(new CubeCamera(env->GetSize(), GL_RGB16F, GL_RGB, GL_HALF_FLOAT));
-		m_Irr = Ref<CubeCamera>(new CubeCamera(irradiance->GetSize(), GL_RGB16F, GL_RGB, GL_HALF_FLOAT));
+		m_Env = Ref<CubeCamera>(new CubeCamera(env->GetSize(), GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE));
+		m_Irr = Ref<CubeCamera>(new CubeCamera(irradiance->GetSize(), GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE));
 		
 		ApplyMatrix(glm::identity<glm::mat4>());
 

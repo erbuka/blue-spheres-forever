@@ -1,5 +1,7 @@
 #include <vector>
 
+#include "Common.h";
+
 namespace bsf
 {
 
@@ -17,12 +19,18 @@ namespace bsf
 	{
 		DisplayModeDescriptor DisplayMode;
 		bool Fullscreen;
-
 		bool Save() const;
-
 		static Config Load();
-
 	};
 
+
+
+	namespace GlobalShadingConfig
+	{
+		inline float SkyExposure = 1.0f;
+		inline float DeferredExposure = 1.0f;
+
+		inline float LightRadiance = 5.0f;
+	}
 
 }

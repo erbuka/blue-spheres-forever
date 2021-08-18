@@ -12,6 +12,8 @@ uniform float uStarMultipler;
 
 uniform float uCloudScale;
 
+uniform float uExposure;
+
 in vec3 fPosition;
 in vec3 fUv;
 
@@ -52,6 +54,8 @@ void main() {
     vec3 clouds = mix(background, vec3(1.0f), cloudVal) * lighting;
 
     vec3 color = background + starColor * (1.0 - cloudStep) + clouds * cloudStep;
+
+    color = vec3(1.0) - exp(-color * uExposure);
 
     oColor = vec4(color, 1.0);
 

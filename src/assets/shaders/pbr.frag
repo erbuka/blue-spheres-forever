@@ -9,6 +9,8 @@ uniform vec3 uLightPos;
 
 uniform vec4 uColor;
 
+uniform float uLightRadiance;
+
 uniform float uEmission;
 
 uniform sampler2D uMap;
@@ -75,7 +77,7 @@ void main() {
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;	  
 
-    vec3 radiance = vec3(5.0f);
+    vec3 radiance = vec3(uLightRadiance);
     vec3 specular = (NDF * G * F) / max(4.0 * NdotV * NdotL, 0.001);
     fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
     
