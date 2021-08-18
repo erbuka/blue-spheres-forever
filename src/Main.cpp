@@ -48,12 +48,14 @@ namespace bsf
 	}
 }
 
-#if 0
+#ifdef BSF_DISTRIBUTION
+#ifdef _WIN32
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	bsf::Run();
 	return 0;
 }
+#endif
 #else
 int main(int argc, char** argv)
 {

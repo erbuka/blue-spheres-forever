@@ -10,8 +10,10 @@ namespace bsf
 
 	void InitializeFileLog()
 	{
-		//auto logger = spdlog::basic_logger_mt("default_log", s_LogFile.data(), true);
-		//spdlog::set_default_logger(logger);
+#ifdef BSF_DISTRIBUTION
+		auto logger = spdlog::basic_logger_mt("default_log", s_LogFile.data(), true);
+		spdlog::set_default_logger(logger);
+#endif
 	}
 
 }

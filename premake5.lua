@@ -99,7 +99,6 @@ project "ImGui"
 
 project "BlueSpheresForever"
     location(_ACTION)
-    kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
 
@@ -134,11 +133,15 @@ project "BlueSpheresForever"
     }
 
     filter "configurations:not Distribution"
+        kind "ConsoleApp"
         includedirs {
             "vendor/imgui",
             "vendor/imgui/examples", 
         }
         links { "ImGui" }
+
+    filter "configurations:Distribution"
+        kind "WindowedApp"
 
     filter "system:windows"
         libdirs { "vendor/bass/lib/win64" }
