@@ -24,7 +24,6 @@ namespace bsf
 	};
 
 
-
 	namespace GlobalShadingConfig
 	{
 		inline float SkyExposure = 1.0f;
@@ -37,7 +36,7 @@ namespace bsf
 		inline float BloomRange = 10.0f;
 
 		inline float EmeraldEmission = 5.0f;
-		inline float RingEmission = 1.7f;
+		inline float RingEmission = 1.5f;
 
 	}
 

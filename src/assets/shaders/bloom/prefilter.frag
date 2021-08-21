@@ -3,7 +3,6 @@
 uniform sampler2D uSource;
 uniform float uThreshold;
 uniform float uKick;
-uniform float uRange;
 
 in vec2 fUv;
 
@@ -11,8 +10,7 @@ out vec4 oColor;
 
 void main() {
     vec3 color = texture(uSource, fUv).rgb;
-    //float luma = dot(vec3(0.299, 0.587, 0.114), color);
-    float luma = max(max(color.r, color.b), color.g);
-    //vec3 modColor = color / (1.0 + luma / uRange);
+    float luma = dot(vec3(0.299, 0.587, 0.114), color);
+    //float luma = max(max(color.r, color.b), color.g);
     oColor = vec4(smoothstep(uThreshold - uKick, uThreshold + uKick, luma) * color,  1.0);
 }
