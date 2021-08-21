@@ -57,7 +57,7 @@ namespace bsf
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.3f);
 		
-		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.8f);
+		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.5f);
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.1f);

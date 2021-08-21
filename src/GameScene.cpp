@@ -17,7 +17,6 @@
 #include "MenuScene.h"
 #include "SkyGenerator.h"
 #include "SplashScene.h"
-#include "BlurFilter.h"
 #include "StageClearScene.h"
 #include "Diagnostic.h"
 #include "GLTF.h"

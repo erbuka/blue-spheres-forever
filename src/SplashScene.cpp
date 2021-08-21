@@ -11,7 +11,6 @@
 #include "Audio.h"
 #include "MenuScene.h"
 #include "SkyGenerator.h"
-#include "BlurFilter.h"
 #include "Color.h"
 #include "Renderer2D.h"
 #include "Font.h"
