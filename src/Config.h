@@ -28,15 +28,16 @@ namespace bsf
 	namespace GlobalShadingConfig
 	{
 		inline float SkyExposure = 1.0f;
-		inline float DeferredExposure = 1.0f;
+		inline float DeferredExposure = 2.0f;
 
-		inline float LightRadiance = 5.0f;
+		inline float LightRadiance = 1.5f;
 
 		inline float BloomThreshold = 1.0f;
-		inline float BloomKick = 0.05f;
+		inline float BloomKnee = 0.05f;
+		inline float BloomRange = 10.0f;
 
-		inline float EmeraldEmission = 2.0f;
-		inline float RingEmission = 2.0f;
+		inline float EmeraldEmission = 5.0f;
+		inline float RingEmission = 1.7f;
 
 	}
 

@@ -150,13 +150,13 @@ namespace bsf
 					ImGui::EndTabItem();
 				}
 
-
 				if (ImGui::BeginTabItem("Shading")) {
 					ImGui::SliderFloat("Sky Exposure", &GlobalShadingConfig::SkyExposure, 1.0f, 10.0f);
 					ImGui::SliderFloat("Light Radiance", &GlobalShadingConfig::LightRadiance, 0.0f, 10.0f);
 					ImGui::SliderFloat("Deferred Exposure", &GlobalShadingConfig::DeferredExposure, 1.0f, 10.0f);
 					ImGui::SliderFloat("Bloom Threshold", &GlobalShadingConfig::BloomThreshold, 0.0f, 10.0f);
-					ImGui::SliderFloat("Bloom Kick", &GlobalShadingConfig::BloomKick, 0.0f, 1.0f);
+					ImGui::SliderFloat("Bloom Knee", &GlobalShadingConfig::BloomKnee, 0.0f, 1.0f);
+					ImGui::SliderFloat("Bloom Range", &GlobalShadingConfig::BloomRange, 1.0f, 100.0f);
 					ImGui::SliderFloat("Ring Emission", &GlobalShadingConfig::RingEmission, 0.0f, 10.0f);
 					ImGui::SliderFloat("Emerald Emission", &GlobalShadingConfig::EmeraldEmission, 0.0f, 10.0f);
 					ImGui::EndTabItem();

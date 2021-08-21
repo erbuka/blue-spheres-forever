@@ -82,7 +82,6 @@ namespace bsf
 		glDisable(GL_DEPTH_TEST);
 
 		// Prefilter
-
 		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferId);
 		glDrawBuffers(1, s_DrawBuffers.data());
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_vDownsample[0]->GetId(), 0);
@@ -91,7 +90,8 @@ namespace bsf
 		m_pPrefilter->Use();
 		m_pPrefilter->UniformTexture(HS("uSource"), m_txSource);
 		m_pPrefilter->Uniform1f(HS("uThreshold"), { GlobalShadingConfig::BloomThreshold });
-		m_pPrefilter->Uniform1f(HS("uKick"), { GlobalShadingConfig::BloomKick });
+		m_pPrefilter->Uniform1f(HS("uKick"), { GlobalShadingConfig::BloomKnee });
+		//m_pPrefilter->Uniform1f(HS("uRange"), { GlobalShadingConfig::BloomRange });
 		
 		m_vaQuad->DrawArrays(GL_TRIANGLES);
 

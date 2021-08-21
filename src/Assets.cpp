@@ -44,9 +44,7 @@ namespace bsf
 		m_Assets[AssetName::FontMain] = MakeRef<Font>("assets/fonts/main.ttf", 128.0f);
 		m_Assets[AssetName::FontText] = MakeRef<Font>("assets/fonts/arial.ttf", 72.0f);
 
-
 		// Textures
-
 		m_Assets[AssetName::TexLogo] = loadTex2D("assets/textures/bs.png");
 
 		m_Assets[AssetName::TexWhite] = MakeRef<Texture2D>(0xffffffff);
@@ -54,10 +52,10 @@ namespace bsf
 		m_Assets[AssetName::TexTransparent] = MakeRef<Texture2D>(0);
 
 		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.1f);
-		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.1f);
+		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.3f);
 
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
-		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.1f);
+		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.3f);
 		
 		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.8f);
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
@@ -66,7 +64,7 @@ namespace bsf
 		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexBumperMetallic] = CreateGray(0.1f);
-		m_Assets[AssetName::TexBumperRoughness] = CreateGray(0.1f);
+		m_Assets[AssetName::TexBumperRoughness] = CreateGray(0.3f);
 		m_Assets[AssetName::TexBumper] = loadTex2D("assets/textures/bumper.png");
 
 		m_Assets[AssetName::TexBRDFLut] = loadTex2D("assets/textures/ibl_brdf_lut.png");

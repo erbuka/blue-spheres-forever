@@ -80,7 +80,6 @@ void main() {
     fragment += (kD * albedo / PI + specular) * radiance * NdotL; 
     
     // Irradiance
-    #ifndef NO_INDIRECT_LIGHTING
     vec3 irradiance = texture(uIrradiance, N).rgb;
     fragment += (kD * irradiance * albedo);
 
@@ -94,8 +93,6 @@ void main() {
         vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
         fragment += indirectSpecular;
     }
-
-    #endif
 
     oColor = vec4(fragment + albedo * uEmission, 1.0);
 }
