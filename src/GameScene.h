@@ -17,6 +17,7 @@ namespace bsf
 	class TextureCube;
 	class Framebuffer;
 	class Sky;
+	class Bloom;
 
 	struct GameStateChangedEvent;
 	struct GameActionEvent;
@@ -50,9 +51,9 @@ namespace bsf
 		MatrixStack m_ShadowProjection, m_ShadowModel;
 
 		Ref<Framebuffer> m_fbPBR, m_fbGroundReflections;
-		Ref<BlurFilter> m_fBloom;
 
 		Ref<ShaderProgram> m_pPBR, m_pSkeletalPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox;
+		Ref<Bloom> m_fxBloom;
 		
 		Ref<Sky> m_Sky;
 		Ref<Texture2D> m_txGroundMap;

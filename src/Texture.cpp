@@ -79,6 +79,11 @@ namespace bsf
 		std::make_tuple(TextureCubeFace::Bottom,		GL_TEXTURE_CUBE_MAP_NEGATIVE_Y),
 	};
 
+	static constexpr Table<2, TextureWrap, GLint> s_glTextureWrap = {
+		std::make_tuple(TextureWrap::Repeat,		GL_REPEAT),
+		std::make_tuple(TextureWrap::ClampToEdge,	GL_CLAMP_TO_EDGE),
+	};
+
 	Texture2D::Texture2D(GLenum internalFormat, GLenum format, GLenum type) :
 		m_InternalFormat(internalFormat),
 		m_Format(format),
@@ -108,8 +113,13 @@ namespace bsf
 
 	void Texture2D::SetPixels(const void* pixels, uint32_t width, uint32_t height)
 	{
+		SetPixels(pixels, width, height, 0);
+	}
+
+	void Texture2D::SetPixels(const void* pixels, uint32_t width, uint32_t height, uint32_t level)
+	{
 		Bind(0);
-		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, m_InternalFormat, width, height, 0, m_Format, m_Type, pixels));
+		BSF_GLCALL(glTexImage2D(GL_TEXTURE_2D, level, m_InternalFormat, width, height, 0, m_Format, m_Type, pixels));
 	}
 
 	void Texture2D::SetFilter(TextureFilter minFilter, TextureFilter magFilter)
@@ -123,6 +133,13 @@ namespace bsf
 		{
 			BSF_GLCALL(glGenerateMipmap(GL_TEXTURE_2D));
 		}
+	}
+
+	void Texture2D::SetWrap(TextureWrap wrap)
+	{
+		Bind(0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, s_glTextureWrap.Get<0, 1>(wrap));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, s_glTextureWrap.Get<0, 1>(wrap));
 	}
 
 

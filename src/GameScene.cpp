@@ -22,6 +22,7 @@
 #include "Diagnostic.h"
 #include "GLTF.h"
 #include "Character.h"
+#include "Bloom.h"
 
 namespace bsf
 {
@@ -51,15 +52,12 @@ namespace bsf
 		// Framebuffers
 		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
 		m_fbGroundReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbGroundReflections->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbGroundReflections->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
-		
-		// Post processing
-		m_fBloom = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
+		// Bloom
+		m_fxBloom = MakeRef<Bloom>(m_fbPBR->GetColorAttachment("color"));
 
 		// Programs
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
@@ -245,7 +243,6 @@ namespace bsf
 				m_pSkeletalPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
 				m_pSkeletalPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
 				m_pSkeletalPBR->UniformTexture(HS("uReflections"), texBlack);
-				m_pSkeletalPBR->UniformTexture(HS("uReflectionsEmission"), texBlack);
 
 				m_pSkeletalPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
 				m_pSkeletalPBR->Uniform2f(HS("uUvOffset"), { 0, 0 });
@@ -274,7 +271,6 @@ namespace bsf
 				m_pPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
 				m_pPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
 				m_pPBR->UniformTexture(HS("uReflections"), texBlack);
-				m_pPBR->UniformTexture(HS("uReflectionsEmission"), texBlack);
 
 				m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
 				m_pPBR->Uniform2f(HS("uUvOffset"), { 0.0f, 0.0f });
@@ -301,7 +297,7 @@ namespace bsf
 						if (value == EStageObject::Ring)
 							m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, glm::pi<float>() * time.Elapsed);
 
-						m_pPBR->Uniform1f(HS("uEmission"), { value == EStageObject::Ring ? 2.0f : 0.0f });
+						m_pPBR->Uniform1f(HS("uEmission"), { value == EStageObject::Ring ? GlobalShadingConfig::RingEmission : 0.0f });
 
 						m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
 						switch (value)
@@ -459,7 +455,6 @@ namespace bsf
 					m_pSkeletalPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
 					m_pSkeletalPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
 					m_pSkeletalPBR->UniformTexture(HS("uReflections"), texBlack);
-					m_pSkeletalPBR->UniformTexture(HS("uReflectionsEmission"), texBlack);
 
 					m_pSkeletalPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
 					m_pSkeletalPBR->Uniform2f(HS("uUvOffset"), { 0, 0 });
@@ -494,7 +489,6 @@ namespace bsf
 				m_pPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
 				m_pPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
 				m_pPBR->UniformTexture(HS("uReflections"), m_fbGroundReflections->GetColorAttachment("color"));
-				m_pPBR->UniformTexture(HS("uReflectionsEmission"), m_fbGroundReflections->GetColorAttachment("emission"));
 
 				m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
 				m_pPBR->Uniform2f(HS("uUvOffset"), { (ix % 2) * 0.5f + fx * 0.5f, (iy % 2) * 0.5f + fy * 0.5f });
@@ -503,7 +497,6 @@ namespace bsf
 
 				// Draw spheres and rings
 				m_pPBR->UniformTexture(HS("uReflections"), texBlack);
-				m_pPBR->UniformTexture(HS("uReflectionsEmission"), texBlack);
 				m_pPBR->Uniform2f(HS("uUvOffset"), { 0.0f, 0.0f });
 
 
@@ -526,7 +519,7 @@ namespace bsf
 								m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
 
 							m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
-							m_pPBR->Uniform1f(HS("uEmission"), { value == EStageObject::Ring ? 2.0f : 0.0f });
+							m_pPBR->Uniform1f(HS("uEmission"), { value == EStageObject::Ring ? GlobalShadingConfig::RingEmission : 0.0f });
 
 							switch (value)
 							{
@@ -588,7 +581,7 @@ namespace bsf
 					auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
 					auto [pos, tbn] = Project({ emeraldPos.x, emeraldPos.y, 0.8f });
 
-					m_pPBR->Uniform1f(HS("uEmission"), { 2.0f });
+					m_pPBR->Uniform1f(HS("uEmission"), { GlobalShadingConfig::EmeraldEmission });
 					m_pPBR->UniformTexture(HS("uMap"), texWhite);
 					m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 					m_pPBR->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
@@ -602,7 +595,6 @@ namespace bsf
 					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 					m_Model.Pop();
 
-
 				}
 
 			}
@@ -610,9 +602,7 @@ namespace bsf
 		}
 		m_fbPBR->Unbind();
 
-
-		// Apply post processing
-		m_fBloom->Apply(3, 2);
+		m_fxBloom->Apply();
 
 		// Draw to default frame buffer
 		{
@@ -626,7 +616,7 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture(HS("uColor"), m_fbPBR->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture(HS("uEmission"), m_fBloom->GetResult());
+			m_pDeferred->UniformTexture(HS("uEmission"), m_fxBloom->GetResult());
 			m_pDeferred->Uniform1f(HS("uExposure"), { GlobalShadingConfig::DeferredExposure });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 

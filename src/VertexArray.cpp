@@ -115,7 +115,7 @@ namespace bsf
 	void VertexArray::DrawArrays(GLenum mode, uint32_t count)
 	{
 		Bind();
-		glDrawArrays(mode, 0, count);
+		BSF_GLCALL(glDrawArrays(mode, 0, count));
 	}
 
 	void VertexArray::DrawIndexed(GLenum mode)

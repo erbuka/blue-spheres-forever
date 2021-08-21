@@ -12,7 +12,7 @@
 namespace bsf
 {
 	BlurFilter::BlurFilter(const Ref<Texture2D>& source) :
-		m_Source(source)
+		m_txSource(source)
 	{
 		m_pHBlur = ShaderProgram::FromFile("assets/shaders/blur.vert", "assets/shaders/blur.frag");
 		m_pVBlur = ShaderProgram::FromFile("assets/shaders/blur.vert", "assets/shaders/blur.frag", { "VERTICAL" });
@@ -30,8 +30,8 @@ namespace bsf
 	{
 		
 		bool horizonal = true;
-		uint32_t width = m_Source->GetWidth() / (1 << scale);
-		uint32_t height = m_Source->GetHeight() / (1 << scale);
+		uint32_t width = m_txSource->GetWidth() / (1 << scale);
+		uint32_t height = m_txSource->GetHeight() / (1 << scale);
 
 		
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_BLEND });
@@ -52,7 +52,7 @@ namespace bsf
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		m_pCopy->Use();
-		m_pCopy->UniformTexture(HS("uSource"), m_Source);
+		m_pCopy->UniformTexture(HS("uSource"), m_txSource);
 		Assets::GetInstance().Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 		src->Unbind();

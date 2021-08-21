@@ -15,6 +15,7 @@ namespace bsf
 	class Sky;
 	class BlurFilter;
 	class Renderer2D;
+	class Bloom;
 
 	class SplashScene : public Scene
 	{
@@ -32,10 +33,10 @@ namespace bsf
 
 		bool m_DisplayTitle = false;
 
-		Ref<BlurFilter> m_fBlur;
 		Ref<Framebuffer> m_fbPBR;
 		Ref<ShaderProgram> m_pPBR, m_pDeferred, m_pSky;
 		Ref<Sky> m_Sky;
+		Ref<Bloom> m_fxBloom;
 
 		MatrixStack m_Projection, m_View, m_Model;
 

@@ -15,6 +15,7 @@
 #include "Color.h"
 #include "Renderer2D.h"
 #include "Font.h"
+#include "Bloom.h"
 
 namespace bsf
 {
@@ -37,10 +38,9 @@ namespace bsf
 		// Framebuffers
 		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
-		m_fbPBR->CreateColorAttachment("emission", GL_RGB16F, GL_RGB, GL_HALF_FLOAT)->SetFilter(TextureFilter::Linear, TextureFilter::Linear);
 
-		// PP
-		m_fBlur = MakeRef<BlurFilter>(m_fbPBR->GetColorAttachment("emission"));
+		// Effects
+		m_fxBloom = MakeRef<Bloom>(m_fbPBR->GetColorAttachment("color"));
 
 		// Shaders
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", {"NO_SHADOWS", "NO_UV_OFFSET"});
@@ -90,8 +90,9 @@ namespace bsf
 	{
 
 		auto windowSize = GetApplication().GetWindowSize();
-		auto &r2 = GetApplication().GetRenderer2D();
-		auto &assets = Assets::GetInstance();
+		auto& r2 = GetApplication().GetRenderer2D();
+		auto& assets = Assets::GetInstance();
+		auto& texBlack = assets.Get<Texture2D>(AssetName::TexBlack);
 
 		// Rotate sky
 		m_Sky->ApplyMatrix(glm::rotate(time.Delta, glm::vec3{0.0f, 1.0f, 0.0f}));
@@ -132,8 +133,7 @@ namespace bsf
 		}
 		m_fbPBR->Unbind();
 
-		// Post processing
-		m_fBlur->Apply(3, 2);
+		m_fxBloom->Apply();
 
 		// Draw to screen
 		{
@@ -148,7 +148,7 @@ namespace bsf
 
 			m_pDeferred->Use();
 			m_pDeferred->UniformTexture(HS("uColor"), m_fbPBR->GetColorAttachment("color"));
-			m_pDeferred->UniformTexture(HS("uEmission"), m_fBlur->GetResult());
+			m_pDeferred->UniformTexture(HS("uEmission"), m_fxBloom->GetResult());
 			m_pDeferred->Uniform1f(HS("uExposure"), { GlobalShadingConfig::DeferredExposure });
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 		}
@@ -206,7 +206,7 @@ namespace bsf
 
 		m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 		
-		m_pPBR->Uniform1f(HS("uEmission"), { 2.0f });
+		m_pPBR->Uniform1f(HS("uEmission"), { GlobalShadingConfig::EmeraldEmission });
 
 		m_pPBR->UniformTexture(HS("uMap"), assets.Get<Texture2D>(AssetName::TexWhite));
 		m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
@@ -216,7 +216,6 @@ namespace bsf
 		m_pPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
 		m_pPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
 		m_pPBR->UniformTexture(HS("uReflections"), assets.Get<Texture2D>(AssetName::TexBlack));
-		m_pPBR->UniformTexture(HS("uReflectionsEmission"), assets.Get<Texture2D>(AssetName::TexBlack));
 
 		for (uint32_t i = 0; i < 7; i++)
 		{
@@ -237,6 +236,7 @@ namespace bsf
 			m_Model.Pop();
 		}
 	}
+
 
 	void SplashScene::DrawTitle(Renderer2D &r2, const Time &time)
 	{

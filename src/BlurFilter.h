@@ -17,7 +17,7 @@ namespace bsf
 	private:
 		Ref<ShaderProgram> m_pHBlur, m_pVBlur, m_pCopy;
 		Ref<Framebuffer> m_Fb0, m_Fb1;
-		Ref<Texture2D> m_Source;
+		Ref<Texture2D> m_txSource;
 	};
 }
 

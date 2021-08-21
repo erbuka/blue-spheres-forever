@@ -23,14 +23,12 @@ uniform samplerCube uIrradiance;
 uniform sampler2D uShadowMap;
 
 uniform sampler2D uReflections;
-uniform sampler2D uReflectionsEmission;
 
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUv;
 
 layout(location = 0) out vec4 oColor;
-layout(location = 1) out vec4 oEmission;
 
 const float PI = 3.14159265359;
 
@@ -89,7 +87,6 @@ void main() {
     // Sky reflections
     ivec2 resolution = textureSize(uReflections, 0);
     vec3 reflections = texture(uReflections, gl_FragCoord.xy / resolution).rgb * F;
-    vec3 reflectionsEmission = texture(uReflectionsEmission, gl_FragCoord.xy / resolution).rgb * F;
     fragment += reflections;
 
     if(length(reflections) == 0.0) { 
@@ -100,8 +97,7 @@ void main() {
 
     #endif
 
-    oColor = vec4(fragment, 1.0);
-    oEmission = vec4(uEmission * albedo + reflectionsEmission, 1.0);
+    oColor = vec4(fragment + albedo * uEmission, 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

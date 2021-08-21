@@ -53,7 +53,7 @@ namespace bsf
 		m_Assets[AssetName::TexBlack] = MakeRef<Texture2D>(0xff000000);
 		m_Assets[AssetName::TexTransparent] = MakeRef<Texture2D>(0);
 
-		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.9f);
+		m_Assets[AssetName::TexEmeraldMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexEmeraldRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
@@ -62,7 +62,7 @@ namespace bsf
 		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.8f);
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
-		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.9f);
+		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.1f);
 
 		m_Assets[AssetName::TexBumperMetallic] = CreateGray(0.1f);

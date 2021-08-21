@@ -31,6 +31,13 @@ namespace bsf
 		inline float DeferredExposure = 1.0f;
 
 		inline float LightRadiance = 5.0f;
+
+		inline float BloomThreshold = 1.0f;
+		inline float BloomKick = 0.05f;
+
+		inline float EmeraldEmission = 2.0f;
+		inline float RingEmission = 2.0f;
+
 	}
 
 }

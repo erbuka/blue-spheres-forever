@@ -160,6 +160,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClInclude Include="..\src\Asset.h" />
     <ClInclude Include="..\src\Assets.h" />
     <ClInclude Include="..\src\Audio.h" />
+    <ClInclude Include="..\src\Bloom.h" />
     <ClInclude Include="..\src\BlurFilter.h" />
     <ClInclude Include="..\src\BsfPch.h" />
     <ClInclude Include="..\src\Character.h" />
@@ -199,6 +200,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
     <ClCompile Include="..\src\Application.cpp" />
     <ClCompile Include="..\src\Assets.cpp" />
     <ClCompile Include="..\src\Audio.cpp" />
+    <ClCompile Include="..\src\Bloom.cpp" />
     <ClCompile Include="..\src\BlurFilter.cpp" />
     <ClCompile Include="..\src\BsfPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

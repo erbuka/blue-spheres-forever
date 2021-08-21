@@ -17,6 +17,12 @@ namespace bsf
 		LinearMipmapLinear
 	};
 
+	enum class TextureWrap
+	{
+		Repeat,
+		ClampToEdge
+	};
+
 	enum class TextureCubeFace : int32_t
 	{
 		Right = 0,
@@ -96,9 +102,11 @@ namespace bsf
 		Texture2D(const Texture2D&) = delete;
 		Texture2D(Texture2D&&) noexcept;
 
-		void SetPixels(const void * pixels, uint32_t width, uint32_t height);
+		void SetPixels(const void* pixels, uint32_t width, uint32_t height);
+		void SetPixels(const void * pixels, uint32_t width, uint32_t height, uint32_t level);
 
 		void SetFilter(TextureFilter minFilter, TextureFilter magFilter) override;
+		void SetWrap(TextureWrap wrap);
 
 		void Bind(uint32_t textureUnit) const override;
 
