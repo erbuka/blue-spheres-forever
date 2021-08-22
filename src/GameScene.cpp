@@ -126,15 +126,15 @@ namespace bsf
 
 		auto character = assets.Get<Character>(AssetName::ChrSonic);
 
-		auto texWhite = assets.Get<Texture2D>(AssetName::TexWhite);
-		auto texBlack = assets.Get<Texture2D>(AssetName::TexBlack);
-		auto texSphereMetallic = assets.Get<Texture2D>(AssetName::TexSphereMetallic);
-		auto texSphereRoughness = assets.Get<Texture2D>(AssetName::TexSphereRoughness);
-		auto texRingMetallic = assets.Get<Texture2D>(AssetName::TexRingMetallic);
-		auto texRingRoughness = assets.Get<Texture2D>(AssetName::TexRingRoughness);
-		auto texBumper = assets.Get<Texture2D>(AssetName::TexBumper);
-		auto texBumperMetallic = assets.Get<Texture2D>(AssetName::TexBumperMetallic);
-		auto texBumperRoughness = assets.Get<Texture2D>(AssetName::TexBumperRoughness);
+		const auto& texWhite = assets.Get<Texture2D>(AssetName::TexWhite);
+		const auto& texBlack = assets.Get<Texture2D>(AssetName::TexBlack);
+		const auto& texSphereMetallic = assets.Get<Texture2D>(AssetName::TexSphereMetallic);
+		const auto& texSphereRoughness = assets.Get<Texture2D>(AssetName::TexSphereRoughness);
+		const auto& texRingMetallic = assets.Get<Texture2D>(AssetName::TexRingMetallic);
+		const auto& texRingRoughness = assets.Get<Texture2D>(AssetName::TexRingRoughness);
+		const auto& texBumper = assets.Get<Texture2D>(AssetName::TexBumper);
+		const auto& texBumperMetallic = assets.Get<Texture2D>(AssetName::TexBumperMetallic);
+		const auto& texBumperRoughness = assets.Get<Texture2D>(AssetName::TexBumperRoughness);
 
 
 		if (!m_Paused)
