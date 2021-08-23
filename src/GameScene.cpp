@@ -27,7 +27,6 @@
 namespace bsf
 {
 
-
 	static constexpr float s_MsgSlideDuration = 0.5f;
 	static constexpr float s_MsgDuration = 2.0f;
 	static constexpr float s_MsgSlideInTime = s_MsgSlideDuration;

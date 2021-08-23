@@ -1,4 +1,4 @@
-#version 330
+#version 330 core
 
 uniform vec3 uBackColor;
 uniform vec3 uStarColor;
