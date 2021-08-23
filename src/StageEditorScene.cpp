@@ -1269,7 +1269,7 @@ namespace bsf
 		const float margin = GetStyle().GetMargin(Margin);
 
 		// Update the current value
-		MinSize.y = MaxSize.y = PreferredSize.y = 1.0f + GetStyle().LabelFontScale + 2.0f * margin;
+		MinSize.y = MaxSize.y = PreferredSize.y = 1.0f + GetStyle().LabelFontScale + 3.0f * margin;
 	}
 
 	void UITextInput::UpdateBounds(const UIRoot& root, const glm::vec2& origin, const glm::vec2& computedSize)
@@ -1391,6 +1391,7 @@ namespace bsf
 	{
 		const auto& style = GetStyle();
 		const float height = style.GetMargin(4.0f);
+		//const float height = 0.75f;
 		MinSize = glm::vec2(height);
 		if (Orientation == UISliderOrientation::Horizontal)
 			MaxSize = { std::numeric_limits<float>::max(), height };

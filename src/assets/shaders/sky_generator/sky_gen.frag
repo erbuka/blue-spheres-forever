@@ -41,8 +41,8 @@ void main() {
     // Stars
     float starBrightness = simplexNoise(dir * uStarBrightnessScale) * 0.5 + 0.5;
     float starVal = simplexNoise(dir * uStarScale) * 0.5 + 0.5;
-    //starVal = pow(starVal * starBrightness, uStarPower) * uStarMultipler;
-    starVal = stupidPow(starVal * starBrightness, uStarPower) * uStarMultipler;
+    starVal = pow(starVal * starBrightness, uStarPower) * uStarMultipler;
+    //starVal = stupidPow(starVal * starBrightness, uStarPower) * uStarMultipler;
     vec3 starColor = uStarColor * starVal;
 
     // Clouds

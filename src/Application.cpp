@@ -92,6 +92,7 @@ namespace bsf
 
     Application::~Application()
     {
+        // Explicitely destroy all resources before the window is terminated
         m_CurrentScene = nullptr;
         m_NextScene = nullptr;
 
@@ -185,9 +186,7 @@ namespace bsf
         auto prevTime = std::chrono::high_resolution_clock::now();
         auto currTime = std::chrono::high_resolution_clock::now();
 
-        m_Running = true;
-
-        while (!glfwWindowShouldClose(m_Window) && m_Running)
+        while (!glfwWindowShouldClose(m_Window))
         {
             BSF_DIAGNOSTIC_BEGIN();
 
@@ -249,7 +248,7 @@ namespace bsf
 
     void Application::Exit()
     {
-        m_Running = false;
+        glfwSetWindowShouldClose(m_Window, GLFW_TRUE);
     }
 
     Renderer2D& Application::GetRenderer2D()
