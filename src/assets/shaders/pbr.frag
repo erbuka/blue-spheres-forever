@@ -87,6 +87,7 @@ void main() {
     vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
     ivec2 resolution = textureSize(uReflections, 0);
     vec3 reflections = texture(uReflections, gl_FragCoord.xy / resolution).rgb * (F * envBrdf.x + envBrdf.y);
+
     fragment += reflections;
 
     if(length(reflections) == 0.0) { 
@@ -95,7 +96,6 @@ void main() {
     }
 
     oColor = vec4(fragment + albedo * uEmission, 1.0);
-    //oColor = vec4(F, 0.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
