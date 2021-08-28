@@ -370,6 +370,8 @@ namespace bsf
 			const std::regex regBase64("^data:.+;base64,");
 			auto fileData = json::parse(ReadTextFile(fileName));
 			auto& assets = Assets::GetInstance();
+			auto baseDir = std::filesystem::path(fileName).parent_path();
+
 
 			std::vector<GLTFBuffer> buffers;
 			std::vector<GLTFBufferView> bufferViews;
@@ -406,13 +408,21 @@ namespace bsf
 
 			loopIfExists("buffers", [&](const json& bufferSpec) {
 
-				auto str = bufferSpec.at("uri").get<std::string>();
+				auto uri = bufferSpec.at("uri").get<std::string>();
 
 				std::smatch result;
 				GLTFBuffer buffer;
 
-				if (std::regex_search(str, result, regBase64))
-					Base64Decode(std::string_view(str).substr(result.position() + result.length()), buffer);
+				if (std::regex_search(uri, result, regBase64))
+				{
+					// Base64 Encoded
+					Base64Decode(std::string_view(uri).substr(result.position() + result.length()), buffer);
+				} 
+				else
+				{
+					// File
+					buffer = ReadBinaryFile((baseDir / uri).string());
+				}
 
 				buffers.push_back(std::move(buffer));
 			});
@@ -446,8 +456,20 @@ namespace bsf
 			});
 
 			loopIfExists("images", [&](const json& imgSpec) {
-				const auto& bufferView = bufferViews[imgSpec["bufferView"].get<size_t>()];
-				images.push_back(ImageLoad(bufferView.Data(), bufferView.ByteLength, false));
+				if (imgSpec.contains("bufferView"))
+				{
+					const auto& bufferView = bufferViews[imgSpec["bufferView"].get<size_t>()];
+					images.push_back(ImageLoad(bufferView.Data(), bufferView.ByteLength, false));
+				}
+				else if (imgSpec.contains("uri"))
+				{
+					const auto data = ReadBinaryFile((baseDir / imgSpec["uri"].get<std::string>()).string());
+					images.push_back(ImageLoad(data.data(), data.size(), false));
+				}
+				else
+				{
+					throw std::runtime_error("Invalid image");
+				}
 			});
 
 			loopIfExists("textures", [&](const json& texSpec) {

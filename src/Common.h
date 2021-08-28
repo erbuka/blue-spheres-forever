@@ -296,6 +296,7 @@ namespace bsf
 	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps);
 
 	std::string ReadTextFile(std::string_view file);
+	std::vector<std::byte> ReadBinaryFile(std::string_view file);
 
 
 	#pragma endregion

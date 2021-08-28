@@ -96,6 +96,32 @@ namespace bsf
 
 	}
 
+	std::vector<std::byte> ReadBinaryFile(std::string_view file)
+	{
+		std::ifstream is;
+
+		is.open(file, std::ios_base::binary);
+
+		if (!is.good())
+		{
+			BSF_ERROR("Can't open file: {}", file.data());
+			return {};
+		}
+
+		std::vector<std::byte> result;
+
+		is.seekg(0, std::ios_base::end);
+		const auto length = is.tellg();
+		is.seekg(0, std::ios_base::beg);
+
+		result.resize(length);
+		is.read((char*)result.data(), length);
+
+		is.close();
+
+		return result;
+
+	}
 
 	static std::regex s_Space("(^\\s+)|(\\s+$)");
 

@@ -129,13 +129,19 @@ namespace bsf
 				glm::rotate(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
 				glm::scale(glm::vec3{ 0.5f, 0.5f, 0.5f });
 
-			sonic->Model.Load("assets/models/sonic.gltf", {
+			sonic->Load("assets/models/sonic.gltf", {
 				GLTFAttributes::Position,
 				GLTFAttributes::Normal,
 				GLTFAttributes::Uv,
 				GLTFAttributes::Joints_0,
 				GLTFAttributes::Weights_0
 				});
+
+			sonic->AnimationMap = {
+				{ CharacterAnimation::Idle, "idle0"},
+				{ CharacterAnimation::Run, "run"},
+				{ CharacterAnimation::Ball, "ball"},
+			};
 
 			m_Assets[AssetName::ChrSonic] = sonic;
 

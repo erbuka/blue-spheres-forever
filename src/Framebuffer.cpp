@@ -85,7 +85,7 @@ namespace bsf
 
 	void Framebuffer::Bind()
 	{
-		static const std::array<uint32_t, 16> s_ColorAttachments = {
+		static constexpr std::array<uint32_t, 16> s_ColorAttachments = {
 			GL_COLOR_ATTACHMENT0,
 			GL_COLOR_ATTACHMENT1,
 			GL_COLOR_ATTACHMENT2,

@@ -9,10 +9,25 @@
 
 namespace bsf
 {
-	struct Character : public Asset
+
+	enum class CharacterAnimation
 	{
+		Run, Ball, Idle
+	};
+
+	class Character : public GLTF, public Asset
+	{
+	public:
+
+		std::unordered_map<CharacterAnimation, std::string_view> AnimationMap;
 		float RunTimeWarp = 1.0f;
 		glm::mat4 Matrix = glm::identity<glm::mat4>();
-		GLTF Model;
+
+		using GLTF::PlayAnimation;
+		using GLTF::FadeToAnimation;
+
+		void PlayAnimation(const CharacterAnimation anim, bool loop = true, float timeWarp = 1.0f);
+		void FadeToAnimation(const CharacterAnimation anim, float fadeTime, bool loop = true, float timeWarp = 1.0f);
+
 	};
 }

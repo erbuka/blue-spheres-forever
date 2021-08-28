@@ -155,8 +155,8 @@ namespace bsf
 			for (size_t i = 0; i < steps; i++)
 				m_GameLogic->Advance({ time.Delta / steps, time.Elapsed });
 
-			character->Model.SetAnimationGlobalTimeWarp(m_GameLogic->GetNormalizedVelocity() * (m_GameLogic->IsGoindBackward() ? -1.0f : 1.0f));
-			character->Model.Update(time);
+			character->SetAnimationGlobalTimeWarp(m_GameLogic->GetNormalizedVelocity() * (m_GameLogic->IsGoindBackward() ? -1.0f : 1.0f));
+			character->Update(time);
 		}
 
 
@@ -242,7 +242,7 @@ namespace bsf
 
 				m_pSkeletalPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
-				m_pSkeletalPBR->Uniform1f(HS("uEmission"), { 0.0f });
+				m_pSkeletalPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(glm::vec3(Colors::Black)));
 
 				m_pSkeletalPBR->UniformTexture(HS("uMetallic"), texBlack);
 				m_pSkeletalPBR->UniformTexture(HS("uRoughness"), texWhite);
@@ -257,7 +257,7 @@ namespace bsf
 
 				GLTFRenderConfig config;
 				config.Program = m_pSkeletalPBR;
-				character->Model.Render(time, config);
+				character->Render(time, config);
 
 				m_Model.Pop();
 			}
@@ -305,7 +305,11 @@ namespace bsf
 						if (value == EStageObject::Ring)
 							m_Model.Rotate({ 0.0f, 0.0f, -1.0f }, glm::pi<float>() * time.Elapsed);
 
-						m_pPBR->Uniform1f(HS("uEmission"), { value == EStageObject::Ring ? GlobalShadingConfig::RingEmission : 0.0f });
+						const auto emission = value == EStageObject::Ring ?
+							GlobalShadingConfig::RingEmission * glm::vec3(Colors::Ring) :
+							glm::vec3(Colors::Black);
+
+						m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(emission));
 
 						m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
 
@@ -454,7 +458,7 @@ namespace bsf
 
 					m_pSkeletalPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
-					m_pSkeletalPBR->Uniform1f(HS("uEmission"), { 0.0f });
+					m_pSkeletalPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(glm::vec3(Colors::Black)));
 
 					m_pSkeletalPBR->UniformTexture(HS("uMetallic"), texBlack);
 					m_pSkeletalPBR->UniformTexture(HS("uRoughness"), texWhite);
@@ -469,7 +473,7 @@ namespace bsf
 
 					GLTFRenderConfig config;
 					config.Program = m_pSkeletalPBR;
-					character->Model.Render(time, config);
+					character->Render(time, config);
 
 					m_Model.Pop();
 				}
@@ -487,7 +491,7 @@ namespace bsf
 
 					m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
-					m_pPBR->Uniform1f(HS("uEmission"), { 0.0f });
+					m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(glm::vec3(Colors::Black)));
 
 					m_pPBR->UniformTexture(HS("uMap"), m_txGroundMap);
 					m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexGroundMetallic));
@@ -529,7 +533,12 @@ namespace bsf
 								m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
 
 							m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
-							m_pPBR->Uniform1f(HS("uEmission"), { value == EStageObject::Ring ? GlobalShadingConfig::RingEmission : 0.0f });
+
+							const auto emission = value == EStageObject::Ring ?
+								GlobalShadingConfig::RingEmission * glm::vec3(Colors::Ring) :
+								glm::vec3(Colors::Black);
+
+							m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(emission));
 
 							auto color = s_ObjectColor.Get<0, 1>(value);
 							m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(color));
@@ -589,11 +598,11 @@ namespace bsf
 					auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
 					auto [pos, tbn] = Project({ emeraldPos.x, emeraldPos.y, 0.8f });
 
-					m_pPBR->Uniform1f(HS("uEmission"), { GlobalShadingConfig::EmeraldEmission });
 					m_pPBR->UniformTexture(HS("uMap"), texWhite);
 					m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 					m_pPBR->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
 					m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(m_Stage->EmeraldColor));
+					m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(GetEmeraldEmission(m_Stage->EmeraldColor)));
 					
 					m_Model.Push();
 					m_Model.Translate(pos);
@@ -770,14 +779,14 @@ namespace bsf
 
 		if (evt.Current == EGameState::Starting)
 		{
-			character->Model.PlayAnimation("idle0");
+			character->PlayAnimation(CharacterAnimation::Idle);
 
 			m_GameMessages.emplace_back("Get Blue Spheres!");
 		}
 		
 		if (evt.Current == EGameState::Playing)
 		{
-			character->Model.FadeToAnimation("run", 0.5f, true, character->RunTimeWarp);
+			character->FadeToAnimation(CharacterAnimation::Run, 0.5f, true, character->RunTimeWarp);
 		}
 		
 		if (evt.Current == EGameState::GameOver)
@@ -788,7 +797,7 @@ namespace bsf
 
 			assets.Get<Audio>(AssetName::SfxMusic)->FadeOut(2.0f);
 
-			character->Model.StopAllAnimations();
+			character->StopAllAnimations();
 
 			task->SetDoneFunction([&](SceneTask& self) {
 
@@ -851,15 +860,15 @@ namespace bsf
 		switch (evt.Action)
 		{
 		case EGameAction::YellowSphereJumpStart:
-			character->Model.PlayAnimation("ball", true, 0.5f);
+			character->PlayAnimation(CharacterAnimation::Ball , true, 0.5f);
 			assets.Get<Audio>(AssetName::SfxYellowSphere)->Play();
 			break;
 		case EGameAction::NormalJumpStart:
-			character->Model.PlayAnimation("ball", true, 0.5f);
+			character->PlayAnimation(CharacterAnimation::Ball, true, 0.5f);
 			assets.Get<Audio>(AssetName::SfxJump)->Play();
 			break;
 		case EGameAction::JumpEnd:
-			character->Model.PlayAnimation("run", true, character->RunTimeWarp);
+			character->PlayAnimation(CharacterAnimation::Run, true, character->RunTimeWarp);
 			break;
 		case EGameAction::GoForward:
 			break;

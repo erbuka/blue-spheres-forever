@@ -15,6 +15,7 @@
 #include "Renderer2D.h"
 #include "Font.h"
 #include "Bloom.h"
+#include "Color.h"
 
 namespace bsf
 {
@@ -205,7 +206,6 @@ namespace bsf
 
 		m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 		
-		m_pPBR->Uniform1f(HS("uEmission"), { GlobalShadingConfig::EmeraldEmission });
 
 		m_pPBR->UniformTexture(HS("uMap"), assets.Get<Texture2D>(AssetName::TexWhite));
 		m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
@@ -228,6 +228,7 @@ namespace bsf
 			m_Model.Rotate({1.0f, 0.0f, 0.0f}, angle + time.Elapsed * s_EmeraldAngularVelocity);
 
 			m_pPBR->UniformMatrix4f(HS("uModel"), m_Model.GetMatrix());
+			m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(GetEmeraldEmission(colors[i])));
 			m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(colors[i]));
 
 			emerald->DrawArrays(GL_TRIANGLES);

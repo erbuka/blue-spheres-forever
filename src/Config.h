@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 
 #include "Common.h";
@@ -35,8 +37,7 @@ namespace bsf
 		inline float BloomKnee = 0.05f;
 		inline float BloomRange = 10.0f;
 
-		inline float EmeraldEmission = 5.0f;
-		inline float RingEmission = 1.5f;
+		inline float RingEmission = 1.0f;
 
 	}
 

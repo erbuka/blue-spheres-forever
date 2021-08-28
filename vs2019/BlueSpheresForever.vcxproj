@@ -205,6 +205,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\src\Character.cpp" />
     <ClCompile Include="..\src\Common.cpp" />
     <ClCompile Include="..\src\Config.cpp" />
     <ClCompile Include="..\src\CubeCamera.cpp" />

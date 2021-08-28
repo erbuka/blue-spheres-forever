@@ -8,10 +8,10 @@ uniform vec3 uCameraPos;
 uniform vec3 uLightPos;
 
 uniform vec4 uColor;
+uniform vec3 uEmission;
 
 uniform float uLightRadiance;
 
-uniform float uEmission;
 
 uniform sampler2D uMap;
 uniform sampler2D uMetallic;
@@ -95,7 +95,7 @@ void main() {
         fragment += indirectSpecular;
     }
 
-    oColor = vec4(fragment + albedo * uEmission, 1.0);
+    oColor = vec4(fragment + uEmission, 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

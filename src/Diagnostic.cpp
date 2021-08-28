@@ -158,7 +158,6 @@ namespace bsf
 					ImGui::SliderFloat("Bloom Knee", &GlobalShadingConfig::BloomKnee, 0.0f, 1.0f);
 					ImGui::SliderFloat("Bloom Range", &GlobalShadingConfig::BloomRange, 1.0f, 100.0f);
 					ImGui::SliderFloat("Ring Emission", &GlobalShadingConfig::RingEmission, 0.0f, 10.0f);
-					ImGui::SliderFloat("Emerald Emission", &GlobalShadingConfig::EmeraldEmission, 0.0f, 10.0f);
 					ImGui::EndTabItem();
 				};
 

@@ -1,9 +1,21 @@
 #pragma once
 
+#include "Config.h"
 #include <glm/glm.hpp>
 
 namespace bsf
 {
+	inline float Luma(const glm::vec3& color)
+	{
+		return glm::dot(glm::vec3(0.299f, 0.587f, 0.114f), color);
+	}
+
+	inline glm::vec3 GetEmeraldEmission(const glm::vec3& originalColor)
+	{
+		const auto col = originalColor + 0.1f;
+		return col / Luma(col) * GlobalShadingConfig::BloomThreshold;
+	}
+
 	constexpr uint32_t ToHexColor(const glm::vec4& rgba)
 	{
 		uint8_t r = uint8_t(rgba.r * 255.0f);
