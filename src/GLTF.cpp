@@ -160,8 +160,8 @@ namespace bsf
 	struct GLTFNode
 	{
 		std::string Name = "";
+		glm::mat4 InitialInverseGlobalTransform = glm::identity<glm::mat4>();
 		glm::mat4 GlobalTransform = glm::identity<glm::mat4>();
-		glm::mat4 InverseGlobalTransform = glm::identity<glm::mat4>();
 		glm::mat4 LocalTransform = glm::identity<glm::mat4>();
 		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
 		glm::quat Rotation = glm::identity<glm::quat>();
@@ -203,16 +203,14 @@ namespace bsf
 			for (auto& child : Children)
 			{
 				child->PostTraverse([](GLTFNode& self) {
+					
 					self.ComputeLocalTransform();
 					self.GlobalTransform = self.Parent->GlobalTransform * self.LocalTransform;
-
-					if (self.Skin)
-						self.InverseGlobalTransform = glm::inverse(self.GlobalTransform);
 
 					if (self.Joint.has_value())
 					{
 						auto& joint = self.Joint.value();
-						joint.SetJointTransform(joint.Root->InverseGlobalTransform * self.GlobalTransform * joint.GetInverseBindTransform());
+						joint.SetJointTransform(joint.Root->InitialInverseGlobalTransform * self.GlobalTransform * joint.GetInverseBindTransform());
 					}
 				});
 			}
@@ -620,15 +618,37 @@ namespace bsf
 
 					m_Nodes[i]->Skin = skin;
 
-					for (size_t i = 0; i < skin->Joints.size(); ++i)
+					// TODO Should check if there's a skeleton
+					const auto& skinRoot = m_Nodes[i];
+
+					for (size_t j = 0; j < skin->Joints.size(); ++j)
 					{
-						skin->Joints[i]->Joint = GLTFJoint{
-							m_Nodes[i],
-							&skin->InverseBindTransform[i],
-							&skin->JointTransform[i]
+						skin->Joints[j]->Joint = GLTFJoint{
+							skinRoot,
+							&skin->InverseBindTransform[j],
+							&skin->JointTransform[j]
 						};
 					}
 
+				}
+			}
+
+			// Compute initial global transforms
+			for (auto& node : m_Nodes)
+			{
+				if (!node->Parent)
+				{
+					node->ComputeLocalTransform();
+					node->GlobalTransform = node->LocalTransform;
+					node->InitialInverseGlobalTransform = glm::inverse(node->GlobalTransform);
+					for (auto& child : node->Children)
+					{
+						child->PostTraverse([](GLTFNode& self) {
+							self.ComputeLocalTransform();
+							self.GlobalTransform = self.Parent->GlobalTransform * self.LocalTransform;
+							self.InitialInverseGlobalTransform = glm::inverse(self.GlobalTransform);
+						});
+					}
 				}
 			}
 
@@ -698,6 +718,29 @@ namespace bsf
 
 				m_Animations.push_back(std::move(animation));
 			});
+
+
+			// TODO Debug Hips
+			
+			for (auto& anim : m_Animations)
+			{
+				if (anim->Name == "ball")
+				{
+					for (auto& chan : anim->Channels)
+					{
+						if (chan.Target->Name == "Hips")
+						{
+							std::visit([&](auto& v) {
+								json j = v;
+								fmt::print("---path {} ---\n{}\n", chan.Path, j.dump(1));
+							}, chan.Data);
+						}
+					}
+				}
+			}
+			
+
+			//
 
 			return true;
 		}

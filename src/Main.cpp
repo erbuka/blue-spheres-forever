@@ -42,7 +42,7 @@ namespace bsf
 		Ref<Character> m_Character;
 		Ref<ShaderProgram> m_Skel, m_Test;
 
-		glm::vec3 m_CameraPos = { 0, 0, 5 };
+		glm::vec3 m_CameraPos = { 0, 0, 6 };
 
 	public:
 
@@ -51,7 +51,7 @@ namespace bsf
 			m_Character = Assets::GetInstance().Get<Character>(AssetName::ChrSonic);
 			m_Skel = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag", { "SKELETAL" });
 			m_Test = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag");
-			m_Character->PlayAnimation(CharacterAnimation::Run, true, 0.25f);
+			m_Character->PlayAnimation(CharacterAnimation::Ball, true, 1);
 		}
 		void OnRender(const Time& time) override
 		{

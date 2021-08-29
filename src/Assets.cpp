@@ -124,7 +124,7 @@ namespace bsf
 			sonic->RunTimeWarp = 2.0f;
 
 
-			sonic->Matrix = 
+			sonic->Matrix =
 				glm::rotate(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
 				glm::rotate(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
 				glm::scale(glm::vec3{ 0.5f, 0.5f, 0.5f });
