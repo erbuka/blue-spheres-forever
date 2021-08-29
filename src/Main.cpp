@@ -34,7 +34,7 @@
 namespace bsf
 {
 
-
+	/*
 	class TestScene : public Scene
 	{
 	private:
@@ -51,7 +51,7 @@ namespace bsf
 			m_Character = Assets::GetInstance().Get<Character>(AssetName::ChrSonic);
 			m_Skel = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag", { "SKELETAL" });
 			m_Test = ShaderProgram::FromFile("assets/shaders/test.vert", "assets/shaders/test.frag");
-			m_Character->PlayAnimation(CharacterAnimation::Ball, true, 1);
+			m_Character->PlayAnimation(CharacterAnimation::Ball, true, 0.25f);
 		}
 		void OnRender(const Time& time) override
 		{
@@ -104,17 +104,17 @@ namespace bsf
 
 		}
 	};
-
+	*/
 
 	void Run()
 	{
 		//auto scene = MakeRef<TestScene>();
-		//auto scene = Ref<Scene>(new DisclaimerScene());
+		auto scene = Ref<Scene>(new DisclaimerScene());
 		//auto scene = Ref<Scene>(new StageEditorScene());
 		//auto scene = Ref<Scene>(new SplashScene());
 		//auto scene = Ref<Scene>(new MenuScene());
 		//auto scene = MakeRef<StageClearScene>(GameInfo{ GameMode::BlueSpheres, 10000, 1 }, 100, true);
-		auto scene = MakeRef<TestScene>();
+		//auto scene = MakeRef<TestScene>();
 
 		Application app;
 		app.GotoScene(std::move(scene));

@@ -30,7 +30,7 @@ namespace bsf
 
 	// Yellow spheres
 	static constexpr float s_YellowSphereDistance = 6.0f;
-	static constexpr float s_YellowSphereHeight = .8f;
+	static constexpr float s_YellowSphereHeight = 0.8f;
 
 	// Game Over
 	static constexpr float s_GameOverRotationAcceleration = 2.0f * glm::pi<float>();

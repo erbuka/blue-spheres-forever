@@ -238,7 +238,7 @@ namespace bsf
 				if (t >= Time[i] && t < Time[i + 1])
 				{
 					const float delta = (t - Time[i]) / (Time[i + 1] - Time[i]);
-					if constexpr (std::is_same_v<T, glm::vec3>) glm::lerp(values[i], values[i + 1], delta);
+					if constexpr (std::is_same_v<T, glm::vec3>) return glm::lerp(values[i], values[i + 1], delta);
 					else if constexpr (std::is_same_v<T, glm::quat>) return glm::slerp(values[i], values[i + 1], delta);
 					else BSF_ERROR("Invalid interpolated type: {0}", typeid(T).name());
 				}
@@ -718,29 +718,6 @@ namespace bsf
 
 				m_Animations.push_back(std::move(animation));
 			});
-
-
-			// TODO Debug Hips
-			
-			for (auto& anim : m_Animations)
-			{
-				if (anim->Name == "ball")
-				{
-					for (auto& chan : anim->Channels)
-					{
-						if (chan.Target->Name == "Hips")
-						{
-							std::visit([&](auto& v) {
-								json j = v;
-								fmt::print("---path {} ---\n{}\n", chan.Path, j.dump(1));
-							}, chan.Data);
-						}
-					}
-				}
-			}
-			
-
-			//
 
 			return true;
 		}
