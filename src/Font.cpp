@@ -108,6 +108,8 @@ namespace bsf
 			result->m_FontTex->SetFilter(TextureFilter::LinearMipmapLinear, TextureFilter::Linear);
 
 			// Create character info
+			// I found the formulas to correcly calculate the UV from the bitmap.
+			// If the image was already flipped like OpenGL likes, it would have been much easier.
 			for (uint32_t i = 0; i < numCharacters; i++)
 			{
 				uint32_t codePoint = fromCharacter + i;

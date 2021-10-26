@@ -18,6 +18,7 @@ namespace bsf
 		auto sw = m_txSource->GetWidth();
 		auto sh = m_txSource->GetHeight();
 
+		// Only need to update the textures if the size of the framebuffer changes
 		if (sw != m_Width || sh != m_Height)
 		{
 			m_Width = sw;

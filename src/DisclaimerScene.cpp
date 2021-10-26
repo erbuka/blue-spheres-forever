@@ -20,7 +20,7 @@ namespace bsf
 		"made from project efforts. No intent to infringe said copyrights or registered trademarks",
 		"is made by contributors of \"Blue Spheres Forever\".",
 		"",
-		"SEGA Mega Driveand Sonic The Hedgehog are trademarks of SEGA Enterprises, LTD.",
+		"SEGA Mega Drive and Sonic The Hedgehog are trademarks of SEGA Enterprises, LTD.",
 		"Copyright 1992 SEGA Enterprises, LTD.Character Design 1991 - 2012 Sonic Team."
 	};
 

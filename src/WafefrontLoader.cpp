@@ -8,7 +8,6 @@
 namespace bsf
 {
 
-	// TODO try to parse with regex
 	Ref<ModelDef> WavefrontLoader::Load(std::string_view fileName)
 	{
 		std::ifstream stdIs;
@@ -23,6 +22,7 @@ namespace bsf
 
 		BSF_INFO("Loading model from: {0}", fileName);
 
+		// Begin a bit lazy here, I could parse with regex, but this seems kind of easier
 		auto parseVec3 = [&](const std::string& str) -> glm::vec3 {
 			glm::vec3 v;
 			std::stringstream(str) >> v.x >> v.y >> v.z;
@@ -50,6 +50,7 @@ namespace bsf
 					vertices.push_back(vertex);
 			}
 
+			// Just in case I forget to triangulate the model
 			if (vertices.size() != 3)
 			{
 				BSF_ERROR("Not triangle face found");

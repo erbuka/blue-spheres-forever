@@ -473,6 +473,7 @@ namespace bsf
 		// Update the game pace
 		m_SpeedUpTimer += time;
 
+		// It's a "while" but reads "if".
 		while (m_SpeedUpTimer.Elapsed >= s_SpeedUpPeriod && m_CurrentPace < s_MaxPace)
 		{
 			m_SpeedUpTimer -= s_SpeedUpPeriod;
@@ -648,6 +649,8 @@ namespace bsf
 	{
 		float step = CalculateStep(time);
 
+		// It's technically possibile that we might still be jumping while collecting
+		// the last blue sphere of the stage, so... handle jump. Doesn't cost anything
 		HandleJump(step);
 
 		m_Position += glm::vec2(m_Direction) * step;
@@ -663,7 +666,7 @@ namespace bsf
 	{
 		if (m_IsJumping)
 		{
-
+			// Jump trajectory (height) is calulated with a quadratic function
 			m_RemainingJumpDistance -= step;
 			float deltaJump = (m_TotalJumpDistance - m_RemainingJumpDistance) / m_TotalJumpDistance;
 			m_Height = std::max(0.0f, (1.0f - std::pow(deltaJump * 2.0f - 1.0f, 2.0f)) * this->m_JumpHeight);
@@ -681,6 +684,9 @@ namespace bsf
 
 	float GameLogic::CalculateStep(const Time& time) const
 	{
+		// The length of the step to move. Yes, depends on a lot of things:
+		// - yellow spheres jump increase the velocity by a factor of 2
+		// - gameover state halves the base velocity
 		return m_Velocity * m_VelocityScale * m_JumpVelocityScale * time.Delta;
 	}
 
@@ -710,11 +716,14 @@ namespace bsf
 
 	bool GameLogic::PullRotateCommand()
 	{
+		// The player can turn at 90 degrees angles.
+
 		if (!m_IsRotating && m_RotateCommand != ERotate::None)
 		{
 			m_IsRotating = true;
 			m_TargetRotationAngle = m_RotationAngle + int32_t(m_RotateCommand) * glm::pi<float>() / 2.0f;
 
+			// Rotating a 2D vector by +/- 90 degrees is really easy and doesn't require any tringonometry
 			if (m_RotateCommand == ERotate::Left)
 			{
 				m_Direction = { -m_Direction.y, m_Direction.x };
@@ -736,6 +745,7 @@ namespace bsf
 	{
 		if (m_IsRotating)
 		{
+			// Just interpolate from the current direction to the next
 			float dist = m_TargetRotationAngle - m_RotationAngle;
 			float step = Sign(dist) * m_AngularVelocity * time.Delta;
 
