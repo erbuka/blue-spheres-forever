@@ -114,7 +114,8 @@ project "BlueSpheresForever"
         "vendor/stb/include",
         "vendor/bass/include",
         "vendor/json/include",
-        "vendor/fmt/include"
+        "vendor/fmt/include",
+        "vendor/miniaudio"
     }
 
     

@@ -80,7 +80,7 @@
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DEBUG;BSF_ENABLE_DIAGNOSTIC;BSF_SAFE_GLCALL;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -102,7 +102,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>BSF_ENABLE_DIAGNOSTIC;BSF_SAFE_GLCALL;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -130,7 +130,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;BSF_DISTRIBUTION;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>

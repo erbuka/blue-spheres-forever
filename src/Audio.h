@@ -7,14 +7,16 @@
 
 namespace bsf
 {
+	class AudioDevice;
+	class Audio;
 
 	class AudioDevice
 	{
 	public:
 		AudioDevice();
 		~AudioDevice();
-	private:
 		struct Impl;
+	private:
 		std::unique_ptr<Impl> m_Impl;
 	};	
 
@@ -38,9 +40,8 @@ namespace bsf
 		void Stop();
 		void FadeOut(float time);
 
-
-	private:
 		struct Impl;
+	private:
 		std::unique_ptr<Impl> m_Impl;
 	};
 
