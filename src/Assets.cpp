@@ -98,7 +98,12 @@ namespace bsf
 
 		// Music
 		{
-			constexpr float loopPoint = 5.7f;
+			// Well propably It's me, but it seems that the loop point
+			// is slightly changing between audio libraries. So it needs to be adjusted manually
+			
+			//constexpr float loopPoint = 5.7f; // BASS LIBRARY
+			constexpr float loopPoint = 5.75f; // MINI AUDIO (
+			
 			auto music = MakeRef<Audio>("assets/sound/music_techno_loop.mp3");
 			music->SetLoop(loopPoint);
 			m_Assets[AssetName::SfxMusic] = music;

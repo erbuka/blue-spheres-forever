@@ -43,7 +43,8 @@ namespace bsf
 
 	static std::vector<Audio::Impl*> m_Streams;
 
-	AudioDevice::Impl::Impl() {
+	AudioDevice::Impl::Impl() 
+	{
 		ma_device_config config = ma_device_config_init(ma_device_type_playback);
 		config.playback.format = s_format;   // Set to ma_format_unknown to use the device's native format.
 		config.playback.channels = s_channels;               // Set to 0 to use the device's native channel count.
@@ -56,16 +57,14 @@ namespace bsf
 			return;
 		}
 
-		ma_device_start(&m_Device);     // The device is sleeping by default so you'll need to start it manually.
-
+		ma_device_start(&m_Device);    
 
 		BSF_INFO("Audio device started");
-
 	}
 
-	AudioDevice::Impl::~Impl() {
-		// Do something here. Probably your program's main loop.
-		ma_device_uninit(&m_Device);    // This will stop the device so no need to do that manually.
+	AudioDevice::Impl::~Impl() 
+	{
+		ma_device_uninit(&m_Device);   
 		BSF_INFO("Audio device stopped");
 	}
 
@@ -83,6 +82,7 @@ namespace bsf
 
 		BSF_INFO("Loaded audio file: {0}", fileName.data());
 	}
+
 	Audio::Impl::~Impl() 
 	{
 		auto& streams = m_Streams;
@@ -90,13 +90,15 @@ namespace bsf
 		ma_decoder_uninit(&m_Decoder);
 	}
 
-	void Audio::Impl::Play() {
+	void Audio::Impl::Play() 
+	{
 		ma_decoder_seek_to_pcm_frame(&m_Decoder, 0);
 		m_Playing = true;
 		m_Fading = false;
 	}
 
-	void Audio::Impl::Stop() {
+	void Audio::Impl::Stop() 
+	{
 		m_Playing = false;
 	}
 
@@ -124,10 +126,6 @@ namespace bsf
 
 	static void DataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 	{
-		// In playback mode copy data to pOutput. In capture mode read data from pInput. In full-duplex mode, both
-		// pOutput and pInput will be valid and you can move data from pInput into pOutput. Never process more than
-		// frameCount frames.
-
 		static std::vector<float> m_Buffer;
 
 		auto& streams = m_Streams;
@@ -192,25 +190,11 @@ namespace bsf
 	#pragma region Interface
 
 
-	AudioDevice::AudioDevice()
-	{
-		m_Impl = std::make_unique<Impl>();
-	}
+	AudioDevice::AudioDevice() { m_Impl = std::make_unique<Impl>(); }
+	AudioDevice::~AudioDevice() { m_Impl.reset(); }
 
-	AudioDevice::~AudioDevice()
-	{
-		m_Impl.reset();
-	}
-
-	Audio::Audio(std::string_view fileName)
-	{
-		m_Impl = std::make_unique<Impl>(fileName);
-	}
-
-	Audio::~Audio()
-	{
-		m_Impl.reset();
-	}
+	Audio::Audio(std::string_view fileName) { m_Impl = std::make_unique<Impl>(fileName); }
+	Audio::~Audio() { m_Impl.reset(); }
 
 	void Audio::SetVolume(float volume) { m_Impl->m_Volume = volume;}
 	float Audio::GetVolume() const { return m_Impl->m_Volume;}

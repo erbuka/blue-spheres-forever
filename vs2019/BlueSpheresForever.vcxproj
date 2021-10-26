@@ -80,7 +80,7 @@
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DEBUG;BSF_ENABLE_DIAGNOSTIC;BSF_SAFE_GLCALL;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -88,12 +88,10 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;bass.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\vendor\bass\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\src\assets\ (xcopy /Q /E /Y /I ..\src\assets ..\bin\Debug\$(ProjectName)\assets &gt; nul) ELSE (xcopy /Q /Y /I ..\src\assets ..\bin\Debug\$(ProjectName)\assets &gt; nul)
-IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bin\win64\bass.dll ..\bin\Debug\$(ProjectName) &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\bass\bin\win64\bass.dll ..\bin\Debug\$(ProjectName) &gt; nul)</Command>
+      <Command>IF EXIST ..\src\assets\ (xcopy /Q /E /Y /I ..\src\assets ..\bin\Debug\$(ProjectName)\assets &gt; nul) ELSE (xcopy /Q /Y /I ..\src\assets ..\bin\Debug\$(ProjectName)\assets &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -102,7 +100,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>BSF_ENABLE_DIAGNOSTIC;BSF_SAFE_GLCALL;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;..\vendor\imgui;..\vendor\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -116,12 +114,10 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;bass.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\vendor\bass\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\src\assets\ (xcopy /Q /E /Y /I ..\src\assets ..\bin\Release\$(ProjectName)\assets &gt; nul) ELSE (xcopy /Q /Y /I ..\src\assets ..\bin\Release\$(ProjectName)\assets &gt; nul)
-IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bin\win64\bass.dll ..\bin\Release\$(ProjectName) &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\bass\bin\win64\bass.dll ..\bin\Release\$(ProjectName) &gt; nul)</Command>
+      <Command>IF EXIST ..\src\assets\ (xcopy /Q /E /Y /I ..\src\assets ..\bin\Release\$(ProjectName)\assets &gt; nul) ELSE (xcopy /Q /Y /I ..\src\assets ..\bin\Release\$(ProjectName)\assets &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">
@@ -130,7 +126,7 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <PrecompiledHeaderFile>BsfPch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;BSF_DISTRIBUTION;SPDLOG_FMT_EXTERNAL;FMT_HEADER_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\bass\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vendor\glm;..\vendor\glad\include;..\vendor\glfw\include;..\vendor\spdlog\include;..\vendor\stb\include;..\vendor\json\include;..\vendor\fmt\include;..\vendor\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -144,15 +140,13 @@ IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bi
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>..\bin\Distribution\Glad\Glad.lib;..\bin\Distribution\GLFW\GLFW.lib;opengl32.lib;bass.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\vendor\bass\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\bin\Distribution\Glad\Glad.lib;..\bin\Distribution\GLFW\GLFW.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PostBuildEvent>
-      <Command>IF EXIST ..\src\assets\ (xcopy /Q /E /Y /I ..\src\assets ..\bin\Distribution\$(ProjectName)\assets &gt; nul) ELSE (xcopy /Q /Y /I ..\src\assets ..\bin\Distribution\$(ProjectName)\assets &gt; nul)
-IF EXIST ..\vendor\bass\bin\win64\bass.dll\ (xcopy /Q /E /Y /I ..\vendor\bass\bin\win64\bass.dll ..\bin\Distribution\$(ProjectName) &gt; nul) ELSE (xcopy /Q /Y /I ..\vendor\bass\bin\win64\bass.dll ..\bin\Distribution\$(ProjectName) &gt; nul)</Command>
+      <Command>IF EXIST ..\src\assets\ (xcopy /Q /E /Y /I ..\src\assets ..\bin\Distribution\$(ProjectName)\assets &gt; nul) ELSE (xcopy /Q /Y /I ..\src\assets ..\bin\Distribution\$(ProjectName)\assets &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

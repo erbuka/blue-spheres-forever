@@ -112,7 +112,6 @@ project "BlueSpheresForever"
         "vendor/glfw/include",
         "vendor/spdlog/include",
         "vendor/stb/include",
-        "vendor/bass/include",
         "vendor/json/include",
         "vendor/fmt/include",
         "vendor/miniaudio"
@@ -126,7 +125,7 @@ project "BlueSpheresForever"
 
     files { "src/**.cpp", "src/**.h"  }
 
-    links { "opengl32", "Glad", "GLFW", "bass" }
+    links { "opengl32", "Glad", "GLFW" }
 
 
     postbuildcommands {
@@ -143,10 +142,4 @@ project "BlueSpheresForever"
 
     filter "configurations:Distribution"
         kind "WindowedApp"
-
-    filter "system:windows"
-        libdirs { "vendor/bass/lib/win64" }
-        postbuildcommands {
-            "{COPY} ../vendor/bass/bin/win64/bass.dll ../bin/%{cfg.buildcfg}/%{prj.name}"
-        }
         
