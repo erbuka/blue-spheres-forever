@@ -121,6 +121,7 @@ namespace bsf
 
 		// Play music
 		auto music = assets.Get<Audio>(AssetName::SfxMusic);
+		music->SetVolume(1.0f);
 		music->Play();
 
 	}

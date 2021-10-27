@@ -41,7 +41,7 @@ namespace bsf
 		~Impl();
 	};
 
-	static std::vector<Audio::Impl*> m_Streams;
+	static std::vector<Audio::Impl*> s_Streams;
 
 	AudioDevice::Impl::Impl() 
 	{
@@ -78,14 +78,14 @@ namespace bsf
 
 		m_Decoder.pUserData = this;
 
-		m_Streams.push_back(this);
+		s_Streams.push_back(this);
 
 		BSF_INFO("Loaded audio file: {0}", fileName.data());
 	}
 
 	Audio::Impl::~Impl() 
 	{
-		auto& streams = m_Streams;
+		auto& streams = s_Streams;
 		streams.erase(std::remove(streams.begin(), streams.end(), this), streams.end());
 		ma_decoder_uninit(&m_Decoder);
 	}
@@ -128,7 +128,7 @@ namespace bsf
 	{
 		static std::vector<float> m_Buffer;
 
-		auto& streams = m_Streams;
+		auto& streams = s_Streams;
 
 		float* fOutput = (float*)pOutput;
 		float* fInput = (float*)pInput;
