@@ -49,6 +49,7 @@ project "GLFW"
         "vendor/glfw/src"
     }
     files {
+        "vendor/glfw/src/egl_context.c",
         "vendor/glfw/src/context.c",
         "vendor/glfw/src/init.c",
         "vendor/glfw/src/input.c",
@@ -76,7 +77,6 @@ project "GLFW"
     filter "system:linux"
         defines { "_GLFW_X11" }
         files {
-            "vendor/glfw/src/egl_context.c",
             "vendor/glfw/src/glx_context.c",
             "vendor/glfw/src/x11_init.c",
             "vendor/glfw/src/x11_monitor.c",
@@ -134,8 +134,8 @@ project "BlueSpheresForever"
 
     defines { "SPDLOG_FMT_EXTERNAL", "FMT_HEADER_ONLY" }
 
-    pchheader "src/BsfPch.h"
-    pchsource "src/BsfPch.cpp"
+    pchheader "BsfPch.h"
+    pchsource "BsfPch.cpp"
 
     files { "src/**.cpp", "src/**.h"  }
 
@@ -144,6 +144,13 @@ project "BlueSpheresForever"
     postbuildcommands {
         "{COPY} ../src/assets ../bin/%{cfg.buildcfg}/%{prj.name}/assets"
     }
+
+    filter "action:vs*"  -- for Visual Studio actions
+        pchheader "BsfPch.h"
+        pchsource "src/BsfPch.cpp"
+
+    filter "action:not vs*"  -- for everything else
+        pchheader "src/BsfPch.h"
 
     filter "system:windows"
         links { "opengl32" }
