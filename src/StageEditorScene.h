@@ -27,7 +27,7 @@ namespace bsf
 	class UIPanel;
 	class UIRoot;
 	class UILayer;
-	
+
 	enum class StageEditorTool
 	{
 		BlueSphere,
@@ -90,9 +90,9 @@ namespace bsf
 
 		// Sizes
 		float GlobalScale = 20.0f;
-		
+
 		float MarginUnit = -1.0f;
-		
+
 		float ShadowOffset = -1.0f;
 
 		float StageAreaCrosshairSize = 0.3f;
@@ -112,9 +112,9 @@ namespace bsf
 
 		UIPalette Palette;
 
-		const glm::vec4 DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const;
-		const glm::vec4 GetBackgroundColor(const UIElement& element, const glm::vec4& default) const;
-		const glm::vec4 GetForegroundColor(const UIElement& element, const glm::vec4& default) const;
+		const glm::vec4 DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& dflt) const;
+		const glm::vec4 GetBackgroundColor(const UIElement& element, const glm::vec4& dflt) const;
+		const glm::vec4 GetForegroundColor(const UIElement& element, const glm::vec4& dflt) const;
 
 		float GetMargin(float units = 1.0f) const { return units * MarginUnit; }
 		void Recompute();
@@ -175,7 +175,7 @@ namespace bsf
 	private:
 		friend class UIRoot;
 		static uint32_t m_NextId;
-		
+
 		std::underlying_type_t<UIElementFlags> m_Flags;
 		UIStyle* m_Style = nullptr;
 		Application* m_App = nullptr;
@@ -225,7 +225,7 @@ namespace bsf
 			std::chrono::system_clock::time_point TimePressed;
 			std::chrono::system_clock::time_point TimeLastClicked;
 		};
-		
+
 		struct {
 			Ref<UIElement> HoverTarget = nullptr;
 			Ref<UIElement> DragTarget = nullptr;
@@ -261,7 +261,7 @@ namespace bsf
 
 		UIPanel() = default;
 		UILayout Layout = UILayout::Vertical;
-		
+
 		bool HasShadow = false;
 
 		void AddChild(const Ref<UIElement>& child);
@@ -336,7 +336,7 @@ namespace bsf
 
 		uint32_t m_Rows = 0;
 		uint32_t m_Columns = 0;
-		
+
 		float m_MaxHeightOffset = 0.0f;
 		float m_HeightOffset = 0.0f;
 		float m_TotalHeight = 0.0f;
@@ -393,7 +393,7 @@ namespace bsf
 		Ref<Stage> m_Stage = nullptr;
 		Ref<Texture2D> m_Pattern = nullptr, m_BgPattern;
 	};
-	
+
 	class UITextInput : public UIElement
 	{
 	public:
@@ -411,7 +411,7 @@ namespace bsf
 		void SetValue(const std::string& value) { m_Value.Set(value); };
 
 	private:
-		UIBoundValue<std::string> m_Value = "";
+		UIBoundValue<std::string> m_Value;
 	};
 
 	class UIText : public UIElement
@@ -441,11 +441,11 @@ namespace bsf
 		void Render(const UIRoot& root, Renderer2D& renderer, const Time& time) override;
 
 	};
-	
+
 	enum class UISliderOrientation { Horizontal, Vertical };
 
 
-	
+
 	class UISlider : public UIElement
 	{
 	public:
@@ -503,7 +503,7 @@ namespace bsf
 		Ref<UIText> m_Label;
 		glm::vec3 m_DefaultValue = Colors::Black;
 	};
-	
+
 
 	class StageEditorScene : public Scene
 	{
@@ -511,7 +511,7 @@ namespace bsf
 		void OnAttach() override;
 		void OnRender(const Time& time) override;
 		void OnDetach() override;
-		
+
 		~StageEditorScene() {}
 
 	private:
@@ -542,6 +542,6 @@ namespace bsf
 
 	};
 
-	
+
 
 }

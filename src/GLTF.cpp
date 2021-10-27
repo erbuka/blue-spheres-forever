@@ -203,7 +203,7 @@ namespace bsf
 			for (auto& child : Children)
 			{
 				child->PostTraverse([](GLTFNode& self) {
-					
+
 					self.ComputeLocalTransform();
 					self.GlobalTransform = self.Parent->GlobalTransform * self.LocalTransform;
 
@@ -407,15 +407,16 @@ namespace bsf
 			loopIfExists("buffers", [&](const json& bufferSpec) {
 
 				auto uri = bufferSpec.at("uri").get<std::string>();
+				constexpr std::string_view delimiter = ";base64,";
+				const auto pos = uri.find(delimiter.data());
 
-				std::smatch result;
 				GLTFBuffer buffer;
 
-				if (std::regex_search(uri, result, regBase64))
+				if (pos != std::string::npos)
 				{
 					// Base64 Encoded
-					Base64Decode(std::string_view(uri).substr(result.position() + result.length()), buffer);
-				} 
+					Base64Decode(std::string_view(uri).substr(pos + delimiter.length()), buffer);
+				}
 				else
 				{
 					// File

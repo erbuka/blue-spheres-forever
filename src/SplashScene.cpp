@@ -92,7 +92,7 @@ namespace bsf
 		auto windowSize = GetApplication().GetWindowSize();
 		auto& r2 = GetApplication().GetRenderer2D();
 		auto& assets = Assets::GetInstance();
-		auto& texBlack = assets.Get<Texture2D>(AssetName::TexBlack);
+		auto texBlack = assets.Get<Texture2D>(AssetName::TexBlack);
 
 		// Rotate sky
 		m_Sky->ApplyMatrix(glm::rotate(time.Delta, glm::vec3{0.0f, 1.0f, 0.0f}));
@@ -205,7 +205,7 @@ namespace bsf
 		m_pPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightPos));
 
 		m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
-		
+
 
 		m_pPBR->UniformTexture(HS("uMap"), assets.Get<Texture2D>(AssetName::TexWhite));
 		m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
@@ -248,7 +248,7 @@ namespace bsf
 
 		const float aspect = (float)texLogo->GetWidth() / texLogo->GetHeight();
 		const float alpha = std::abs(std::sin(time.Elapsed * 5.0f));
-		
+
 		r2.Pivot(EPivot::Center);
 
 		r2.Push();

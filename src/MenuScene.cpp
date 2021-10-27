@@ -116,7 +116,7 @@ namespace bsf
 
 		// Menus
 		BuildMenus();
-		
+
 		// Fade In
 		ScheduleTask(ESceneTaskEvent::PostRender, MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f));
 
@@ -132,7 +132,7 @@ namespace bsf
 		float height = s_VirtualHeight;
 		float width = windowSize.x / windowSize.y * s_VirtualHeight;
 		float offset = glm::fract(time.Elapsed / 2.0f);
-		
+
 		glViewport(0, 0, windowSize.x, windowSize.y);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -178,7 +178,7 @@ namespace bsf
 	{
 		Assets::GetInstance().Get<Audio>(AssetName::SfxIntro)->FadeOut(0.5f);
 	}
-	
+
 	void MenuScene::BuildMenus()
 	{
 		// Create menus
@@ -190,7 +190,7 @@ namespace bsf
 		auto backFn = [&](MenuRoot& root) { root.PopMenu(); return true; };
 
 		playMenu->AddItem<ButtonMenuItem>("Play")->SetConfirmFunction([&](MenuRoot& root) {
-			auto& stageGenerator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
+			auto stageGenerator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
 			auto code = m_StageCodeMenuItem->GetStageCode();
 			auto stage = stageGenerator->Generate(code);
 			PlayStage(stage, GameInfo{ GameMode::BlueSpheres, 0, stageGenerator->GetStageFromCode(code).value() });
@@ -248,8 +248,8 @@ namespace bsf
 			m_DisplayModeMenuItem->AddOption(mode.ToString(), mode);
 
 		m_DisplayModeMenuItem->SetSelectedOption(m_Config.DisplayMode);
-		
-			
+
+
 		mainMenu->AddItem<LinkMenuItem>("Classic Mode", playMenu);
 		mainMenu->AddItem<LinkMenuItem>("Custom Stages", customStagesMenu);
 		mainMenu->AddItem<LinkMenuItem>("Options", optionsMenu);
@@ -426,7 +426,7 @@ namespace bsf
 			m_SelectedItem = iter != m_Children.end() ? *iter : m_SelectedItem;
 
 		}
-		
+
 		return true;
 
 	}
@@ -522,7 +522,7 @@ namespace bsf
 	}
 
 
-	
+
 	StageCodeMenuItem::StageCodeMenuItem() : m_CursorPos(0)
 	{
 		auto generator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
@@ -607,7 +607,7 @@ namespace bsf
 	{
 		auto color = Selected ? s_SelectedMenuColor : s_MenuColor;
 		auto font = Assets::GetInstance().Get<Font>(AssetName::FontMain);
-		
+
 		auto& code = m_CurrentCode;
 
 		FormattedString codeString;

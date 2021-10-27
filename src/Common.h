@@ -34,7 +34,7 @@ namespace glm
 		for (size_t i = 0; i < C * R; i++)
 			*(ptr + i) = json[i].get<T>();
 	}
-	
+
 	// Quaternions
 	template<template<typename, glm::qualifier> typename V, typename T, qualifier Q>
 	void to_json(json& json, const V<T, Q>& v)
@@ -74,7 +74,7 @@ namespace bsf
 {
 	class Texture2D;
 	class VertexArray;
-	
+
 
 	#pragma region PBR
 
@@ -84,11 +84,11 @@ namespace bsf
 		glm::vec3 Normal;
 		glm::vec2 Uv;
 	};
-	
+
 	constexpr float s_GroundRadius = 12.5f;
 	constexpr int32_t s_SightRadius = 12;
 	constexpr glm::vec3 s_GroundCenter = { 0.0f, 0.0f, -s_GroundRadius };
-	
+
 	std::tuple<bool, glm::vec3, glm::mat4> Reflect(const glm::vec3& cameraPosition, const glm::vec3& position, float radius);
 	std::tuple<glm::vec3, glm::mat4> Project(const glm::vec3& position, bool invertOrientation = false);
 	Ref<VertexArray> CreateClipSpaceQuad();
@@ -116,7 +116,7 @@ namespace bsf
 	};
 
 	#pragma endregion
-	
+
 	#pragma region Utilities
 
 
@@ -213,7 +213,7 @@ namespace bsf
 
 	template <typename T>
 	typename std::enable_if<std::is_unsigned<T>::value, int>::type
-	constexpr Sign(T const x) 
+	constexpr Sign(T const x)
 	{
 		return T(0) < x;
 	}
@@ -233,7 +233,7 @@ namespace bsf
 		else return static_cast<std::underlying_type_t<Enum>>(f);
 	}
 
-	
+
 	template<typename T, typename K>
 	constexpr T MoveTowards(const T& from, const T& target, K k)
 	{
@@ -275,19 +275,18 @@ namespace bsf
 		void operator()(float t) { m_Value = (1 - t) * m_v0 + t * m_v1; }
 
 		template<uint8_t N>
-		T Get() const;
-
-		template<>
-		T Get<0>() const { return m_v0; }
-
-		template<>
-		T Get<1>() const { return m_v1; }
+		T Get() const
+		{
+			if constexpr(N == 0) return m_v0;
+			else if constexpr(N == 1) return m_v1;
+			else throw std::exception("Invalid value");
+		}
 
 	private:
 		T m_Value;
 		T m_v0, m_v1;
 	};
-	
+
 
 
 
@@ -302,5 +301,3 @@ namespace bsf
 	#pragma endregion
 
 }
-
-

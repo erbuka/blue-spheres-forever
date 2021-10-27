@@ -24,7 +24,7 @@ namespace bsf
 			std::ifstream is;
 
 			// Read file data
-			is.open(fileName, std::ios_base::binary);
+			is.open(fileName.data(), std::ios_base::binary);
 
 			if (!is.good())
 			{
@@ -133,7 +133,7 @@ namespace bsf
 			return result;
 		}
 
-		Font::Impl() {}
+		Impl() {}
 
 		const Ref<Texture2D> GetTexture() { return m_FontTex; }
 
@@ -164,7 +164,7 @@ namespace bsf
 	};
 
 
-	
+
 	Font::Font(std::string_view fileName, float fontSize)
 	{
 		m_Impl = std::unique_ptr<Impl>(Impl::Pack(fileName, fontSize, s_FirstChar, s_LastChar, s_BitmapSize, s_BitmapSize));

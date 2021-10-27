@@ -66,7 +66,7 @@ namespace bsf
 		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
-		
+
 		m_fbGroundReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbGroundReflections->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
@@ -78,13 +78,13 @@ namespace bsf
 		m_pSkeletalPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "SKELETAL" });
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
 		m_pSkyBox = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
-		
+
 		// Textures
 		m_txGroundMap = CreateCheckerBoard({ ToHexColor(m_Stage->PatternColors[0]), ToHexColor(m_Stage->PatternColors[1]) });
 		m_txGroundMap->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);;
-		
+
 		// Skybox
-		auto& skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);
+		auto skyGenerator = assets.Get<SkyGenerator>(AssetName::SkyGenerator);
 		m_Sky = skyGenerator->Generate({ 1024, m_Stage->SkyColor, m_Stage->StarsColor });
 
 		// Event hanlders
@@ -125,7 +125,7 @@ namespace bsf
 		music->Play();
 
 	}
-	
+
 	void GameScene::OnRender(const Time& time)
 	{
 		BSF_DIAGNOSTIC_FUNC();
@@ -261,7 +261,7 @@ namespace bsf
 
 				m_Model.Pop();
 			}
-			
+
 			// Draw Objects
 			{
 
@@ -297,7 +297,7 @@ namespace bsf
 						auto [visible, p, tbn] = Reflect(cameraWorldPosition, { x - fx, y - fy, 0.15f + m_GameOverObjectsHeight }, 0.15f);
 						if (!visible)
 							continue;
-						
+
 						m_Model.Push();
 						m_Model.Translate(p);
 						m_Model.Multiply(tbn);
@@ -369,11 +369,11 @@ namespace bsf
 
 				auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
 				auto [visible, pos, tbn] = Reflect(cameraWorldPosition, { emeraldPos.x, emeraldPos.y, 0.8f }, 0.15f);
-				
+
 
 				if (visible)
 				{
-					
+
 					m_pPBR->UniformTexture(HS("uMap"), texWhite);
 					m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
 					m_pPBR->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
@@ -410,10 +410,10 @@ namespace bsf
 				m_View.LoadIdentity();
 				m_View.LookAt({ 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, -2.5f }, { 0.0f, 1.0f, 0.0f });
 				m_View.Rotate({ 0.0f, 1.0f, 0.0f }, -m_GameLogic->GetRotationAngle() + glm::pi<float>() / 2.0f);
-				
+
 				m_Model.Reset();
 				m_Model.LoadIdentity();
-				
+
 				glDepthMask(GL_FALSE);
 				m_pSkyBox->Use();
 				m_pSkyBox->UniformMatrix4f(HS("uProjection"), m_Projection);
@@ -603,7 +603,7 @@ namespace bsf
 					m_pPBR->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
 					m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(m_Stage->EmeraldColor));
 					m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(GetEmeraldEmission(m_Stage->EmeraldColor)));
-					
+
 					m_Model.Push();
 					m_Model.Translate(pos);
 					m_Model.Multiply(tbn);
@@ -615,9 +615,9 @@ namespace bsf
 				}
 
 			}
-			
+
 		}
-		
+
 		m_fbPBR->Unbind();
 
 		m_fxBloom->Apply();
@@ -641,11 +641,11 @@ namespace bsf
 		}
 
 
-	
+
 		RenderGameUI(time);
-		
+
 	}
-	
+
 	void GameScene::OnDetach()
 	{
 	}
@@ -700,7 +700,7 @@ namespace bsf
 			}
 
 			renderer2d.End();
-			
+
 			m_GameMessages.remove_if([](auto& x) { return x.Time >= s_MsgSlideOutTime; });
 
 		}
@@ -714,7 +714,7 @@ namespace bsf
 			float sh = sw / windowSize.x * windowSize.y;
 
 			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh, -1.0f, 1.0f));
-			
+
 
 			{
 				auto blueSpheres = std::to_string(m_Stage->Count(EStageObject::BlueSphere));
@@ -723,20 +723,20 @@ namespace bsf
 				renderer2d.Translate({ padding, sh - padding });
 
 				renderer2d.Texture(assets.Get<Texture2D>(AssetName::TexUISphere));
-				
+
 				renderer2d.Color(Colors::Black);
 				renderer2d.DrawQuad({ shadowOffset, -shadowOffset });
 
 				renderer2d.Color(Colors::BlueSphere);
 				renderer2d.DrawQuad({ 0.0f, 0.0f });
-	
+
 				renderer2d.Translate({ 1.0f + padding / 2.0f, 0.0f });
 
 				renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
 				renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });
 				renderer2d.TextShadowOffset({ shadowOffset, -shadowOffset });
 				renderer2d.DrawStringShadow(assets.Get<Font>(AssetName::FontMain), blueSpheres);
-				
+
 				renderer2d.Pop();
 			}
 
@@ -769,7 +769,7 @@ namespace bsf
 			renderer2d.End();
 		}
 
-		
+
 	}
 
 	void GameScene::OnGameStateChanged(const GameStateChangedEvent& evt)
@@ -783,12 +783,12 @@ namespace bsf
 
 			m_GameMessages.emplace_back("Get Blue Spheres!");
 		}
-		
+
 		if (evt.Current == EGameState::Playing)
 		{
 			character->FadeToAnimation(CharacterAnimation::Run, 0.5f, true, character->RunTimeWarp);
 		}
-		
+
 		if (evt.Current == EGameState::GameOver)
 		{
 			auto task = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
@@ -818,7 +818,7 @@ namespace bsf
 
 			ScheduleTask(ESceneTaskEvent::PostRender, task);
 		}
-		
+
 		if (evt.Current == EGameState::Emerald)
 		{
 
@@ -827,8 +827,8 @@ namespace bsf
 
 			auto liftObjectsTask = MakeRef<SceneTask>();
 			liftObjectsTask->SetUpdateFunction([&](SceneTask& self, const Time& time) {
-				//m_GameOverObjectsHeight += time.Delta * 10.0f;				
-				m_GameOverObjectsHeight += time.Delta * 5.0f;				
+				//m_GameOverObjectsHeight += time.Delta * 10.0f;
+				m_GameOverObjectsHeight += time.Delta * 5.0f;
 			});
 
 			ScheduleTask(ESceneTaskEvent::PreRender, liftObjectsTask);
@@ -895,7 +895,7 @@ namespace bsf
 		}
 
 	}
-	
+
 
 	void GameScene::RotateSky(const glm::vec2& deltaPosition)
 	{
@@ -903,7 +903,7 @@ namespace bsf
 
 		float du = deltaPosition.x / s_Scale;
 		float dv = deltaPosition.y / s_Scale;
-		
+
 		glm::mat4 rotateZ = glm::rotate(glm::identity<glm::mat4>(), du * glm::pi<float>() * 2.0f, { 0.0f, 0.0f, 1.0f });
 		glm::mat4 rotateX = glm::rotate(glm::identity<glm::mat4>(), dv * glm::pi<float>() * 2.0f, { 1.0f, 0.0f, 0.0f });
 		glm::mat rotate = rotateZ * rotateX;
@@ -911,7 +911,7 @@ namespace bsf
 		m_Sky->ApplyMatrix(rotate);
 	}
 
-	
+
 	void GameScene::RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model)
 	{
 		auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();

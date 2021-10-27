@@ -1,6 +1,6 @@
 #include "BsfPch.h"
 
-#include <json\json.hpp>
+#include <json/json.hpp>
 
 #include "Config.h"
 #include "Log.h"
@@ -9,7 +9,7 @@
 namespace bsf
 {
 	using namespace nlohmann;
-	
+
 	static constexpr std::string_view s_ConfigFile = "assets/config.json";
 
 	void to_json(json& json, const DisplayModeDescriptor& mode)
@@ -60,23 +60,23 @@ namespace bsf
 				continue;
 
 			DisplayModeDescriptor mode;
-				
+
 			mode.Width = videoModes[i].width;
 			mode.Height = videoModes[i].height;
-				
+
 			result.push_back(std::move(mode));
 
 		}
 
 		return result;
-	}	
+	}
 
 
 	bool Config::Save() const
 	{
 		std::ofstream of;
 
-		of.open(s_ConfigFile);
+		of.open(s_ConfigFile.data());
 
 		if (!of.is_open())
 		{
@@ -100,7 +100,7 @@ namespace bsf
 		if (!fs::is_regular_file(s_ConfigFile))
 		{
 			Config config;
-			
+
 			config.DisplayMode = GetDisplayModes()[0];
 			config.Fullscreen = false;
 
@@ -108,7 +108,7 @@ namespace bsf
 
 			return config;
 
-		} 
+		}
 		else
 		{
 			Config result;

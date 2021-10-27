@@ -1,6 +1,6 @@
 #include "BsfPch.h"
 
-#include <spdlog\sinks\basic_file_sink.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include "Log.h"
 
@@ -17,4 +17,3 @@ namespace bsf
 	}
 
 }
-

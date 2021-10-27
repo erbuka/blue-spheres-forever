@@ -72,7 +72,7 @@ namespace bsf
 
 		// Input
 		AddSubscription(app.KeyReleased, [&](const KeyReleasedEvent& evt) {
-			
+
 			if (m_InputEnabled && evt.KeyCode == GLFW_KEY_ENTER)
 			{
 				auto fadeOut = MakeRef<FadeTask>(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f);
@@ -80,7 +80,7 @@ namespace bsf
 				fadeOut->SetDoneFunction([&](SceneTask& self) {
 					if (m_GameInfo.Mode == GameMode::BlueSpheres)
 					{
-						auto& stageGenerator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
+						auto stageGenerator = Assets::GetInstance().Get<StageGenerator>(AssetName::StageGenerator);
 						auto newGameInfo = m_GameInfo;
 						newGameInfo.CurrentStage = m_NextStage;
 						newGameInfo.Score = m_Score.Get<1>();
@@ -137,7 +137,7 @@ namespace bsf
 			r2.Translate({ width / 4.0f, 0.0f });
 			r2.Pivot(EPivot::TopLeft);
 			r2.DrawStringShadow(font, str);
-			
+
 			r2.Translate({ width / 2.0f, 0.0f });
 			r2.Pivot(EPivot::TopRight);
 			r2.DrawStringShadow(font, std::to_string(count));

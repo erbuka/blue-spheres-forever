@@ -2,6 +2,7 @@
 
 #include "Asset.h"
 #include "Ref.h"
+#include "Log.h"
 
 #include <glm/glm.hpp>
 
@@ -58,7 +59,7 @@ namespace bsf
 		void UniformTexture(uint64_t hash, const Ref<T>& texture)
 		{
 			static_assert(std::is_base_of_v<Texture, T>);
-			
+
 			auto info = m_UniformInfo.find(hash);
 
 			if (info != m_UniformInfo.end())
@@ -68,13 +69,13 @@ namespace bsf
 				texture->Bind(texUnit);
 				return;
 			}
-			
+
 			BSF_ERROR("Couldn't find uniform texture: {0}", hash);
 
 		}
 
 		uint32_t GetId() const { return m_Id; }
-		
+
 		UNIFORM1_INL(i, int32_t, 1);
 		UNIFORM_DECL(i, int32_t, 1);
 

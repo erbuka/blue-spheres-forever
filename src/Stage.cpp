@@ -4,7 +4,7 @@
 #include <json/json.hpp>
 
 #include "Stage.h"
-#include "Log.h";
+#include "Log.h"
 #include "Common.h"
 #include "Table.h"
 
@@ -16,7 +16,7 @@ namespace bsf
 	static constexpr char* s_SortedStagesFile = "assets/data/stages.json";
 
 #pragma region Loaders
-	
+
 	using LoaderFn = void(*)(Stage&, const nlohmann::json& json);
 
 	static void Loader200(Stage& stage, const nlohmann::json& json)
@@ -68,7 +68,7 @@ namespace bsf
 			BSF_ERROR("Cannot save stages ordering");
 			return;
 		}
-		
+
 		os << nlohmann::json(files).dump();
 
 		os.close();
@@ -76,7 +76,7 @@ namespace bsf
 
 	std::vector<std::string> Stage::GetStageFiles()
 	{
-		
+
 		namespace fs = std::filesystem;
 
 
@@ -100,7 +100,7 @@ namespace bsf
 
 		for (auto& entry : fs::directory_iterator("assets/data"))
 		{
-			
+
 			if (entry.is_regular_file() && std::find(result.begin(), result.end(), entry.path().string()) == result.end() &&
 				entry.path().extension().string() == ".bssj")
 			{
@@ -207,7 +207,7 @@ namespace bsf
 		Wrap(x); Wrap(y);
 		m_Data[(size_t)y * m_Size + x] = obj;
 	}
-	
+
 	EAvoidSearch Stage::GetAvoidSearchAt(int32_t x, int32_t y) const
 	{
 		Wrap(x); Wrap(y);
@@ -288,14 +288,14 @@ namespace bsf
 	}
 
 
-	
+
 	#pragma region Stage Generator
 
 	static constexpr uint32_t s_SectionSize = 16;
 	static constexpr uint32_t s_MinStage = 1;
 	static constexpr uint32_t s_MaxStage = 134217728;
 
-	static constexpr std::array<glm::vec3, 8> s_EmeraldColors = { 
+	static constexpr std::array<glm::vec3, 8> s_EmeraldColors = {
 		glm::vec3(0.0, 1.0, 0.0),
 		glm::vec3(1.0, 0.0, 0.0),
 		glm::vec3(1.0, 0.0, 1.0),
@@ -375,7 +375,7 @@ namespace bsf
 		inline EAvoidSearch GetAvoidSearchAt(int32_t x, int32_t y) { return AvoidSearch[(size_t)y * s_SectionSize + x]; }
 		inline EAvoidSearch GetAvoidSearchAt(const glm::ivec2& pos) { return GetAvoidSearchAt(pos.x, pos.y); }
 
-		StageSection Flip(bool horizontal) 
+		StageSection Flip(bool horizontal)
 		{
 			StageSection result;
 
@@ -456,7 +456,7 @@ namespace bsf
 		uint32_t bl = (3 + ((stage - 1) % 125) * 7) % 125;	// Bottom left
 
 
-		std::array<StageSection, 4> sections = { 
+		std::array<StageSection, 4> sections = {
 			m_Impl->m_Sections[bl],
 			m_Impl->m_Sections[br].Flip(true),
 			m_Impl->m_Sections[tl].Flip(false),
@@ -478,14 +478,14 @@ namespace bsf
 				auto& s = sections[(size_t)sy * 2 + sx];
 
 				result->MaxRings += s.Rings;
-				
+
 				for (uint32_t y = 0; y < s_SectionSize; y++)
 				{
 					for (uint32_t x = 0; x < s_SectionSize; x++)
 					{
 						// Absolute x
 						int32_t ax = sx * s_SectionSize + x;
-						
+
 						// Absolute y
 						int32_t ay = sy * s_SectionSize + y;
 
@@ -504,7 +504,7 @@ namespace bsf
 			s_CheckerBoardPatterns[((size_t)tl % 16) * 2],
 			s_CheckerBoardPatterns[((size_t)tl % 16) * 2 + 1]
 		};
-		
+
 		result->SkyColor = s_SkyColor[tl % 16];
 
 		result->StarsColor = Colors::White;
@@ -512,7 +512,7 @@ namespace bsf
 		result->EmeraldColor = s_EmeraldColors[tr % s_EmeraldColors.size()];
 
 		result->StartDirection = { 0, 1 };
-		result->StartPoint = { 28, 15 }; 
+		result->StartPoint = { 28, 15 };
 
 		return result;
 
@@ -582,7 +582,7 @@ namespace bsf
 
 		// Get the other bits from the code
 		ca = code;
-		
+
 		// First bit of the code is always 1
 		ca[38] = true;
 
@@ -611,7 +611,7 @@ namespace bsf
 
 		/*
 			Extra safety check
-			Checking that the given code is fully correct. If not, return -1 (invalid code) 
+			Checking that the given code is fully correct. If not, return -1 (invalid code)
 		*/
 		if (GetCodeFromStage(stage) != code) {
 			BSF_ERROR("Invalid stage code: {0}", code);

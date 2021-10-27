@@ -17,13 +17,13 @@ namespace bsf
 	{
 		std::ifstream is;
 
-		is.open(fileName, std::ios_base::binary);
-		
+		is.open(fileName.data(), std::ios_base::binary);
+
 		BSF_INFO("Loading image from file: {0}", fileName.data());
 
 		if (!is.is_open())
 		{
-			BSF_ERROR("There was en error while opengin file '{0}'", fileName);
+			BSF_ERROR("There was en error while opening file '{0}'", fileName);
 			return { };
 		}
 
@@ -46,7 +46,7 @@ namespace bsf
 		constexpr size_t channels = 4;
 		int32_t width, height;
 		stbi_set_flip_vertically_on_load(flipY);
-			
+
 		std::byte* imageData = (std::byte*)stbi_load_from_memory((const uint8_t*)ptr, length, &width, &height, nullptr, channels);
 
 		if (imageData == nullptr)
@@ -236,7 +236,7 @@ namespace bsf
 
 	}
 
-	TextureCube::TextureCube(uint32_t size, std::string_view front, std::string_view back, std::string_view left, 
+	TextureCube::TextureCube(uint32_t size, std::string_view front, std::string_view back, std::string_view left,
 		std::string_view right, std::string_view bottom, std::string_view top) :
 		TextureCube(size, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
 	{
@@ -252,7 +252,7 @@ namespace bsf
 		std::array<std::string_view, 6> files = { front, back, left, right, bottom, top };
 
 		Initialize();
-		
+
 		for (uint32_t i = 0; i < files.size(); i++)
 		{
 			auto [pixels, width, height] = std::move(ImageLoad(files[i], false));
@@ -265,7 +265,7 @@ namespace bsf
 
 			SetPixels(faces[i], pixels.data());
 		}
-		
+
 
 	}
 

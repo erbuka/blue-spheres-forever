@@ -1,25 +1,9 @@
 #include "BsfPch.h"
 
-#include <thread>
-
-#include <json/json.hpp>
-
 #include "Application.h"
-#include "Stage.h"
-#include "GameScene.h"
-#include "Common.h"
-#include "MenuScene.h"
 #include "DisclaimerScene.h"
-#include "SplashScene.h"
-#include "StageClearScene.h"
-#include "StageEditorScene.h"
 
-#include "Renderer2D.h"
-#include "GLTF.h"
-#include "Assets.h"
-#include "ShaderProgram.h"
-#include "VertexArray.h"
-#include "Texture.h"
+
 
 #include <glm/gtc/noise.hpp>
 #include <fmt/core.h>
@@ -49,6 +33,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	bsf::Run();
 	return 0;
 }
+#else
+int main(int argc, char** argv)
+{
+	bsf::Run();
+	return 0;
+}
 #endif
 #else
 int main(int argc, char** argv)
@@ -57,5 +47,3 @@ int main(int argc, char** argv)
 	return 0;
 }
 #endif
-
-

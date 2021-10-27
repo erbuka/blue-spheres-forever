@@ -26,7 +26,7 @@ static const std::string s_VertexSource = R"VERTEX(
 	layout(location = 3) in uint aTexture;
 	layout(location = 4) in uint aClip;
 	layout(location = 5) in vec4 aClipPlanes;
-	
+
 	out vec2 fPosition;
 	out vec2 fUv;
 	out vec4 fColor;
@@ -39,15 +39,15 @@ static const std::string s_VertexSource = R"VERTEX(
 		fPosition = aPosition;
 		fUv = aUv;
 		fColor = aColor;
-		fTexture = aTexture;		
+		fTexture = aTexture;
 		fClip = aClip;
 		fClipPlanes = aClipPlanes;
-	}	
+	}
 
 )VERTEX";
 
 static const std::string s_FragmentSource = R"FRAGMENT(
-	
+
 	#version 330
 
 	uniform sampler2D uTextures[32];
@@ -62,17 +62,50 @@ static const std::string s_FragmentSource = R"FRAGMENT(
 	out vec4 oColor;
 
 	void main() {
-		
+
 		if(fClip > 0u && (fPosition.x < fClipPlanes.x || fPosition.x > fClipPlanes.y || fPosition.y < fClipPlanes.z || fPosition.y > fClipPlanes.w))
 			discard;
 		else {
-			#ifdef DEBUG
-			oColor = vec4(0.0, 0.0, 0.0, 1.0);
-			#else
-			oColor = fColor * texture(uTextures[fTexture], fUv);
-			#endif
+			vec4 texColor;
+
+			switch(fTexture) {
+				case 0u: texColor = texture(uTextures[0], fUv); break;
+				case 1u: texColor = texture(uTextures[1], fUv); break;
+				case 2u: texColor = texture(uTextures[2], fUv); break;
+				case 3u: texColor = texture(uTextures[3], fUv); break;
+				case 4u: texColor = texture(uTextures[4], fUv); break;
+				case 5u: texColor = texture(uTextures[5], fUv); break;
+				case 6u: texColor = texture(uTextures[6], fUv); break;
+				case 7u: texColor = texture(uTextures[7], fUv); break;
+				case 8u: texColor = texture(uTextures[8], fUv); break;
+				case 9u: texColor = texture(uTextures[9], fUv); break;
+				case 10u: texColor = texture(uTextures[10], fUv); break;
+				case 11u: texColor = texture(uTextures[11], fUv); break;
+				case 12u: texColor = texture(uTextures[12], fUv); break;
+				case 13u: texColor = texture(uTextures[13], fUv); break;
+				case 14u: texColor = texture(uTextures[14], fUv); break;
+				case 15u: texColor = texture(uTextures[15], fUv); break;
+				case 16u: texColor = texture(uTextures[16], fUv); break;
+				case 17u: texColor = texture(uTextures[17], fUv); break;
+				case 18u: texColor = texture(uTextures[18], fUv); break;
+				case 19u: texColor = texture(uTextures[19], fUv); break;
+				case 20u: texColor = texture(uTextures[20], fUv); break;
+				case 21u: texColor = texture(uTextures[21], fUv); break;
+				case 22u: texColor = texture(uTextures[22], fUv); break;
+				case 23u: texColor = texture(uTextures[23], fUv); break;
+				case 24u: texColor = texture(uTextures[24], fUv); break;
+				case 25u: texColor = texture(uTextures[25], fUv); break;
+				case 26u: texColor = texture(uTextures[26], fUv); break;
+				case 27u: texColor = texture(uTextures[27], fUv); break;
+				case 28u: texColor = texture(uTextures[28], fUv); break;
+				case 29u: texColor = texture(uTextures[29], fUv); break;
+				case 30u: texColor = texture(uTextures[30], fUv); break;
+				case 31u: texColor = texture(uTextures[31], fUv); break;
+			}
+
+			oColor = fColor * texColor;
 		}
-	}	
+	}
 
 )FRAGMENT";
 #pragma endregion
@@ -250,12 +283,12 @@ namespace bsf
 			pos[2] = { offsetX + glyph.Max.x, offsetY + glyph.Max.y };
 			pos[3] = { offsetX + glyph.Min.x, offsetY + glyph.Max.y };
 
-			
+
 			uvs[0] = { glyph.UvMin.x, glyph.UvMin.y };
 			uvs[1] = { glyph.UvMax.x, glyph.UvMin.y };
 			uvs[2] = { glyph.UvMax.x, glyph.UvMax.y };
 			uvs[3] = { glyph.UvMin.x, glyph.UvMax.y };
-			
+
 
 			DrawTriangleInternal({ pos[0], pos[1], pos[2] }, { uvs[0], uvs[1], uvs[2] });
 			DrawTriangleInternal({ pos[0], pos[2], pos[3] }, { uvs[0], uvs[2], uvs[3] });
@@ -403,15 +436,15 @@ namespace bsf
 			m_pTriangleProgram->Use();
 
 			m_pTriangleProgram->UniformMatrix4f(HS("uProjection"), m_Projection);
-			
+
 			for (uint32_t i = 0; i < m_Textures.size(); i++)
 			{
 				BSF_GLCALL(glActiveTexture(GL_TEXTURE0 + i));
 				BSF_GLCALL(glBindTexture(GL_TEXTURE_2D, m_Textures[i]));
 			}
-			
+
 			m_pTriangleProgram->Uniform1iv(HS("uTextures[0]"), (uint32_t)m_Textures.size(), m_TextureUnits.data());
-			
+
 			m_Triangles->GetVertexBuffer(0)->SetSubData(m_TriangleVertices, 0, m_CurVertexIndex);
 
 			m_Triangles->DrawArrays(GL_TRIANGLES, m_CurVertexIndex);

@@ -34,7 +34,7 @@ namespace bsf
 		InitializeUI();
 		ScheduleTask<FadeTask>(ESceneTaskEvent::PostRender, glm::vec4(1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), 0.5f);
 	}
-	
+
 	void StageEditorScene::OnRender(const Time& time)
 	{
 		auto& app = GetApplication();
@@ -134,7 +134,7 @@ namespace bsf
 			btn->Tint = tint;
 			return btn;
 		};
-		
+
 		// Editor layer
 		{
 			// Top Bar
@@ -174,7 +174,7 @@ namespace bsf
 				AddSubscription(btn->MouseClicked, this, &StageEditorScene::OnStageListButtonClick);
 				topBar->AddChild(btn);
 			}
-			
+
 			// Save button
 			{
 				auto btn = makeToolBarButton(AssetName::TexUISave, Colors::White);
@@ -227,7 +227,7 @@ namespace bsf
 				topBar->AddChild(btn);
 			}
 
-		
+
 
 
 			// Properties
@@ -407,16 +407,16 @@ namespace bsf
 			m_uiStageList = MakeRef<UIStageList>(4, 4);
 			m_uiStageList->ItemWidth = s_uiStageListItemWidth;
 			m_uiStageList->ItemHeight = s_uiStageListItemHeight;
-			
-			AddSubscription(m_uiStageList->FileSelected, [&](const UIStageList::StageSelectedEvent& evt) { 
-				LoadStage(evt.FileName); 
+
+			AddSubscription(m_uiStageList->FileSelected, [&](const UIStageList::StageSelectedEvent& evt) {
+				LoadStage(evt.FileName);
 				m_uiRoot->PopLayer();
 			});
-			
+
 			AddSubscription(m_uiStageList->FileReorder, [&](const UIStageList::StageReorderEvent& evt) {
 				Stage::SaveStageFiles(evt.Files);
 			});
-			
+
 			dialogPanel->AddChild(m_uiStageList);
 
 			// Scroll slider
@@ -449,7 +449,7 @@ namespace bsf
 			m_uiConfirmDialogPanel->HasShadow = true;
 			m_uiConfirmDialogPanel->Margin = 2.0f;
 			m_uiConfirmDialogLayer->AddChild(m_uiConfirmDialogPanel);
-			
+
 			m_uiConfirmDialogText = MakeRef<UIText>();
 			m_uiConfirmDialogPanel->AddChild(m_uiConfirmDialogText);
 
@@ -527,7 +527,7 @@ namespace bsf
 			m_ShouldPack = false;
 		}
 
-		
+
 	}
 
 	void UIPanel::Render(const UIRoot& root, Renderer2D& r2, const Time& time)
@@ -578,7 +578,7 @@ namespace bsf
 						std::clamp(contentBounds.Width(), child->MinSize.x, child->MaxSize.x),
 						std::clamp(child->PreferredSize.y >= 0 ? child->PreferredSize.y : contentBounds.Height() + child->PreferredSize.y, child->MinSize.y, child->MaxSize.y)
 					};
-					
+
 					origin.y -= computedSize.y;
 
 					child->UpdateBounds(root, origin, computedSize);
@@ -609,11 +609,11 @@ namespace bsf
 				glm::vec2 origin = contentBounds.Position;
 
 				auto& child = m_Children.front();
-				
+
 				glm::vec2 computedSize = glm::vec2(std::clamp(contentBounds.Width(), child->MinSize.x, child->MaxSize.x),
 					std::clamp(contentBounds.Height(), child->MinSize.y, child->MaxSize.y));
 
-				child->UpdateBounds(root, 
+				child->UpdateBounds(root,
 					origin + glm::vec2((contentBounds.Width() - computedSize.x) / 2.0f, (contentBounds.Height() - computedSize.y) / 2.0f), computedSize);
 			}
 			else
@@ -655,7 +655,7 @@ namespace bsf
 				std::pair<std::string, std::string>{ "Margin", fmt::format("{0:.2f}", Margin) }
 			};
 			std::array<std::string, infos.size()> infoStrings;
-			auto& font = Assets::GetInstance().Get<Font>(AssetName::FontText);
+			auto font = Assets::GetInstance().Get<Font>(AssetName::FontText);
 			float width = 0.0f;
 
 			for (size_t i = 0; i < infos.size(); ++i)
@@ -668,7 +668,7 @@ namespace bsf
 			r2.Pivot(EPivot::TopLeft);
 			r2.Translate({ Bounds.Left(), Bounds.Top() });
 			r2.Color({ 0.0f, 0.0f, 0.0f, 0.75f });
-			r2.Scale(0.25f); 
+			r2.Scale(0.25f);
 			r2.DrawQuad({ 0, 0 }, { width, infoStrings.size() });
 			r2.Color(Colors::Yellow);
 			for (const auto& str : infoStrings)
@@ -751,7 +751,7 @@ namespace bsf
 			{
 
 				intersection->MouseMoved.Emit({ pos.x, pos.y, 0, 0, MouseButton::None });
-				
+
 				m_MouseState.HoverTarget = intersection;
 
 				if (intersection->GetFlag(UIElementFlags::ReceiveHover))
@@ -873,10 +873,10 @@ namespace bsf
 
 		r2.TextShadowColor(m_Style.ShadowColor);
 		r2.TextShadowOffset({ m_Style.TextShadowOffset, -m_Style.TextShadowOffset });
-		
+
 		for (auto& layer : m_Layers)
 		{
-			layer->Traverse([&](UIElement& el) { 
+			layer->Traverse([&](UIElement& el) {
 				el.m_Style = &m_Style;
 				el.m_App = m_App;
 			});
@@ -1016,7 +1016,7 @@ namespace bsf
 					{
 						if (m_Stage->StartPoint == stageCoords)
 							m_Stage->StartDirection = { -m_Stage->StartDirection.y, m_Stage->StartDirection.x };
-						
+
 						m_Stage->StartPoint = stageCoords;
 
 					}
@@ -1075,9 +1075,9 @@ namespace bsf
 			auto texWhite = assets.Get<Texture2D>(AssetName::TexWhite);
 
 			r2.Push();
-			
+
 			r2.Clip(Bounds);
-			
+
 
 			r2.Texture(m_BgPattern);
 			r2.Color(style.GetBackgroundColor(*this, style.Palette.Background));
@@ -1102,7 +1102,7 @@ namespace bsf
 
 						r2.Color(style.ShadowColor);
 						r2.DrawQuad(WorldToScreen({ x + style.ShadowOffset, y - style.ShadowOffset }), { m_Zoom, m_Zoom });
-						
+
 						r2.Color(std::get<1>(obj->second));
 						r2.DrawQuad(WorldToScreen({ x, y }), { m_Zoom, m_Zoom });
 					}
@@ -1125,7 +1125,7 @@ namespace bsf
 
 			// Position
 			{
-				float angle = std::atan2f((float)m_Stage->StartDirection.y, (float)m_Stage->StartDirection.x)
+				float angle = std::atan2((float)m_Stage->StartDirection.y, (float)m_Stage->StartDirection.x)
 					- glm::pi<float>() / 2.0f;
 
 				r2.Push();
@@ -1152,7 +1152,7 @@ namespace bsf
 
 			DrawCursor(r2, style);
 
-			
+
 			r2.Pop();
 		}
 	}
@@ -1174,7 +1174,7 @@ namespace bsf
 
 	}
 
-	
+
 	void UIStageEditorArea::DrawCursor(Renderer2D& r2, const UIStyle& style)
 	{
 		const float lw = style.StageAreaCrosshairSize; // line width
@@ -1227,7 +1227,7 @@ namespace bsf
 	{
 		glm::ivec2 localPos = glm::floor(ScreenToWorld(screenPos));
 
-		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetSize() 
+		if (m_Stage != nullptr && localPos.x >= 0 && localPos.x < m_Stage->GetSize()
 			&& localPos.y >= 0 && localPos.y < m_Stage->GetSize())
 			return localPos;
 		else
@@ -1283,7 +1283,7 @@ namespace bsf
 		auto value = m_Value.Get();
 		const float margin = style.GetMargin(Margin);
 		Rect innerBounds = Bounds;
-		innerBounds.Shrink(margin); 
+		innerBounds.Shrink(margin);
 
 		r2.Push();
 
@@ -1315,7 +1315,7 @@ namespace bsf
 			r2.Translate({ margin, 1.0f });
 			r2.Scale({ style.LabelFontScale, style.LabelFontScale });
 			r2.DrawStringShadow(Assets::GetInstance().Get<Font>(AssetName::FontMain), Label);
-			
+
 			r2.Pop();
 		}
 
@@ -1323,9 +1323,9 @@ namespace bsf
 		r2.Pop();
 	}
 
-	const glm::vec4 UIStyle::DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& default) const { return colorOpt.has_value() ? colorOpt.value() : default; }
-	const glm::vec4 UIStyle::GetBackgroundColor(const UIElement& element, const glm::vec4& default) const { return DefaultColor(element.BackgroundColor, default); }
-	const glm::vec4 UIStyle::GetForegroundColor(const UIElement& element, const glm::vec4& default) const { return DefaultColor(element.ForegroundColor, default); }
+	const glm::vec4 UIStyle::DefaultColor(const std::optional<glm::vec4>& colorOpt, const glm::vec4& def) const { return colorOpt.has_value() ? colorOpt.value() : def; }
+	const glm::vec4 UIStyle::GetBackgroundColor(const UIElement& element, const glm::vec4& def) const { return DefaultColor(element.BackgroundColor, def); }
+	const glm::vec4 UIStyle::GetForegroundColor(const UIElement& element, const glm::vec4& def) const { return DefaultColor(element.ForegroundColor, def); }
 
 	void UIStyle::Recompute()
 	{
@@ -1660,14 +1660,14 @@ namespace bsf
 					}
 				}
 
-				
+
 			}
 		});
 
 		AddSubscription(MouseDragged, [&](const MouseEvent& evt) {
 			if (evt.Button == MouseButton::Left && m_DraggedItem.has_value())
 			{
-				
+
 				auto& draggedItem = m_DraggedItem.value();
 				draggedItem.CurrentBounds.Position += glm::vec2(evt.DeltaX, evt.DeltaY);
 
@@ -1677,7 +1677,7 @@ namespace bsf
 				{
 					if (it->TargetBounds.Contains({ evt.X, evt.Y }) && *it != *draggedIt)
 					{
-						
+
 						std::vector<StageInfo> newStageInfo;
 						newStageInfo.reserve(m_StagesInfo.size());
 						auto [min, max] = std::minmax(it, draggedIt);
@@ -1702,7 +1702,7 @@ namespace bsf
 							inserter = std::copy(min, max, inserter);
 							std::copy(max + 1, m_StagesInfo.end(), inserter);
 						}
-						
+
 						m_StagesInfo = std::move(newStageInfo);
 
 						// Must break here because we could potentially go over multiple boxes
@@ -1711,7 +1711,7 @@ namespace bsf
 
 					}
 				}
-			
+
 			}
 		});
 
@@ -1739,7 +1739,7 @@ namespace bsf
 		});
 
 		AddSubscription(MouseDblClicked, [&](const MouseEvent& evt) {
-			
+
 			if (evt.Button == MouseButton::Left)
 			{
 				glm::vec2 pos = { evt.X,evt.Y };
@@ -1779,7 +1779,7 @@ namespace bsf
 		auto& style = GetStyle();
 		auto contentBounds = Bounds;
 		const float margin = style.GetMargin(Margin);
-		
+
 		MinSize.y = m_Rows * (ItemHeight + margin) + margin;
 		MinSize.x = m_Columns * (ItemWidth + margin) + margin;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <spdlog\spdlog.h>
+#include <spdlog/spdlog.h>
 
 #define BSF_LOG_INIT() ::bsf::InitializeFileLog()
 
@@ -20,5 +20,3 @@ namespace bsf
 {
 	void InitializeFileLog();
 }
-
-

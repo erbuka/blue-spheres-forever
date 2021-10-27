@@ -10,7 +10,7 @@
 
 namespace bsf
 {
-    
+
 
 #pragma region GLFW Callbacks
 
@@ -99,7 +99,7 @@ namespace bsf
         m_Renderer2D = nullptr;
 
         m_AudioDevice = nullptr;
-        
+
         Assets::GetInstance().Dispose();
         glfwTerminate();
     }
@@ -130,7 +130,7 @@ namespace bsf
         BSF_LOG_INIT();
 
 
-        if (!glfwInit()) 
+        if (!glfwInit())
         {
             BSF_ERROR("Can't initialize GLFW");
             return;
@@ -141,13 +141,14 @@ namespace bsf
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         m_Window = glfwCreateWindow(640, 480, "Blue Spheres Forever", NULL, NULL);
-        
+
         if (!m_Window)
         {
             BSF_ERROR("Can't create the window");
             glfwTerminate();
         }
 
+        glfwSetWindowTitle(m_Window, "Blue Spheres Forever");
 
         glfwMakeContextCurrent(m_Window);
 
@@ -178,8 +179,8 @@ namespace bsf
 
         // Init Audio Device
         m_AudioDevice = MakeRef<AudioDevice>();
-        
-        // Load Assets 
+
+        // Load Assets
         Assets::GetInstance().Load();
 
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -209,12 +210,6 @@ namespace bsf
                 prevTime = now;
                 const Time time = { delta.count(), elapsed.count() };
 
-
-                /* FPS counter */
-                char buffer[0x80];
-                sprintf_s(buffer, "Period: %f, FPS: %f", delta.count(), 1.0f / delta.count());
-                glfwSetWindowTitle(m_Window, buffer);
-                /* FPS counter */
 
                 RunScheduledTasks(time, m_CurrentScene, ESceneTaskEvent::PreRender);
                 m_CurrentScene->OnRender(time);
@@ -288,7 +283,7 @@ namespace bsf
             task->m_Scene = scene.get();
             task->m_Event = evt;
             task->CallUpdateFn(time);
-            if (task->IsDone()) 
+            if (task->IsDone())
             {
                 task->CallDoneFn();
                 taskIt = tasks.erase(taskIt);

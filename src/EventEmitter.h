@@ -57,7 +57,7 @@ namespace bsf
 	{
 		char Character;
 	};
-	
+
 	#pragma endregion
 
 	template<typename Event>
@@ -108,13 +108,13 @@ namespace bsf
 	class EventReceiver
 	{
 	public:
-		virtual ~EventReceiver() 
-		{ 
+		virtual ~EventReceiver()
+		{
 			if (!m_Subscriptions.empty())
 				BSF_ERROR("Subscriber has been destroyed but still has {0} subscriptions", m_Subscriptions.size());
 		}
 
-		void ClearSubscriptions() 
+		void ClearSubscriptions()
 		{
 			for (auto& unsub : m_Subscriptions)
 				unsub();
@@ -122,18 +122,18 @@ namespace bsf
 		}
 
 		template<typename Event>
-		void AddSubscription(EventEmitter<Event>& evt, typename EventEmitter<Event>::HandlerFn&& handler) 
-		{ 
-			m_Subscriptions.push_back(evt.Subscribe(std::forward<EventEmitter<Event>::HandlerFn>(handler)));
+		void AddSubscription(EventEmitter<Event>& evt, typename EventEmitter<Event>::HandlerFn&& handler)
+		{
+			m_Subscriptions.push_back(evt.Subscribe(std::forward<typename EventEmitter<Event>::HandlerFn>(handler)));
 		}
-		
-		
+
+
 		template<typename Event, typename T>
 		void AddSubscription(EventEmitter<Event>& evt, T* instance, typename EventEmitter<Event>::MemberHandlerFnPtr<T> handler)
 		{
 			m_Subscriptions.push_back(evt.Subscribe(instance, handler));
 		}
-		
+
 
 	private:
 		std::list<Unsubscribe> m_Subscriptions;

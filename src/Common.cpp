@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "Color.h"
 #include "Log.h"
-#include "Texture.h";
+#include "Texture.h"
 #include "VertexArray.h"
 
 namespace bsf
@@ -79,7 +79,7 @@ namespace bsf
 	{
 		std::ifstream is;
 
-		is.open(file);
+		is.open(file.data());
 
 		if (!is.is_open()) {
 			BSF_ERROR("Can't open file: {0}", file);
@@ -100,7 +100,7 @@ namespace bsf
 	{
 		std::ifstream is;
 
-		is.open(file, std::ios_base::binary);
+		is.open(file.data(), std::ios_base::binary);
 
 		if (!is.good())
 		{
@@ -132,7 +132,7 @@ namespace bsf
 
 	uint32_t UniqueId()
 	{
-		/* 
+		/*
 		Did this just for fun, it should be fine for its purpose (generate file names),
 		but It's not reliable in general. Don't use for complex ids
 		*/
@@ -173,7 +173,7 @@ namespace bsf
 		};
 
 		float horizon = calcHorizon(cameraPosition);
-		
+
 		auto top = std::get<0>(Project(position + glm::vec3(0.0f, 0.0f, radius)));
 		float maxTopDist = calcHorizon(top) + horizon;
 		float topDist = glm::length(top - cameraPosition);
@@ -181,7 +181,7 @@ namespace bsf
 
 		return factor >= 1.0f ? std::make_tuple(false, glm::vec3(), glm::mat4()) :
 			std::tuple_cat(
-				std::make_tuple(true), 
+				std::make_tuple(true),
 				Project({ position.x, position.y, glm::lerp(-position.z, 2.0f * radius + position.z,  factor * factor) }, true));
 
 
@@ -306,8 +306,8 @@ namespace bsf
 
 		for (const auto& t : triangles)
 		{
-			float u = (std::atan2f(t.z, t.x) / (2.0f * glm::pi<float>()));
-			float v = (std::asinf(t.y) / glm::pi<float>()) + 0.5f;
+			float u = (std::atan2(t.z, t.x) / (2.0f * glm::pi<float>()));
+			float v = (std::asin(t.y) / glm::pi<float>()) + 0.5f;
 			vertices.push_back({ t * radius, glm::normalize(t), glm::vec2(u, v) });
 		}
 
@@ -421,7 +421,7 @@ namespace bsf
 		// Bottom
 		verts.push_back({ v[0], v[0] }); verts.push_back({ v[1], v[1] }); verts.push_back({ v[5], v[5] });
 		verts.push_back({ v[0], v[0] }); verts.push_back({ v[5], v[5] }); verts.push_back({ v[4], v[4] });
-		
+
 		return verts;
 
 	}
@@ -470,7 +470,7 @@ namespace bsf
 
 		while (padding-- > 0)
 			result.pop_back();
-		
+
 		return true;
 	}
 
@@ -506,4 +506,3 @@ namespace bsf
 	}
 
 }
-

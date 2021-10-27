@@ -7,7 +7,7 @@
 #include "Texture.h"
 #include "Log.h"
 #include "Common.h"
-#include "Font.h";
+#include "Font.h"
 #include "WafefrontLoader.h"
 #include "Audio.h"
 #include "Stage.h"
@@ -56,7 +56,7 @@ namespace bsf
 
 		m_Assets[AssetName::TexSphereMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexSphereRoughness] = CreateGray(0.3f);
-		
+
 		m_Assets[AssetName::TexGroundMetallic] = CreateGray(0.5f);
 		m_Assets[AssetName::TexGroundRoughness] = CreateGray(0.1f);
 
@@ -68,7 +68,7 @@ namespace bsf
 		m_Assets[AssetName::TexBumper] = loadTex2D("assets/textures/bumper.png");
 
 		m_Assets[AssetName::TexBRDFLut] = loadTex2D("assets/textures/ibl_brdf_lut.png");
-		
+
 		m_Assets[AssetName::TexUISphere] = loadTex2D("assets/textures/sphere_ui.png");
 		m_Assets[AssetName::TexUIRing] = loadTex2D("assets/textures/ring_ui.png");
 		m_Assets[AssetName::TexUIAvoidSearch] = loadTex2D("assets/textures/avoid_search_ui.png");
@@ -100,26 +100,26 @@ namespace bsf
 		{
 			// Well propably It's me, but it seems that the loop point
 			// is slightly changing between audio libraries. So it needs to be adjusted manually
-			
+
 			//constexpr float loopPoint = 5.7f; // BASS LIBRARY
 			constexpr float loopPoint = 5.75f; // MINI AUDIO (
-			
+
 			auto music = MakeRef<Audio>("assets/sound/music_techno_loop.mp3");
 			music->SetLoop(loopPoint);
 			m_Assets[AssetName::SfxMusic] = music;
 		}
 
 		// Models
-		
+
 		m_Assets[AssetName::ModSphere] = CreateModel(WavefrontLoader().Load("assets/models/sphere.obj"))->GetMesh(0);
 		m_Assets[AssetName::ModGround] = CreateGround(-10, 10, -10, 10, 10);
 		m_Assets[AssetName::ModClipSpaceQuad] = CreateClipSpaceQuad();
 		m_Assets[AssetName::ModSkyBox] = CreateCube();
-		
-		m_Assets[AssetName::ModRing] = 
+
+		m_Assets[AssetName::ModRing] =
 			CreateModel(WavefrontLoader().Load("assets/models/ring.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 
-		m_Assets[AssetName::ModChaosEmerald] = 
+		m_Assets[AssetName::ModChaosEmerald] =
 			CreateModel(WavefrontLoader().Load("assets/models/chaos-emerald.obj"), { 1.0f, 1.0f, 1.0f }, GL_STATIC_DRAW);
 
 		// Sonic character

@@ -16,7 +16,7 @@
 #define BSF_DIAGNOSTIC_SCOPE(name) DiagnosticGuard bsf_dguard##__LINE__ (name)
 #define BSF_DIAGNOSTIC_END() DiagnosticTool::Get().End()
 #else
-#define BSF_DIAGNOSTIC_INIT()
+#define BSF_DIAGNOSTIC_INIT(app, window)
 #define BSF_DIAGNOSTIC_BEGIN()
 #define BSF_DIAGNOSTIC_FUNC()
 #define BSF_DIAGNOSTIC_SCOPE(name)
@@ -37,7 +37,7 @@ namespace bsf
 		float MaxExecutionTime = 0.0f;
 		std::list<float> LastExecutionTimes = std::list<float>(Samples);
 	};
-	
+
 	struct DiagnosticGuard
 	{
 	public:
@@ -67,4 +67,3 @@ namespace bsf
 	};
 
 }
-

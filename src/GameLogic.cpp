@@ -34,7 +34,7 @@ namespace bsf
 
 	// Game Over
 	static constexpr float s_GameOverRotationAcceleration = 2.0f * glm::pi<float>();
-	
+
 	// Emerald
 	static constexpr int32_t s_EmeraldDistanceHalf = 8;
 
@@ -90,11 +90,11 @@ namespace bsf
 			result.clear();
 
 			const glm::ivec2& position = CurrentPath.back();
-			
+
 			// Check if this location is marked for avoid search. If that's the case, skip completely.
 			if (m_Stage->GetAvoidSearchAt(position) == EAvoidSearch::Yes)
 				return;
-			
+
 			// Let's check if all the surrounding spheres are red
 			// If that's the case we should discard all the children of this state
 			// since they would not lead to a solution
@@ -135,7 +135,7 @@ namespace bsf
 					continue;
 
 				// Check if already in path, skipping the path first position which actually is allowed
-				if (std::find_if(CurrentPath.begin() + 1, CurrentPath.end(), 
+				if (std::find_if(CurrentPath.begin() + 1, CurrentPath.end(),
 					[&](auto& v) { return m_Stage->WrapCoordinates(v) == wrappedPos; }) != CurrentPath.end())
 					continue;
 
@@ -176,7 +176,7 @@ namespace bsf
 			return CurrentPath.size() > 1 && CurrentPath.front() == CurrentPath.back() &&
 				(CurrentPath[1] - CurrentPath[0] != ForbiddenTurn);
 		}
-		
+
 		std::tuple<glm::ivec2, glm::ivec2> ComputeBounds() const
 		{
 			// Compute the bounding box of this path
@@ -233,7 +233,7 @@ namespace bsf
 		Stage* m_Stage;
 	};
 
-	
+
 
 	class TransformRingAlgorithm
 	{
@@ -265,7 +265,7 @@ namespace bsf
 			std::vector<TransformRingState> children;
 
 			openSet.emplace_back(&m_Stage, m_StartingPoint);
-			
+
 			while (!openSet.empty())
 			{
 				std::sort(openSet.begin(), openSet.end());
@@ -309,9 +309,9 @@ namespace bsf
 				{
 					if (std::find(openSet.begin(), openSet.end(), state) == openSet.end())
 						openSet.push_back(std::move(state));
-					
+
 				}
-				
+
 			}
 
 			if (!pathFound)
@@ -332,7 +332,7 @@ namespace bsf
 			if (m_Stage.GetValueAt(pos) == EStageObject::BlueSphere)
 			{
 				m_Stage.SetValueAt(pos, EStageObject::Ring);
-				
+
 				convertedBlueSpheres += 1;
 
 				for (const auto& dir : s_AllDirections)
@@ -358,7 +358,7 @@ namespace bsf
 		m_Stage(stage)
 	{
 		m_State = EGameState::Starting;
-		
+
 		m_RotateCommand = ERotate::None;
 		m_JumpCommand = false;
 		m_RunForwardCommand = false;
@@ -372,7 +372,7 @@ namespace bsf
 		m_VelocityScale = 1.0f;
 		m_JumpVelocityScale = 1.0f;
 		m_AngularVelocity = s_BaseAngularVelocity;
-		
+
 		m_GameOverRotationSpeed = s_BaseAngularVelocity;
 
 		m_IsEmeraldVisible = false;
@@ -381,7 +381,7 @@ namespace bsf
 		m_IsRotating = false;
 		m_IsJumping = false;
 		m_IsGoingBackward = false;
-		m_RotationAngle = m_TargetRotationAngle = std::atan2f(m_Direction.y, m_Direction.x);
+		m_RotationAngle = m_TargetRotationAngle = std::atan2(m_Direction.y, m_Direction.x);
 		m_Height = 0.0f;
 		m_LastBounceDistance = 1.0f;
 		m_CurrentPace = s_MinPace;
@@ -622,10 +622,10 @@ namespace bsf
 
 			// If we crossed and edge and there's a rotation request,
 			// we want snap to the edge and rotate in place.
-			
+
 			// Must be on the ground to rotate, and can't rotate in the
 			// same spot more than once
-			
+
 			// We also have to make sure that the state is still "Playing"
 			// We don't want to pull rotate commands if it's "GameOver" or "Emerald"
 			if (m_State == EGameState::Playing)
@@ -705,10 +705,10 @@ namespace bsf
 			pos.y += m_Stage.GetSize();
 
 		if (pos.x > m_Stage.GetSize())
-			pos.x = std::fmodf(pos.x, m_Stage.GetSize());
+			pos.x = std::remainder(pos.x, m_Stage.GetSize());
 
 		if (pos.y > m_Stage.GetSize())
-			pos.y = std::fmodf(pos.y, m_Stage.GetSize());
+			pos.y = std::remainder(pos.y, m_Stage.GetSize());
 
 		return pos;
 
@@ -771,10 +771,10 @@ namespace bsf
 		}
 
 
-		int32_t 
-			x0 = glm::floor(currentPos.x), 
-			y0 = glm::floor(currentPos.y), 
-			x1 = glm::floor(nextPosition.x), 
+		int32_t
+			x0 = glm::floor(currentPos.x),
+			y0 = glm::floor(currentPos.y),
+			x1 = glm::floor(nextPosition.x),
 			y1 = glm::floor(nextPosition.y);
 
 		horizontal = x1 - x0 != 0;
@@ -793,4 +793,3 @@ namespace bsf
 
 
 }
-

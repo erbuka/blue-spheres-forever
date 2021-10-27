@@ -30,12 +30,12 @@ namespace bsf
 		auto irr = GenerateIrradiance(env, 32);
 		return Ref<Sky>(new Sky(env, irr));
 	}
-	
+
 	Ref<TextureCube> SkyGenerator::GenerateEnvironment(const Options& options)
-	{	
+	{
 		GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE, GL_BLEND });
 		auto& assets = Assets::GetInstance();
-		auto& starTex = assets.Get<Texture2D>(AssetName::TexWhite);
+		auto starTex = assets.Get<Texture2D>(AssetName::TexWhite);
 
 		CubeCamera camera(options.Size, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 
@@ -118,11 +118,11 @@ namespace bsf
 	{
 		m_Vertices = CreateCubeData();
 		m_VertexArray = CreateCube();
-		
+
 		m_pSky = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 		m_Env = Ref<CubeCamera>(new CubeCamera(env->GetSize(), GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE));
 		m_Irr = Ref<CubeCamera>(new CubeCamera(irradiance->GetSize(), GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE));
-		
+
 		ApplyMatrix(glm::identity<glm::mat4>());
 
 	}
