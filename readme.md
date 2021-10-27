@@ -9,16 +9,14 @@ This repository has submodules, so it has to be cloned recursively:
 git clone https://github.com/erbuka/blue-spheres-forever --recursive
 ```
 
-This project uses [Premake](https://premake.github.io/) to generate project files, and for now it can run only on Windows (Linux and Apple builds are on my todo list).
-
-Visual Studio 2019 solution is provided under the *vs2019* folder.
+This project uses [Premake](https://premake.github.io/) to generate project files.
 
 ## Roadmap
 
 Major features to be added in the next releases:
 
 - [ ] New Mechanic: Portals
-- [ ] Linux porting
+- [X] Linux porting
 - [ ] Apple porting
 - [ ] New Character: Tails
 - [ ] New Character: Knuckles
