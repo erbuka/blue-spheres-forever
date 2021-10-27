@@ -15,8 +15,8 @@ This project uses [Premake](https://premake.github.io/) to generate project file
 
 Major features to be added in the next releases:
 
-- [ ] New Mechanic: Portals
 - [X] Linux porting
 - [ ] Apple porting
+- [ ] New Mechanic: Portals
 - [ ] New Character: Tails
 - [ ] New Character: Knuckles
