@@ -6,9 +6,4 @@
 - [X] ~~*Mouse support for main menu*~~ [2020-11-24]
 - [X] ~~*Adjust velocity by eyeballing original game*~~ [2020-11-30]
 - [X] ~~*Windowed App + WinMain*~~ [2020-11-30]
-- Video recording
-  - Generic gameplay
-  - Emerald ??
-  - Green spheres
-  - New level editor
-  - big levels
+- [ ] Cleanup assets (shaders moslty)

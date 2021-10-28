@@ -3,15 +3,6 @@
 #include "Application.h"
 #include "DisclaimerScene.h"
 
-
-
-#include <glm/gtc/noise.hpp>
-#include <fmt/core.h>
-
-// TODO Move convertion functions somewhere else
-
-//void ConvertSections();
-
 #include "Character.h"
 #include "VertexArray.h"
 

@@ -9,3 +9,5 @@
 - [ ] Fix reflections on Game Over
 - [X] ~~*Switched to OpenGL Core profile (3.3)*~~ [2021-08-29]
 - [X] ~~*Used standard "pow" in the shader, again. Hope it works*~~ [2021-08-29]
+- [X] ~~*Porting on Linux*~~ [2021-10-27]
+- [X] ~~*Pause screen*~~ [2021-10-27]

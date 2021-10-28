@@ -715,7 +715,6 @@ namespace bsf
 
 			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh, -1.0f, 1.0f));
 
-
 			{
 				auto blueSpheres = std::to_string(m_Stage->Count(EStageObject::BlueSphere));
 				renderer2d.Push();
@@ -769,7 +768,28 @@ namespace bsf
 			renderer2d.End();
 		}
 
+		// Pause
+		if(m_Paused) 
+		{
+			float sw = scale * windowSize.x / windowSize.y;
+			float sh = scale;
+			renderer2d.Begin(glm::ortho(0.0f, sw, 0.0f, sh));
 
+			renderer2d.Pivot({ 0.0f, 0.0f });
+			renderer2d.Color({ 0.0f, 0.0f, 0.0f, 0.5f });
+			renderer2d.DrawQuad({ 0.0f, 0.0f }, { sw, sh });
+
+			renderer2d.Translate({ sw / 2.0f, sh / 2.0f });
+			renderer2d.Pivot(EPivot::Center);
+
+			renderer2d.TextShadowColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+			renderer2d.TextShadowOffset({ 0.02, -0.02 });
+			renderer2d.Color({ 1.0f, 1.0f, 1.0f, 1.0f });
+
+			renderer2d.DrawStringShadow(assets.Get<Font>(AssetName::FontMain), "Paused");
+
+			renderer2d.End();
+		}
 	}
 
 	void GameScene::OnGameStateChanged(const GameStateChangedEvent& evt)

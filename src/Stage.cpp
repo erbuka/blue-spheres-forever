@@ -13,7 +13,7 @@
 namespace bsf
 {
 	static constexpr uint32_t s_CurrentVersion = 201;
-	static constexpr char* s_SortedStagesFile = "assets/data/stages.json";
+	static constexpr std::string_view s_SortedStagesFile = "assets/data/stages.json";
 
 #pragma region Loaders
 
@@ -61,7 +61,7 @@ namespace bsf
 	{
 		std::ofstream os;
 
-		os.open(s_SortedStagesFile);
+		os.open(s_SortedStagesFile.data());
 
 		if (!os.is_open())
 		{
@@ -82,9 +82,9 @@ namespace bsf
 
 		std::vector<std::string> result;
 
-		if (fs::is_regular_file(s_SortedStagesFile))
+		if (fs::is_regular_file(s_SortedStagesFile.data()))
 		{
-			auto files = nlohmann::json::parse(ReadTextFile(s_SortedStagesFile));
+			auto files = nlohmann::json::parse(ReadTextFile(s_SortedStagesFile.data()));
 
 			for (auto& item : files)
 			{
