@@ -6,6 +6,7 @@
 #include "Character.h"
 #include "VertexArray.h"
 
+
 namespace bsf
 {
 	void Run()
@@ -16,6 +17,8 @@ namespace bsf
 		app.Start();
 	}
 }
+
+
 
 int main(int argc, char** argv)
 {

@@ -52,7 +52,7 @@ namespace bsf
 
 		Ref<Framebuffer> m_fbPBR, m_fbGroundReflections;
 
-		Ref<ShaderProgram> m_pPBR, m_pSkeletalPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox;
+		Ref<ShaderProgram> m_pReflections, m_pSkeletalReflections, m_pPBR, m_pSkeletalPBR, m_pSkyGradient, m_pDeferred, m_pSkyBox;
 		Ref<Bloom> m_fxBloom;
 		
 		Ref<Sky> m_Sky;

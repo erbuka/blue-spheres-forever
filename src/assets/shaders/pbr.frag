@@ -12,17 +12,20 @@ uniform vec3 uEmission;
 
 uniform float uLightRadiance;
 
-
 uniform sampler2D uMap;
 uniform sampler2D uMetallic;
 uniform sampler2D uRoughness;
 
-uniform sampler2D uBRDFLut;
-uniform samplerCube uEnvironment;
 uniform samplerCube uIrradiance;
 uniform sampler2D uShadowMap;
 
+#ifdef REFLECTIONS_MODE 
+uniform float uReflectionsBlending;
+#else
 uniform sampler2D uReflections;
+uniform sampler2D uBRDFLut;
+uniform samplerCube uEnvironment;
+#endif
 
 in vec3 fNormal;
 in vec3 fPosition;
@@ -84,18 +87,27 @@ void main() {
     fragment += (kD * irradiance * albedo);
 
     // Reflections
-    vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
-    ivec2 resolution = textureSize(uReflections, 0);
-    vec3 reflections = texture(uReflections, gl_FragCoord.xy / resolution).rgb * (F * envBrdf.x + envBrdf.y);
 
-    fragment += reflections;
-
-    if(length(reflections) == 0.0) { 
+    #ifdef REFLECTIONS_MODE
+        oColor = vec4(fragment + uEmission, uReflectionsBlending);
+    #else
+        vec2 envBrdf = texture(uBRDFLut, vec2(NdotV, roughness)).xy;
         vec3 indirectSpecular = texture(uEnvironment, R).rgb * (F * envBrdf.x + envBrdf.y);
-        fragment += indirectSpecular;
-    }
+        ivec2 resolution = textureSize(uReflections, 0);
+        vec4 reflectionsSample = texture(uReflections, gl_FragCoord.xy / resolution);
+        vec3 reflectionsColor = reflectionsSample.rgb * (F * envBrdf.x + envBrdf.y);
+        float reflectionsBlending = reflectionsSample.a;
 
-    oColor = vec4(fragment + uEmission, 1.0);
+        if(length(reflectionsColor) == 0.0) { 
+            fragment += indirectSpecular;
+        } else {
+            fragment += mix(indirectSpecular, reflectionsColor, reflectionsBlending);
+        }
+    
+        oColor = vec4(fragment + uEmission, 1.0);
+
+    #endif
+
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

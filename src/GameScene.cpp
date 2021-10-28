@@ -66,9 +66,8 @@ namespace bsf
 		m_fbPBR = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
 		m_fbPBR->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
 
-
 		m_fbGroundReflections = MakeRef<Framebuffer>(windowSize.x, windowSize.y, true);
-		m_fbGroundReflections->CreateColorAttachment("color", GL_RGB16F, GL_RGB, GL_HALF_FLOAT);
+		m_fbGroundReflections->CreateColorAttachment("color", GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
 
 		// Bloom
 		m_fxBloom = MakeRef<Bloom>(m_fbPBR->GetColorAttachment("color"));
@@ -76,6 +75,8 @@ namespace bsf
 		// Programs
 		m_pPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
 		m_pSkeletalPBR = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "SKELETAL" });
+		m_pReflections = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "REFLECTIONS_MODE" });
+		m_pSkeletalReflections = ShaderProgram::FromFile("assets/shaders/pbr.vert", "assets/shaders/pbr.frag", { "SKELETAL", "REFLECTIONS_MODE" });
 		m_pDeferred = ShaderProgram::FromFile("assets/shaders/deferred.vert", "assets/shaders/deferred.frag");
 		m_pSkyBox = ShaderProgram::FromFile("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 
@@ -207,7 +208,7 @@ namespace bsf
 
 			GLEnableScope scope({ GL_DEPTH_TEST, GL_CULL_FACE });
 
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			glEnable(GL_DEPTH_TEST);
@@ -231,32 +232,30 @@ namespace bsf
 				m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, m_GameLogic->GetRotationAngle());
 				m_Model.Multiply(character->Matrix);
 
-				m_pSkeletalPBR->Use();
+				m_pSkeletalReflections->Use();
 
-				m_pSkeletalPBR->UniformMatrix4f(HS("uProjection"), m_Projection.GetMatrix());
-				m_pSkeletalPBR->UniformMatrix4f(HS("uView"), m_View.GetMatrix());
-				m_pSkeletalPBR->UniformMatrix4f(HS("uModel"), m_Model.GetMatrix());
+				m_pSkeletalReflections->UniformMatrix4f(HS("uProjection"), m_Projection.GetMatrix());
+				m_pSkeletalReflections->UniformMatrix4f(HS("uView"), m_View.GetMatrix());
+				m_pSkeletalReflections->UniformMatrix4f(HS("uModel"), m_Model.GetMatrix());
 
-				m_pSkeletalPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
-				m_pSkeletalPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
+				m_pSkeletalReflections->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
+				m_pSkeletalReflections->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
 
-				m_pSkeletalPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
+				m_pSkeletalReflections->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
-				m_pSkeletalPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(glm::vec3(Colors::Black)));
+				m_pSkeletalReflections->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(glm::vec3(Colors::Black)));
 
-				m_pSkeletalPBR->UniformTexture(HS("uMetallic"), texBlack);
-				m_pSkeletalPBR->UniformTexture(HS("uRoughness"), texWhite);
+				m_pSkeletalReflections->UniformTexture(HS("uMetallic"), texBlack);
+				m_pSkeletalReflections->UniformTexture(HS("uRoughness"), texWhite);
 
-				m_pSkeletalPBR->UniformTexture(HS("uBRDFLut"), assets.Get<Texture2D>(AssetName::TexBRDFLut));
-				m_pSkeletalPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
-				m_pSkeletalPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
-				m_pSkeletalPBR->UniformTexture(HS("uReflections"), texBlack);
+				m_pSkeletalReflections->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
+				m_pSkeletalReflections->Uniform1f(HS("uReflectionsBlending"), { 1.0f });
 
-				m_pSkeletalPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
-				m_pSkeletalPBR->Uniform2f(HS("uUvOffset"), { 0, 0 });
+				m_pSkeletalReflections->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
+				m_pSkeletalReflections->Uniform2f(HS("uUvOffset"), { 0, 0 });
 
 				GLTFRenderConfig config;
-				config.Program = m_pSkeletalPBR;
+				config.Program = m_pSkeletalReflections;
 				character->Render(time, config);
 
 				m_Model.Pop();
@@ -265,24 +264,24 @@ namespace bsf
 			// Draw Objects
 			{
 
-				m_pPBR->Use();
+				const float reflectionsBlendingFactor = 1.0f - glm::min(1.0f, m_GameOverObjectsHeight / s_GameOverObjectsFadeHeight);
 
-				m_pPBR->UniformMatrix4f(HS("uProjection"), m_Projection.GetMatrix());
-				m_pPBR->UniformMatrix4f(HS("uView"), m_View.GetMatrix());
-				m_pPBR->UniformMatrix4f(HS("uModel"), m_Model.GetMatrix());
+				m_pReflections->Use();
 
-				m_pPBR->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
-				m_pPBR->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
+				m_pReflections->UniformMatrix4f(HS("uProjection"), m_Projection.GetMatrix());
+				m_pReflections->UniformMatrix4f(HS("uView"), m_View.GetMatrix());
+				m_pReflections->UniformMatrix4f(HS("uModel"), m_Model.GetMatrix());
 
-				m_pPBR->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
+				m_pReflections->Uniform3fv(HS("uCameraPos"), 1, glm::value_ptr(cameraPosition));
+				m_pReflections->Uniform3fv(HS("uLightPos"), 1, glm::value_ptr(lightVector));
 
-				m_pPBR->UniformTexture(HS("uBRDFLut"), assets.Get<Texture2D>(AssetName::TexBRDFLut));
-				m_pPBR->UniformTexture(HS("uEnvironment"), m_Sky->GetEnvironment());
-				m_pPBR->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
-				m_pPBR->UniformTexture(HS("uReflections"), texBlack);
+				m_pReflections->Uniform1f(HS("uLightRadiance"), { GlobalShadingConfig::LightRadiance });
 
-				m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
-				m_pPBR->Uniform2f(HS("uUvOffset"), { 0.0f, 0.0f });
+				m_pReflections->UniformTexture(HS("uIrradiance"), m_Sky->GetIrradiance());
+				m_pReflections->Uniform1f(HS("uReflectionsBlending"), { reflectionsBlendingFactor });
+
+				m_pReflections->Uniform4fv(HS("uColor"), 1, glm::value_ptr(Colors::White));
+				m_pReflections->Uniform2f(HS("uUvOffset"), { 0.0f, 0.0f });
 
 				// Stage objects
 				for (int32_t x = -s_SightRadius; x <= s_SightRadius; x++)
@@ -309,50 +308,49 @@ namespace bsf
 							GlobalShadingConfig::RingEmission * glm::vec3(Colors::Ring) :
 							glm::vec3(Colors::Black);
 
-						m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(emission));
+						m_pReflections->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(emission));
 
-						m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
+						m_pReflections->UniformMatrix4f(HS("uModel"), m_Model);
 
 						auto color = s_ObjectColor.Get<0, 1>(value);
-						m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(color));
+						m_pReflections->Uniform4fv(HS("uColor"), 1, glm::value_ptr(color));
 
 						switch (value)
 						{
 						case EStageObject::Ring:
-
-							m_pPBR->UniformTexture(HS("uMap"), texWhite);
-							m_pPBR->UniformTexture(HS("uMetallic"), texRingMetallic); // Sphere metallic
-							m_pPBR->UniformTexture(HS("uRoughness"), texRingRoughness); // Sphere roughness
+							m_pReflections->UniformTexture(HS("uMap"), texWhite);
+							m_pReflections->UniformTexture(HS("uMetallic"), texRingMetallic); // Sphere metallic
+							m_pReflections->UniformTexture(HS("uRoughness"), texRingRoughness); // Sphere roughness
 							modRing->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 							break;
 						case EStageObject::RedSphere:
-							m_pPBR->UniformTexture(HS("uMap"), texWhite);
-							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							m_pReflections->UniformTexture(HS("uMap"), texWhite);
+							m_pReflections->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pReflections->UniformTexture(HS("uRoughness"), texSphereRoughness);
 							modSphere->DrawArrays(GL_TRIANGLES);
 							break;
 						case EStageObject::BlueSphere:
-							m_pPBR->UniformTexture(HS("uMap"), texWhite);
-							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							m_pReflections->UniformTexture(HS("uMap"), texWhite);
+							m_pReflections->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pReflections->UniformTexture(HS("uRoughness"), texSphereRoughness);
 							modSphere->DrawArrays(GL_TRIANGLES);
 							break;
 						case EStageObject::YellowSphere:
-							m_pPBR->UniformTexture(HS("uMap"), texWhite);
-							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							m_pReflections->UniformTexture(HS("uMap"), texWhite);
+							m_pReflections->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pReflections->UniformTexture(HS("uRoughness"), texSphereRoughness);
 							modSphere->DrawArrays(GL_TRIANGLES);
 							break;
 						case EStageObject::GreenSphere:
-							m_pPBR->UniformTexture(HS("uMap"), texWhite);
-							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							m_pReflections->UniformTexture(HS("uMap"), texWhite);
+							m_pReflections->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pReflections->UniformTexture(HS("uRoughness"), texSphereRoughness);
 							modSphere->DrawArrays(GL_TRIANGLES);
 							break;
 						case EStageObject::Bumper:
-							m_pPBR->UniformTexture(HS("uMap"), texBumper);
-							m_pPBR->UniformTexture(HS("uMetallic"), texBumperMetallic);
-							m_pPBR->UniformTexture(HS("uRoughness"), texBumperRoughness);
+							m_pReflections->UniformTexture(HS("uMap"), texBumper);
+							m_pReflections->UniformTexture(HS("uMetallic"), texBumperMetallic);
+							m_pReflections->UniformTexture(HS("uRoughness"), texBumperRoughness);
 							modSphere->DrawArrays(GL_TRIANGLES);
 
 							break;
@@ -370,26 +368,26 @@ namespace bsf
 				auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
 				auto [visible, pos, tbn] = Reflect(cameraWorldPosition, { emeraldPos.x, emeraldPos.y, 0.8f }, 0.15f);
 
-
 				if (visible)
 				{
 
-					m_pPBR->UniformTexture(HS("uMap"), texWhite);
-					m_pPBR->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
-					m_pPBR->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
-					m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(m_Stage->EmeraldColor));
+					m_pReflections->UniformTexture(HS("uMap"), texWhite);
+					m_pReflections->UniformTexture(HS("uMetallic"), assets.Get<Texture2D>(AssetName::TexEmeraldMetallic));
+					m_pReflections->UniformTexture(HS("uRoughness"), assets.Get<Texture2D>(AssetName::TexEmeraldRoughness));
+					m_pReflections->Uniform4fv(HS("uColor"), 1, glm::value_ptr(m_Stage->EmeraldColor));
+					m_pReflections->Uniform1f(HS("uReflectionsBlending"), { 1.0f });
 
 					m_Model.Push();
 					m_Model.Translate(pos);
 					m_Model.Multiply(tbn);
 					m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, time.Elapsed * glm::pi<float>());
-					m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
+					m_pReflections->UniformMatrix4f(HS("uModel"), m_Model);
 					assets.Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 					m_Model.Pop();
 				}
 
-
 			}
+
 
 		}
 
@@ -439,6 +437,7 @@ namespace bsf
 
 				// Draw player
 				{
+
 					m_Model.Push();
 
 					if (m_GameLogic->IsJumping())
