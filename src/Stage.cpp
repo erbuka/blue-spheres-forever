@@ -90,7 +90,7 @@ namespace bsf
 			{
 				std::string name = item.get<std::string>();
 
-				if (fs::is_regular_file(name))
+				if (fs::is_regular_file(std::filesystem::path("assets/data") / name))
 					result.push_back(name);
 
 			}
@@ -101,10 +101,12 @@ namespace bsf
 		for (auto& entry : fs::directory_iterator("assets/data"))
 		{
 
-			if (entry.is_regular_file() && std::find(result.begin(), result.end(), entry.path().string()) == result.end() &&
-				entry.path().extension().string() == ".bssj")
+			const auto filename = entry.path().filename();
+
+			if (entry.is_regular_file() && std::find(result.begin(), result.end(), filename.string()) == result.end() &&
+				filename.extension() == ".bssj")
 			{
-				result.push_back(entry.path().string());
+				result.push_back(filename.string());
 			}
 		}
 
@@ -119,7 +121,7 @@ namespace bsf
 
 		try
 		{
-			auto root = json::parse(ReadTextFile(fileName));
+			auto root = json::parse(ReadTextFile(std::filesystem::path("assets/data") / fileName));
 
 			Version = root.at("version").get<uint32_t>();
 			BSF_INFO("Loading stage: {0}, version {1}", fileName.data(), Version);
@@ -154,7 +156,7 @@ namespace bsf
 		};
 
 		std::ofstream os;
-		os.open(fileName.data());
+		os.open(std::filesystem::path("assets/data") /  fileName);
 
 
 		if (!os.is_open())

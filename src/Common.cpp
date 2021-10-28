@@ -75,14 +75,14 @@ namespace bsf
 
 	}
 
-	std::string ReadTextFile(std::string_view file)
+	std::string ReadTextFile(const std::filesystem::path& file)
 	{
 		std::ifstream is;
 
-		is.open(file.data());
+		is.open(file);
 
 		if (!is.is_open()) {
-			BSF_ERROR("Can't open file: {0}", file);
+			BSF_ERROR("Can't open file: {0}", file.string());
 			return "";
 		}
 
@@ -93,7 +93,6 @@ namespace bsf
 		is.close();
 
 		return ss.str();
-
 	}
 
 	std::vector<std::byte> ReadBinaryFile(std::string_view file)

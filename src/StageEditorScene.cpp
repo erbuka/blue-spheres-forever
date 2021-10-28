@@ -87,9 +87,7 @@ namespace bsf
 		}
 		else
 		{
-			std::stringstream fileName;
-			fileName << "assets/data/" << std::hex << UniqueId() << ".bssj";
-			m_CurrentStageFile = fileName.str();
+			m_CurrentStageFile = fmt::format("{:x}.bssj", UniqueId());
 			m_CurrentStage->Save(m_CurrentStageFile.value());
 		}
 

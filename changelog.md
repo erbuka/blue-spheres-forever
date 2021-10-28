@@ -11,3 +11,4 @@
 - [X] ~~*Used standard "pow" in the shader, again. Hope it works*~~ [2021-08-29]
 - [X] ~~*Porting on Linux*~~ [2021-10-27]
 - [X] ~~*Pause screen*~~ [2021-10-27]
+- [X] ~~*Remove path from stages file*~~ [2021-10-28]

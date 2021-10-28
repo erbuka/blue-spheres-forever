@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <unordered_map>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <json/json.hpp>
@@ -294,7 +295,8 @@ namespace bsf
 	Ref<Texture2D> CreateGray(float value);
 	Ref<Texture2D> CreateGradient(uint32_t size, const std::initializer_list<std::pair<float, glm::vec3>>& steps);
 
-	std::string ReadTextFile(std::string_view file);
+
+	std::string ReadTextFile(const std::filesystem::path& file);
 	std::vector<std::byte> ReadBinaryFile(std::string_view file);
 
 
