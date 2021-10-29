@@ -63,6 +63,8 @@ namespace bsf
 		m_Assets[AssetName::TexRingMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexRingRoughness] = CreateGray(0.1f);
 
+		m_Assets[AssetName::TexRingSparkle] = loadTex2D("assets/textures/sparkle.png");
+
 		m_Assets[AssetName::TexBumperMetallic] = CreateGray(0.1f);
 		m_Assets[AssetName::TexBumperRoughness] = CreateGray(0.3f);
 		m_Assets[AssetName::TexBumper] = loadTex2D("assets/textures/bumper.png");

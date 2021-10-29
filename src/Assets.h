@@ -33,6 +33,8 @@ namespace bsf
 
 		TexRingMetallic,
 		TexRingRoughness,
+		
+		TexRingSparkle,
 
 		TexBRDFLut,
 

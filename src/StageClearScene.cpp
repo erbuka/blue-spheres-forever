@@ -37,8 +37,6 @@ namespace bsf
 		// Play sound
 		Assets::GetInstance().Get<Audio>(AssetName::SfxStageClear)->Play();
 
-		// Some call backs
-
 		// Tasks
 		auto fadeIn = MakeRef<FadeTask>(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 0.0f }, 0.5f);
 		ScheduleTask(ESceneTaskEvent::PostRender, fadeIn);

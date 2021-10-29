@@ -30,6 +30,29 @@ namespace bsf
 		float Time ;
 	};
 
+	struct RingSparkle
+	{
+		glm::vec2 Position = { 0.0f, 0.0f };
+		glm::vec2 Size = { 1.0f, 1.0f };
+		glm::vec2 Velocity = { 0.0f, 0.0f };
+		float Time = 0.0f;
+		bool Alive = true;
+	};
+
+
+	class RingSparkleEmitter
+	{
+	private:
+		std::vector<RingSparkle> m_Sparkles;
+	public:
+		void Clear();
+		void Emit(const uint32_t count);
+		void Update(const Time& time);
+		const auto Empty() const { return m_Sparkles.empty(); }
+		auto begin() const { return m_Sparkles.cbegin(); }
+		auto end() const { return m_Sparkles.cend(); }
+	};
+
 	class GameScene : public Scene
 	{
 	public:
@@ -58,6 +81,8 @@ namespace bsf
 		Ref<Sky> m_Sky;
 		Ref<Texture2D> m_txGroundMap;
 		Ref<GameLogic> m_GameLogic;
+
+		RingSparkleEmitter m_RingSparkles;
 		
 		Ref<Stage> m_Stage;
 
@@ -73,6 +98,8 @@ namespace bsf
 		void RotateSky(const glm::vec2& deltaPosition);
 
 		void RenderEmerald(const Ref<ShaderProgram>& currentProgram, const Time& time, MatrixStack& model);
+
+		void RenderRingSparkles(glm::vec4 projectedOrigin, const Time& time);
 
 	};
 }

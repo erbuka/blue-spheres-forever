@@ -12,3 +12,4 @@
 - [X] ~~*Porting on Linux*~~ [2021-10-27]
 - [X] ~~*Pause screen*~~ [2021-10-27]
 - [X] ~~*Remove path from stages file*~~ [2021-10-28]
+- [X] ~~*Add ring sparkles*~~ [2021-10-29]

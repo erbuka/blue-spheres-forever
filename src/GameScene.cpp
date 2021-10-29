@@ -35,6 +35,13 @@ namespace bsf
 
 	static constexpr float s_GameOverObjectsFadeHeight = 2.0f;
 
+	static constexpr float s_RingSparklesViewHeight = 10.0f;
+	static constexpr float s_RingSparklesSize = 0.2f;
+	static constexpr float s_RingSparklesLifeTime = 0.1f;
+	static constexpr float s_RingSparklesMinVelocity = 5.0f;
+	static constexpr float s_RingSparklesMaxVelocity = 12.0f;
+	static constexpr float s_RingSparklesDamping = 0.5f;
+
 
 	static constexpr Table<7, EStageObject, glm::vec4> s_ObjectColor = {
 		std::make_tuple(EStageObject::None, Colors::Transparent),
@@ -517,81 +524,81 @@ namespace bsf
 					{
 						for (int32_t y = -s_SightRadius; y <= s_SightRadius; y++)
 						{
-							auto value = m_Stage->GetValueAt(x + ix, y + iy);
+						auto value = m_Stage->GetValueAt(x + ix, y + iy);
 
-							if (value == EStageObject::None || !isObjectVisible({ x - fx, y - fy }))
-								continue;
+						if (value == EStageObject::None || !isObjectVisible({ x - fx, y - fy }))
+							continue;
 
-							auto [p, tbn] = Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight });
+						auto [p, tbn] = Project({ x - fx, y - fy, 0.15f + m_GameOverObjectsHeight });
 
-							m_Model.Push();
-							m_Model.Translate(p);
-							m_Model.Multiply(tbn);
+						m_Model.Push();
+						m_Model.Translate(p);
+						m_Model.Multiply(tbn);
 
-							if (value == EStageObject::Ring)
-								m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>() * time.Elapsed);
+						if (value == EStageObject::Ring)
+							m_Model.Rotate({ 0.0f, 0.0f, 1.0f }, glm::pi<float>()* time.Elapsed);
 
-							m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
+						m_pPBR->UniformMatrix4f(HS("uModel"), m_Model);
 
-							const auto emission = value == EStageObject::Ring ?
-								GlobalShadingConfig::RingEmission * glm::vec3(Colors::Ring) :
-								glm::vec3(Colors::Black);
+						const auto emission = value == EStageObject::Ring ?
+							GlobalShadingConfig::RingEmission * glm::vec3(Colors::Ring) :
+							glm::vec3(Colors::Black);
 
-							m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(emission));
+						m_pPBR->Uniform3fv(HS("uEmission"), 1, glm::value_ptr(emission));
 
-							auto color = s_ObjectColor.Get<0, 1>(value);
-							m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(color));
+						auto color = s_ObjectColor.Get<0, 1>(value);
+						m_pPBR->Uniform4fv(HS("uColor"), 1, glm::value_ptr(color));
 
-							switch (value)
-							{
-							case EStageObject::Ring:
+						switch (value)
+						{
+						case EStageObject::Ring:
 
-								m_pPBR->UniformTexture(HS("uMap"), texWhite);
-								m_pPBR->UniformTexture(HS("uMetallic"), texRingMetallic);
-								m_pPBR->UniformTexture(HS("uRoughness"), texRingRoughness);
-								modRing->GetMesh(0)->DrawArrays(GL_TRIANGLES);
-								break;
-							case EStageObject::RedSphere:
-								m_pPBR->UniformTexture(HS("uMap"), texWhite);
-								m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-								m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
-								modSphere->DrawArrays(GL_TRIANGLES);
-								break;
-							case EStageObject::BlueSphere:
-								m_pPBR->UniformTexture(HS("uMap"), texWhite);
-								m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-								m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
-								modSphere->DrawArrays(GL_TRIANGLES);
-								break;
-							case EStageObject::YellowSphere:
-								m_pPBR->UniformTexture(HS("uMap"), texWhite);
-								m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-								m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
-								modSphere->DrawArrays(GL_TRIANGLES);
-								break;
-							case EStageObject::GreenSphere:
-								m_pPBR->UniformTexture(HS("uMap"), texWhite);
-								m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
-								m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
-								modSphere->DrawArrays(GL_TRIANGLES);
-								break;
-							case EStageObject::Bumper:
-								m_pPBR->UniformTexture(HS("uMap"), texBumper);
-								m_pPBR->UniformTexture(HS("uMetallic"), texBumperMetallic);
-								m_pPBR->UniformTexture(HS("uRoughness"), texBumperRoughness);
-								modSphere->DrawArrays(GL_TRIANGLES);
+							m_pPBR->UniformTexture(HS("uMap"), texWhite);
+							m_pPBR->UniformTexture(HS("uMetallic"), texRingMetallic);
+							m_pPBR->UniformTexture(HS("uRoughness"), texRingRoughness);
+							modRing->GetMesh(0)->DrawArrays(GL_TRIANGLES);
+							break;
+						case EStageObject::RedSphere:
+							m_pPBR->UniformTexture(HS("uMap"), texWhite);
+							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							modSphere->DrawArrays(GL_TRIANGLES);
+							break;
+						case EStageObject::BlueSphere:
+							m_pPBR->UniformTexture(HS("uMap"), texWhite);
+							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							modSphere->DrawArrays(GL_TRIANGLES);
+							break;
+						case EStageObject::YellowSphere:
+							m_pPBR->UniformTexture(HS("uMap"), texWhite);
+							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							modSphere->DrawArrays(GL_TRIANGLES);
+							break;
+						case EStageObject::GreenSphere:
+							m_pPBR->UniformTexture(HS("uMap"), texWhite);
+							m_pPBR->UniformTexture(HS("uMetallic"), texSphereMetallic);
+							m_pPBR->UniformTexture(HS("uRoughness"), texSphereRoughness);
+							modSphere->DrawArrays(GL_TRIANGLES);
+							break;
+						case EStageObject::Bumper:
+							m_pPBR->UniformTexture(HS("uMap"), texBumper);
+							m_pPBR->UniformTexture(HS("uMetallic"), texBumperMetallic);
+							m_pPBR->UniformTexture(HS("uRoughness"), texBumperRoughness);
+							modSphere->DrawArrays(GL_TRIANGLES);
 
-								break;
-							}
+							break;
+						}
 
 
-							m_Model.Pop();
+						m_Model.Pop();
 						}
 					}
 				}
 
 				// Draw Emerald if visible
-				if(m_GameLogic->IsEmeraldVisible())
+				if (m_GameLogic->IsEmeraldVisible())
 				{
 
 					auto emeraldPos = glm::vec2(m_GameLogic->GetDirection()) * m_GameLogic->GetEmeraldDistance();
@@ -614,6 +621,16 @@ namespace bsf
 				}
 
 			}
+
+			// Render ring sparkles
+
+			
+
+			if(!m_RingSparkles.Empty()) {
+				auto projectedOrigin = m_Projection.GetMatrix() * m_View.GetMatrix() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				RenderRingSparkles(projectedOrigin, time);
+			}
+
 
 		}
 
@@ -638,7 +655,6 @@ namespace bsf
 			assets.Get<VertexArray>(AssetName::ModClipSpaceQuad)->DrawArrays(GL_TRIANGLES);
 
 		}
-
 
 
 		RenderGameUI(time);
@@ -894,6 +910,7 @@ namespace bsf
 		case EGameAction::GoBackward:
 			break;
 		case EGameAction::RingCollected:
+			m_RingSparkles.Emit(10);
 			assets.Get<Audio>(AssetName::SfxRing)->Play();
 			break;
 		case EGameAction::Perfect:
@@ -944,4 +961,76 @@ namespace bsf
 		Assets::GetInstance().Get<Model>(AssetName::ModChaosEmerald)->GetMesh(0)->DrawArrays(GL_TRIANGLES);
 		model.Pop();
 	}
+
+	void GameScene::RenderRingSparkles(glm::vec4 projectedOrigin, const Time& time)
+	{
+		auto& app = GetApplication();
+		const auto windowSize = app.GetWindowSize();
+		const auto tex = Assets::GetInstance().Get<Texture2D>(AssetName::TexRingSparkle);
+
+		constexpr float vh = s_RingSparklesViewHeight;
+		const float vw = windowSize.x / windowSize.y * vh;
+
+		const auto projMatrix = glm::ortho(0.0f, vw, 0.0f, vh);
+		const auto invProjMatrix = glm::inverse(projMatrix);
+
+		const glm::vec3 color = Colors::Ring * (1.0f + GlobalShadingConfig::RingEmission);
+
+		auto origin = invProjMatrix * projectedOrigin;
+		origin /= origin.w;
+
+		m_RingSparkles.Update(time);
+		auto& r2 = GetApplication().GetRenderer2D();
+
+		r2.Begin(projMatrix);
+		r2.Texture(tex);
+		r2.Translate(glm::vec2(origin));
+		for (const auto& s : m_RingSparkles)
+		{
+			r2.Color({ color, 1.0f });
+			r2.DrawQuad(s.Position, s.Size);
+		}
+		r2.End();
+
+
+	}
+
+
+	void RingSparkleEmitter::Clear()
+	{
+		m_Sparkles.clear();
+	}
+
+	void RingSparkleEmitter::Emit(const uint32_t count)
+	{
+		for (auto i = 0u; i < count; ++i)
+		{
+			RingSparkle s;
+			s.Alive = true;
+			s.Position = { 0, 0 };
+			s.Velocity = glm::circularRand(1.0f) * glm::mix(s_RingSparklesMinVelocity, s_RingSparklesMaxVelocity, glm::linearRand(0.0f, 1.0f));
+			s.Size = glm::vec2(s_RingSparklesSize);
+			s.Time = 0.0f;
+			s.Alive = true;
+			m_Sparkles.push_back(std::move(s));
+		}
+	}
+
+	void RingSparkleEmitter::Update(const Time& time)
+	{
+		for (auto& s : m_Sparkles)
+		{
+			s.Position += s.Velocity * time.Delta;
+			s.Velocity *= s_RingSparklesDamping;
+			s.Time += time.Delta;
+			if (s.Time >= s_RingSparklesLifeTime)
+				s.Alive = false;
+		}
+
+		m_Sparkles.erase(std::remove_if(m_Sparkles.begin(), m_Sparkles.end(), [](const auto& s) {
+			return !s.Alive;
+		}), m_Sparkles.end());
+
+	}
+
 }
