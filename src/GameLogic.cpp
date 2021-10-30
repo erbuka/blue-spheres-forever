@@ -749,7 +749,7 @@ namespace bsf
 			float dist = m_TargetRotationAngle - m_RotationAngle;
 			float step = Sign(dist) * m_AngularVelocity * time.Delta;
 
-			if (std::abs(dist) < std::abs(step))
+			if (std::abs(dist) <= std::abs(step))
 			{
 				m_RotationAngle = m_TargetRotationAngle;
 				m_IsRotating = false;
