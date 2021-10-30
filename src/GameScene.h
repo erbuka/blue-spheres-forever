@@ -33,8 +33,8 @@ namespace bsf
 	struct RingSparkle
 	{
 		glm::vec2 Position = { 0.0f, 0.0f };
-		glm::vec2 Size = { 1.0f, 1.0f };
-		glm::vec2 Velocity = { 0.0f, 0.0f };
+		float Rotation = 0.0f;
+		float Size = 0.0f;
 		float Time = 0.0f;
 		bool Alive = true;
 	};

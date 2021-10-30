@@ -36,11 +36,11 @@ namespace bsf
 	static constexpr float s_GameOverObjectsFadeHeight = 2.0f;
 
 	static constexpr float s_RingSparklesViewHeight = 10.0f;
-	static constexpr float s_RingSparklesSize = 0.2f;
-	static constexpr float s_RingSparklesLifeTime = 0.1f;
-	static constexpr float s_RingSparklesMinVelocity = 5.0f;
-	static constexpr float s_RingSparklesMaxVelocity = 12.0f;
-	static constexpr float s_RingSparklesDamping = 0.5f;
+	static constexpr float s_RingSparklesLifeTime = 0.3f;
+	static constexpr float s_RingSparklesSize = 0.4f;
+	static constexpr float s_RingSparklesMinDistance = 0.1f; 
+	static constexpr float s_RingSparklesMaxDistance = 0.2f; 
+	static constexpr float s_RingSparklesRotationSpeed = glm::pi<float>();
 
 
 	static constexpr Table<7, EStageObject, glm::vec4> s_ObjectColor = {
@@ -910,7 +910,7 @@ namespace bsf
 		case EGameAction::GoBackward:
 			break;
 		case EGameAction::RingCollected:
-			m_RingSparkles.Emit(10);
+			m_RingSparkles.Emit(3);
 			assets.Get<Audio>(AssetName::SfxRing)->Play();
 			break;
 		case EGameAction::Perfect:
@@ -987,8 +987,12 @@ namespace bsf
 		r2.Translate(glm::vec2(origin));
 		for (const auto& s : m_RingSparkles)
 		{
+			r2.Push();
+			r2.Translate(s.Position);
+			r2.Rotate(s.Rotation);
 			r2.Color({ color, 1.0f });
-			r2.DrawQuad(s.Position, s.Size);
+			r2.DrawQuad({ 0.0f, 0.0f }, glm::vec2(s.Size));
+			r2.Pop();
 		}
 		r2.End();
 
@@ -1007,11 +1011,10 @@ namespace bsf
 		{
 			RingSparkle s;
 			s.Alive = true;
-			s.Position = { 0, 0 };
-			s.Velocity = glm::circularRand(1.0f) * glm::mix(s_RingSparklesMinVelocity, s_RingSparklesMaxVelocity, glm::linearRand(0.0f, 1.0f));
-			s.Size = glm::vec2(s_RingSparklesSize);
+			s.Position =  glm::circularRand(1.0f) * glm::mix(s_RingSparklesMinDistance, s_RingSparklesMaxDistance, glm::linearRand(0.0f, 1.0f));
+			s.Size = 0.0f;
+			s.Rotation = glm::linearRand(0.0f, glm::pi<float>() * 2.0f);
 			s.Time = 0.0f;
-			s.Alive = true;
 			m_Sparkles.push_back(std::move(s));
 		}
 	}
@@ -1020,8 +1023,8 @@ namespace bsf
 	{
 		for (auto& s : m_Sparkles)
 		{
-			s.Position += s.Velocity * time.Delta;
-			s.Velocity *= s_RingSparklesDamping;
+			s.Size = s_RingSparklesSize * (1.0f - glm::abs(s.Time / s_RingSparklesLifeTime * 2.0f - 1.0f));
+			s.Rotation += s_RingSparklesRotationSpeed * time.Delta;
 			s.Time += time.Delta;
 			if (s.Time >= s_RingSparklesLifeTime)
 				s.Alive = false;
