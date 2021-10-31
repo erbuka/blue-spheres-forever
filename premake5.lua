@@ -43,7 +43,7 @@ project "GLFW"
     targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
     debugdir "bin/%{cfg.buildcfg}/%{prj.name}"
 
-    defines { "GLFW_STATIC" }
+    defines { "GLFW_STATIC", "_CRT_SECURE_NO_WARNINGS" }
 
     includedirs {
         "vendor/glfw/src"
@@ -59,8 +59,6 @@ project "GLFW"
         "vendor/glfw/src/window.c",
         "vendor/glfw/src/xkb_unicode.c",
     }
-
-    defines { "_CRT_SECURE_NO_WARNINGS" }
 
     filter "system:windows"
         defines { "_GLFW_WIN32" }
