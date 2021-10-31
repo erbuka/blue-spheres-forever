@@ -32,6 +32,7 @@ namespace bsf
 		GreenSphere = 6
 	};
 
+	// TODO This has to be removed
 	enum class EFloorRenderingMode : uint8_t
 	{
 		CheckerBoard = 0,

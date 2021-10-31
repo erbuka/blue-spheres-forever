@@ -17,6 +17,3 @@ Major features to be added in the next releases:
 
 - [X] Linux porting
 - [ ] Apple porting
-- [ ] New Mechanic: Portals
-- [ ] New Character: Tails
-- [ ] New Character: Knuckles
