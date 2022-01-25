@@ -9,7 +9,7 @@
 
 
 #define UNIFORM_IMPL(type, varType, size) \
-	void ShaderProgram::Uniform ## size ## type ## v(uint64_t hash, uint32_t count, const varType * ptr) { \
+	void ShaderProgram::Uniform ## size ## type ## v(const uint64_t hash, const uint32_t count, const varType * ptr) { \
 		BSF_GLCALL(glUniform ## size ## type ## v(GetUniformLocation(hash), count, ptr)); \
 	}
 
@@ -167,13 +167,14 @@ namespace bsf
 		}
 
 
+#ifdef DEBUG
 		std::vector<UniformInfo> infos;
 		std::transform(m_UniformInfo.begin(), m_UniformInfo.end(), std::back_inserter(infos), [](const auto& i) { return i.second; });
 		std::sort(infos.begin(), infos.end(), [](const auto& a, const auto& b) -> bool { return a.Location < b.Location; });
 		
 		for (const auto& info : infos)
 			BSF_DEBUG("\t{1} - {0}, textureUnit: {2}", info.Name, info.Location, info.TextureUnit);
-
+#endif
 	}
 
 	ShaderProgram::~ShaderProgram()

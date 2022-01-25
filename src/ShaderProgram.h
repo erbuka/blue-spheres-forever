@@ -13,9 +13,9 @@
 #include <tuple>
 #include <initializer_list>
 
-#define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(uint64_t hash, uint32_t count, const varType * ptr)
+#define UNIFORM_DECL(type, varType, size) void Uniform ## size ## type ## v(const uint64_t hash, const uint32_t count, const varType * ptr)
 #define UNIFORM1_INL(type, varType, size) \
-	inline void Uniform ## size ## type(uint64_t hash, std::array<varType,size> v) { \
+	inline void Uniform ## size ## type(const uint64_t hash, const std::array<varType,size>& v) { \
 		Uniform ## size ## type ## v(hash, 1, v.data()); \
 	}
 
